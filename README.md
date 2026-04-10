@@ -5,24 +5,59 @@ Git-managed Kubernetes manifests for the home lab.
 ## Structure
 
 ```
-base/
-  openbao/          # OpenBao secrets manager
+bootstrap/           # ArgoCD bootstrap (run once)
+  kustomization.yaml # Kustomize to deploy ArgoCD + apps
+argocd-install/      # ArgoCD install manifests (v2.14.3)
+argocd/              # ArgoCD AppProject + Application
+base/                # Cluster apps
+  openbao/           # OpenBao secrets manager
 ```
 
-## Apply to cluster
+## Quick Start
 
+### 1. Clone this repo
 ```bash
-kubectl apply -k base/openbao
+git clone https://github.com/RKruit/k3s-gitops
+cd k3s-gitops
 ```
 
-## First-time setup
+### 2. Bootstrap ArgoCD (run once)
+```bash
+chmod +x BOOTSTRAP.sh && ./BOOTSTRAP.sh
+```
 
-1. Clone this repo
-2. Run `kubectl apply -k base/openbao`
-3. OpenBao will be available at `http://<node-ip>:30820`
+Or manually:
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f argocd-install/install.yaml
+kubectl patch svc argocd-server -n argocd -p '{"spec":{"type":"NodePort","ports":[{"port":443,"targetPort":8080,"nodePort":30880}]}}'
+```
 
-## Adding new apps
+### 3. Get ArgoCD credentials
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+# Username: admin
+# UI: http://<node-ip>:30880
+```
+
+### 4. ArgoCD watches this repo automatically
+The `argocd/` Application tells ArgoCD to sync `base/` → cluster.
+
+## GitOps Flow
+
+1. Edit or add manifests in `base/<app>/`
+2. Commit and push:
+   ```bash
+   git add . && git commit -m "Update openbao" && git push
+   ```
+3. ArgoCD detects changes → syncs to cluster automatically ✓
+
+## Adding New Apps
 
 1. Add manifests under `base/<app-name>/`
-2. Commit and push
-3. ArgoCD/Flux will auto-sync (when configured)
+2. Add to ArgoCD Application (`argocd/application.yaml`)
+3. Commit → push → ArgoCD syncs automatically
+
+## Repository
+
+https://github.com/RKruit/k3s-gitops
