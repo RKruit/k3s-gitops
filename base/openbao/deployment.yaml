@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao
+  namespace: openbao
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openbao
+  template:
+    metadata:
+      labels:
+        app: openbao
+    spec:
+      containers:
+      - name: openbao
+        image: docker.io/openbao/openbao:latest
+        args: ["server", "-dev", "-dev-root-token-id=testing"]
+        ports:
+        - containerPort: 8200
+        env:
+        - name: BAO_ADDR
+          value: "0.0.0.0:8200"
