@@ -25602,11 +25602,7 @@ spec:
               key: auth
               name: argocd-redis
         - name: ARGOCD_SERVER_INSECURE
-          valueFrom:
-            configMapKeyRef:
-              key: server.insecure
-              name: argocd-cmd-params-cm
-              optional: true
+          value: 'true'
         - name: ARGOCD_SERVER_BASEHREF
           valueFrom:
             configMapKeyRef:
