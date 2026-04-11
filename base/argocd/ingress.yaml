@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: argocd-server
+  namespace: argocd
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`argocd.oostrandpark.com`)
+      services:
+        - kind: Service
+          name: argocd-server
+          port: 8080
+  tls:
+    secretName: argocd-tls
