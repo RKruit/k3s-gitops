@@ -6,4 +6,3 @@ resources:
   - argocd-app-openbao.yaml
   - argocd-app-monitoring.yaml
   - argocd-app-nfs-provisioner.yaml
-  - argocd-app-bootstrap.yaml
