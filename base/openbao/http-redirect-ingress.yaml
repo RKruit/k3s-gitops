@@ -1,16 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: openbao
+  name: openbao-http-redirect
   namespace: openbao
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: openbao-https-redirect@kubernetescrd
 spec:
-  tls:
-    - hosts:
-        - openbao.oostrandpark.com
-      secretName: openbao-tls
+  ingressClassName: traefik
   rules:
     - host: openbao.oostrandpark.com
       http:
