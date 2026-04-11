@@ -1,8 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argocd
+patches:
+  - path: insecure-patch.yaml
+    target:
+      kind: Deployment
+      name: argocd-server
 resources:
+  - argocd-install/install.yaml
   - namespace.yaml
   - service.yaml
   - argocd-project.yaml
   - argocd-app-openbao.yaml
+  - argocd-app-bootstrap.yaml
