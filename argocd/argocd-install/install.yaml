@@ -1,4 +1,3 @@
-# This is an auto-generated file. DO NOT EDIT
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -39,19 +38,28 @@ spec:
         description: Application is a definition of Application resource.
         properties:
           apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object.
+
+              Servers should convert recognized schemas to the latest internal value,
+              and
+
               may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
+            description: 'Kind is a string value representing the REST resource this
+              object represents.
+
+              Servers may infer this from the endpoint the client submits requests
+              to.
+
               Cannot be updated.
+
               In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -154,21 +162,26 @@ spec:
                       type: object
                     type: array
                   revision:
-                    description: |-
-                      Revision is the revision (Git) or chart version (Helm) which to sync the application to
-                      If omitted, will use the revision specified in app spec.
+                    description: 'Revision is the revision (Git) or chart version
+                      (Helm) which to sync the application to
+
+                      If omitted, will use the revision specified in app spec.'
                     type: string
                   revisions:
-                    description: |-
-                      Revisions is the list of revision (Git) or chart version (Helm) which to sync each source in sources field for the application to
-                      If omitted, will use the revision specified in app spec.
+                    description: 'Revisions is the list of revision (Git) or chart
+                      version (Helm) which to sync each source in sources field for
+                      the application to
+
+                      If omitted, will use the revision specified in app spec.'
                     items:
                       type: string
                     type: array
                   source:
-                    description: |-
-                      Source overrides the source definition set in the application.
-                      This is typically set in a Rollback operation and is nil during a Sync operation
+                    description: 'Source overrides the source definition set in the
+                      application.
+
+                      This is typically set in a Rollback operation and is nil during
+                      a Sync operation'
                     properties:
                       chart:
                         description: Chart is a Helm chart name, and must be specified
@@ -240,9 +253,12 @@ spec:
                         description: Helm holds helm specific options
                         properties:
                           apiVersions:
-                            description: |-
-                              APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                              Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                            description: 'APIVersions specifies the Kubernetes resource
+                              API versions to pass to Helm when templating manifests.
+                              By default,
+
+                              Argo CD uses the API versions of the target cluster.
+                              The format is [group/]version/kind.'
                             items:
                               type: string
                             type: array
@@ -268,9 +284,11 @@ spec:
                               not appending them to helm template --values
                             type: boolean
                           kubeVersion:
-                            description: |-
-                              KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                              uses the Kubernetes version of the target cluster.
+                            description: 'KubeVersion specifies the Kubernetes API
+                              version to pass to Helm when templating manifests. By
+                              default, Argo CD
+
+                              uses the Kubernetes version of the target cluster.'
                             type: string
                           namespace:
                             description: Namespace is an optional namespace to template
@@ -343,9 +361,12 @@ spec:
                         description: Kustomize holds kustomize specific options
                         properties:
                           apiVersions:
-                            description: |-
-                              APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                              Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                            description: 'APIVersions specifies the Kubernetes resource
+                              API versions to pass to Helm when templating manifests.
+                              By default,
+
+                              Argo CD uses the API versions of the target cluster.
+                              The format is [group/]version/kind.'
                             items:
                               type: string
                             type: array
@@ -389,9 +410,11 @@ spec:
                               type: string
                             type: array
                           kubeVersion:
-                            description: |-
-                              KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                              uses the Kubernetes version of the target cluster.
+                            description: 'KubeVersion specifies the Kubernetes API
+                              version to pass to Helm when templating manifests. By
+                              default, Argo CD
+
+                              uses the Kubernetes version of the target cluster.'
                             type: string
                           labelWithoutSelector:
                             description: LabelWithoutSelector specifies whether to
@@ -530,18 +553,23 @@ spec:
                           Helm) that contains the application manifests
                         type: string
                       targetRevision:
-                        description: |-
-                          TargetRevision defines the revision of the source to sync the application to.
-                          In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                          In case of Helm, this is a semver tag for the Chart's version.
+                        description: 'TargetRevision defines the revision of the source
+                          to sync the application to.
+
+                          In case of Git, this can be commit, tag, or branch. If omitted,
+                          will equal to HEAD.
+
+                          In case of Helm, this is a semver tag for the Chart''s version.'
                         type: string
                     required:
                     - repoURL
                     type: object
                   sources:
-                    description: |-
-                      Sources overrides the source definition set in the application.
-                      This is typically set in a Rollback operation and is nil during a Sync operation
+                    description: 'Sources overrides the source definition set in the
+                      application.
+
+                      This is typically set in a Rollback operation and is nil during
+                      a Sync operation'
                     items:
                       description: ApplicationSource contains all required information
                         about the source of an application
@@ -617,9 +645,12 @@ spec:
                           description: Helm holds helm specific options
                           properties:
                             apiVersions:
-                              description: |-
-                                APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                              description: 'APIVersions specifies the Kubernetes resource
+                                API versions to pass to Helm when templating manifests.
+                                By default,
+
+                                Argo CD uses the API versions of the target cluster.
+                                The format is [group/]version/kind.'
                               items:
                                 type: string
                               type: array
@@ -645,9 +676,11 @@ spec:
                                 by not appending them to helm template --values
                               type: boolean
                             kubeVersion:
-                              description: |-
-                                KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                uses the Kubernetes version of the target cluster.
+                              description: 'KubeVersion specifies the Kubernetes API
+                                version to pass to Helm when templating manifests.
+                                By default, Argo CD
+
+                                uses the Kubernetes version of the target cluster.'
                               type: string
                             namespace:
                               description: Namespace is an optional namespace to template
@@ -721,9 +754,12 @@ spec:
                           description: Kustomize holds kustomize specific options
                           properties:
                             apiVersions:
-                              description: |-
-                                APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                              description: 'APIVersions specifies the Kubernetes resource
+                                API versions to pass to Helm when templating manifests.
+                                By default,
+
+                                Argo CD uses the API versions of the target cluster.
+                                The format is [group/]version/kind.'
                               items:
                                 type: string
                               type: array
@@ -769,9 +805,11 @@ spec:
                                 type: string
                               type: array
                             kubeVersion:
-                              description: |-
-                                KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                uses the Kubernetes version of the target cluster.
+                              description: 'KubeVersion specifies the Kubernetes API
+                                version to pass to Helm when templating manifests.
+                                By default, Argo CD
+
+                                uses the Kubernetes version of the target cluster.'
                               type: string
                             labelWithoutSelector:
                               description: LabelWithoutSelector specifies whether
@@ -910,10 +948,14 @@ spec:
                             Helm) that contains the application manifests
                           type: string
                         targetRevision:
-                          description: |-
-                            TargetRevision defines the revision of the source to sync the application to.
-                            In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                            In case of Helm, this is a semver tag for the Chart's version.
+                          description: 'TargetRevision defines the revision of the
+                            source to sync the application to.
+
+                            In case of Git, this can be commit, tag, or branch. If
+                            omitted, will equal to HEAD.
+
+                            In case of Helm, this is a semver tag for the Chart''s
+                            version.'
                           type: string
                       required:
                       - repoURL
@@ -932,10 +974,13 @@ spec:
                           the sync.
                         properties:
                           force:
-                            description: |-
-                              Force indicates whether or not to supply the --force flag to `kubectl apply`.
-                              The --force flag deletes and re-create the resource, when PATCH encounters conflict and has
-                              retried for 5 times.
+                            description: 'Force indicates whether or not to supply
+                              the --force flag to `kubectl apply`.
+
+                              The --force flag deletes and re-create the resource,
+                              when PATCH encounters conflict and has
+
+                              retried for 5 times.'
                             type: boolean
                         type: object
                       hook:
@@ -943,10 +988,13 @@ spec:
                           perform the sync. This is the default strategy
                         properties:
                           force:
-                            description: |-
-                              Force indicates whether or not to supply the --force flag to `kubectl apply`.
-                              The --force flag deletes and re-create the resource, when PATCH encounters conflict and has
-                              retried for 5 times.
+                            description: 'Force indicates whether or not to supply
+                              the --force flag to `kubectl apply`.
+
+                              The --force flag deletes and re-create the resource,
+                              when PATCH encounters conflict and has
+
+                              retried for 5 times.'
                             type: boolean
                         type: object
                     type: object
@@ -967,9 +1015,11 @@ spec:
                       not set.
                     type: string
                   namespace:
-                    description: |-
-                      Namespace specifies the target namespace for the application's resources.
-                      The namespace will only be set for namespace-scoped resources that have not set a value for .metadata.namespace
+                    description: 'Namespace specifies the target namespace for the
+                      application''s resources.
+
+                      The namespace will only be set for namespace-scoped resources
+                      that have not set a value for .metadata.namespace'
                     type: string
                   server:
                     description: Server specifies the URL of the target cluster's
@@ -998,9 +1048,12 @@ spec:
                     kind:
                       type: string
                     managedFieldsManagers:
-                      description: |-
-                        ManagedFieldsManagers is a list of trusted managers. Fields mutated by those managers will take precedence over the
-                        desired state defined in the SCM and won't be displayed in diffs
+                      description: 'ManagedFieldsManagers is a list of trusted managers.
+                        Fields mutated by those managers will take precedence over
+                        the
+
+                        desired state defined in the SCM and won''t be displayed in
+                        diffs'
                       items:
                         type: string
                       type: array
@@ -1027,17 +1080,26 @@ spec:
                   type: object
                 type: array
               project:
-                description: |-
-                  Project is a reference to the project this application belongs to.
-                  The empty string means that application belongs to the 'default' project.
+                description: 'Project is a reference to the project this application
+                  belongs to.
+
+                  The empty string means that application belongs to the ''default''
+                  project.'
                 type: string
               revisionHistoryLimit:
-                description: |-
-                  RevisionHistoryLimit limits the number of items kept in the application's revision history, which is used for informational purposes as well as for rollbacks to previous versions.
+                description: 'RevisionHistoryLimit limits the number of items kept
+                  in the application''s revision history, which is used for informational
+                  purposes as well as for rollbacks to previous versions.
+
                   This should only be changed in exceptional circumstances.
-                  Setting to zero will store no history. This will reduce storage used.
-                  Increasing will increase the space used to store the history, so we do not recommend increasing it.
-                  Default is 10.
+
+                  Setting to zero will store no history. This will reduce storage
+                  used.
+
+                  Increasing will increase the space used to store the history, so
+                  we do not recommend increasing it.
+
+                  Default is 10.'
                 format: int64
                 type: integer
               source:
@@ -1113,9 +1175,12 @@ spec:
                     description: Helm holds helm specific options
                     properties:
                       apiVersions:
-                        description: |-
-                          APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                          Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                        description: 'APIVersions specifies the Kubernetes resource
+                          API versions to pass to Helm when templating manifests.
+                          By default,
+
+                          Argo CD uses the API versions of the target cluster. The
+                          format is [group/]version/kind.'
                         items:
                           type: string
                         type: array
@@ -1141,9 +1206,11 @@ spec:
                           appending them to helm template --values
                         type: boolean
                       kubeVersion:
-                        description: |-
-                          KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                          uses the Kubernetes version of the target cluster.
+                        description: 'KubeVersion specifies the Kubernetes API version
+                          to pass to Helm when templating manifests. By default, Argo
+                          CD
+
+                          uses the Kubernetes version of the target cluster.'
                         type: string
                       namespace:
                         description: Namespace is an optional namespace to template
@@ -1214,9 +1281,12 @@ spec:
                     description: Kustomize holds kustomize specific options
                     properties:
                       apiVersions:
-                        description: |-
-                          APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                          Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                        description: 'APIVersions specifies the Kubernetes resource
+                          API versions to pass to Helm when templating manifests.
+                          By default,
+
+                          Argo CD uses the API versions of the target cluster. The
+                          format is [group/]version/kind.'
                         items:
                           type: string
                         type: array
@@ -1259,9 +1329,11 @@ spec:
                           type: string
                         type: array
                       kubeVersion:
-                        description: |-
-                          KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                          uses the Kubernetes version of the target cluster.
+                        description: 'KubeVersion specifies the Kubernetes API version
+                          to pass to Helm when templating manifests. By default, Argo
+                          CD
+
+                          uses the Kubernetes version of the target cluster.'
                         type: string
                       labelWithoutSelector:
                         description: LabelWithoutSelector specifies whether to apply
@@ -1396,10 +1468,13 @@ spec:
                       that contains the application manifests
                     type: string
                   targetRevision:
-                    description: |-
-                      TargetRevision defines the revision of the source to sync the application to.
-                      In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                      In case of Helm, this is a semver tag for the Chart's version.
+                    description: 'TargetRevision defines the revision of the source
+                      to sync the application to.
+
+                      In case of Git, this can be commit, tag, or branch. If omitted,
+                      will equal to HEAD.
+
+                      In case of Helm, this is a semver tag for the Chart''s version.'
                     type: string
                 required:
                 - repoURL
@@ -1430,9 +1505,10 @@ spec:
                     - targetRevision
                     type: object
                   hydrateTo:
-                    description: |-
-                      HydrateTo specifies an optional "staging" location to push hydrated manifests to. An external system would then
-                      have to move manifests to the SyncSource, e.g. by pull request.
+                    description: 'HydrateTo specifies an optional "staging" location
+                      to push hydrated manifests to. An external system would then
+
+                      have to move manifests to the SyncSource, e.g. by pull request.'
                     properties:
                       targetBranch:
                         description: TargetBranch is the branch to which hydrated
@@ -1446,9 +1522,11 @@ spec:
                       from.
                     properties:
                       path:
-                        description: |-
-                          Path is a directory path within the git repository where hydrated manifests should be committed to and synced
-                          from. If hydrateTo is set, this is just the path from which hydrated manifests will be synced.
+                        description: 'Path is a directory path within the git repository
+                          where hydrated manifests should be committed to and synced
+
+                          from. If hydrateTo is set, this is just the path from which
+                          hydrated manifests will be synced.'
                         type: string
                       targetBranch:
                         description: TargetBranch is the branch to which hydrated
@@ -1538,9 +1616,12 @@ spec:
                       description: Helm holds helm specific options
                       properties:
                         apiVersions:
-                          description: |-
-                            APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                            Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                          description: 'APIVersions specifies the Kubernetes resource
+                            API versions to pass to Helm when templating manifests.
+                            By default,
+
+                            Argo CD uses the API versions of the target cluster. The
+                            format is [group/]version/kind.'
                           items:
                             type: string
                           type: array
@@ -1566,9 +1647,11 @@ spec:
                             appending them to helm template --values
                           type: boolean
                         kubeVersion:
-                          description: |-
-                            KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                            uses the Kubernetes version of the target cluster.
+                          description: 'KubeVersion specifies the Kubernetes API version
+                            to pass to Helm when templating manifests. By default,
+                            Argo CD
+
+                            uses the Kubernetes version of the target cluster.'
                           type: string
                         namespace:
                           description: Namespace is an optional namespace to template
@@ -1641,9 +1724,12 @@ spec:
                       description: Kustomize holds kustomize specific options
                       properties:
                         apiVersions:
-                          description: |-
-                            APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                            Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                          description: 'APIVersions specifies the Kubernetes resource
+                            API versions to pass to Helm when templating manifests.
+                            By default,
+
+                            Argo CD uses the API versions of the target cluster. The
+                            format is [group/]version/kind.'
                           items:
                             type: string
                           type: array
@@ -1687,9 +1773,11 @@ spec:
                             type: string
                           type: array
                         kubeVersion:
-                          description: |-
-                            KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                            uses the Kubernetes version of the target cluster.
+                          description: 'KubeVersion specifies the Kubernetes API version
+                            to pass to Helm when templating manifests. By default,
+                            Argo CD
+
+                            uses the Kubernetes version of the target cluster.'
                           type: string
                         labelWithoutSelector:
                           description: LabelWithoutSelector specifies whether to apply
@@ -1827,10 +1915,13 @@ spec:
                         that contains the application manifests
                       type: string
                     targetRevision:
-                      description: |-
-                        TargetRevision defines the revision of the source to sync the application to.
-                        In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                        In case of Helm, this is a semver tag for the Chart's version.
+                      description: 'TargetRevision defines the revision of the source
+                        to sync the application to.
+
+                        In case of Git, this can be commit, tag, or branch. If omitted,
+                        will equal to HEAD.
+
+                        In case of Helm, this is a semver tag for the Chart''s version.'
                       type: string
                   required:
                   - repoURL
@@ -2076,9 +2167,12 @@ spec:
                           description: Helm holds helm specific options
                           properties:
                             apiVersions:
-                              description: |-
-                                APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                              description: 'APIVersions specifies the Kubernetes resource
+                                API versions to pass to Helm when templating manifests.
+                                By default,
+
+                                Argo CD uses the API versions of the target cluster.
+                                The format is [group/]version/kind.'
                               items:
                                 type: string
                               type: array
@@ -2104,9 +2198,11 @@ spec:
                                 by not appending them to helm template --values
                               type: boolean
                             kubeVersion:
-                              description: |-
-                                KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                uses the Kubernetes version of the target cluster.
+                              description: 'KubeVersion specifies the Kubernetes API
+                                version to pass to Helm when templating manifests.
+                                By default, Argo CD
+
+                                uses the Kubernetes version of the target cluster.'
                               type: string
                             namespace:
                               description: Namespace is an optional namespace to template
@@ -2180,9 +2276,12 @@ spec:
                           description: Kustomize holds kustomize specific options
                           properties:
                             apiVersions:
-                              description: |-
-                                APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                              description: 'APIVersions specifies the Kubernetes resource
+                                API versions to pass to Helm when templating manifests.
+                                By default,
+
+                                Argo CD uses the API versions of the target cluster.
+                                The format is [group/]version/kind.'
                               items:
                                 type: string
                               type: array
@@ -2228,9 +2327,11 @@ spec:
                                 type: string
                               type: array
                             kubeVersion:
-                              description: |-
-                                KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                uses the Kubernetes version of the target cluster.
+                              description: 'KubeVersion specifies the Kubernetes API
+                                version to pass to Helm when templating manifests.
+                                By default, Argo CD
+
+                                uses the Kubernetes version of the target cluster.'
                               type: string
                             labelWithoutSelector:
                               description: LabelWithoutSelector specifies whether
@@ -2369,10 +2470,14 @@ spec:
                             Helm) that contains the application manifests
                           type: string
                         targetRevision:
-                          description: |-
-                            TargetRevision defines the revision of the source to sync the application to.
-                            In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                            In case of Helm, this is a semver tag for the Chart's version.
+                          description: 'TargetRevision defines the revision of the
+                            source to sync the application to.
+
+                            In case of Git, this can be commit, tag, or branch. If
+                            omitted, will equal to HEAD.
+
+                            In case of Helm, this is a semver tag for the Chart''s
+                            version.'
                           type: string
                       required:
                       - repoURL
@@ -2455,9 +2560,12 @@ spec:
                             description: Helm holds helm specific options
                             properties:
                               apiVersions:
-                                description: |-
-                                  APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                  Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                description: 'APIVersions specifies the Kubernetes
+                                  resource API versions to pass to Helm when templating
+                                  manifests. By default,
+
+                                  Argo CD uses the API versions of the target cluster.
+                                  The format is [group/]version/kind.'
                                 items:
                                   type: string
                                 type: array
@@ -2484,9 +2592,11 @@ spec:
                                   locally by not appending them to helm template --values
                                 type: boolean
                               kubeVersion:
-                                description: |-
-                                  KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                  uses the Kubernetes version of the target cluster.
+                                description: 'KubeVersion specifies the Kubernetes
+                                  API version to pass to Helm when templating manifests.
+                                  By default, Argo CD
+
+                                  uses the Kubernetes version of the target cluster.'
                                 type: string
                               namespace:
                                 description: Namespace is an optional namespace to
@@ -2562,9 +2672,12 @@ spec:
                             description: Kustomize holds kustomize specific options
                             properties:
                               apiVersions:
-                                description: |-
-                                  APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                  Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                description: 'APIVersions specifies the Kubernetes
+                                  resource API versions to pass to Helm when templating
+                                  manifests. By default,
+
+                                  Argo CD uses the API versions of the target cluster.
+                                  The format is [group/]version/kind.'
                                 items:
                                   type: string
                                 type: array
@@ -2610,9 +2723,11 @@ spec:
                                   type: string
                                 type: array
                               kubeVersion:
-                                description: |-
-                                  KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                  uses the Kubernetes version of the target cluster.
+                                description: 'KubeVersion specifies the Kubernetes
+                                  API version to pass to Helm when templating manifests.
+                                  By default, Argo CD
+
+                                  uses the Kubernetes version of the target cluster.'
                                 type: string
                               labelWithoutSelector:
                                 description: LabelWithoutSelector specifies whether
@@ -2755,10 +2870,14 @@ spec:
                               or Helm) that contains the application manifests
                             type: string
                           targetRevision:
-                            description: |-
-                              TargetRevision defines the revision of the source to sync the application to.
-                              In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                              In case of Helm, this is a semver tag for the Chart's version.
+                            description: 'TargetRevision defines the revision of the
+                              source to sync the application to.
+
+                              In case of Git, this can be commit, tag, or branch.
+                              If omitted, will equal to HEAD.
+
+                              In case of Helm, this is a semver tag for the Chart''s
+                              version.'
                             type: string
                         required:
                         - repoURL
@@ -2770,9 +2889,10 @@ spec:
                   type: object
                 type: array
               observedAt:
-                description: |-
-                  ObservedAt indicates when the application state was updated without querying latest git state
-                  Deprecated: controller no longer updates ObservedAt field
+                description: 'ObservedAt indicates when the application state was
+                  updated without querying latest git state
+
+                  Deprecated: controller no longer updates ObservedAt field'
                 format: date-time
                 type: string
               operationState:
@@ -2890,21 +3010,26 @@ spec:
                               type: object
                             type: array
                           revision:
-                            description: |-
-                              Revision is the revision (Git) or chart version (Helm) which to sync the application to
-                              If omitted, will use the revision specified in app spec.
+                            description: 'Revision is the revision (Git) or chart
+                              version (Helm) which to sync the application to
+
+                              If omitted, will use the revision specified in app spec.'
                             type: string
                           revisions:
-                            description: |-
-                              Revisions is the list of revision (Git) or chart version (Helm) which to sync each source in sources field for the application to
-                              If omitted, will use the revision specified in app spec.
+                            description: 'Revisions is the list of revision (Git)
+                              or chart version (Helm) which to sync each source in
+                              sources field for the application to
+
+                              If omitted, will use the revision specified in app spec.'
                             items:
                               type: string
                             type: array
                           source:
-                            description: |-
-                              Source overrides the source definition set in the application.
-                              This is typically set in a Rollback operation and is nil during a Sync operation
+                            description: 'Source overrides the source definition set
+                              in the application.
+
+                              This is typically set in a Rollback operation and is
+                              nil during a Sync operation'
                             properties:
                               chart:
                                 description: Chart is a Helm chart name, and must
@@ -2982,9 +3107,12 @@ spec:
                                 description: Helm holds helm specific options
                                 properties:
                                   apiVersions:
-                                    description: |-
-                                      APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                      Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                    description: 'APIVersions specifies the Kubernetes
+                                      resource API versions to pass to Helm when templating
+                                      manifests. By default,
+
+                                      Argo CD uses the API versions of the target
+                                      cluster. The format is [group/]version/kind.'
                                     items:
                                       type: string
                                     type: array
@@ -3013,9 +3141,11 @@ spec:
                                       template --values
                                     type: boolean
                                   kubeVersion:
-                                    description: |-
-                                      KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                      uses the Kubernetes version of the target cluster.
+                                    description: 'KubeVersion specifies the Kubernetes
+                                      API version to pass to Helm when templating
+                                      manifests. By default, Argo CD
+
+                                      uses the Kubernetes version of the target cluster.'
                                     type: string
                                   namespace:
                                     description: Namespace is an optional namespace
@@ -3093,9 +3223,12 @@ spec:
                                 description: Kustomize holds kustomize specific options
                                 properties:
                                   apiVersions:
-                                    description: |-
-                                      APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                      Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                    description: 'APIVersions specifies the Kubernetes
+                                      resource API versions to pass to Helm when templating
+                                      manifests. By default,
+
+                                      Argo CD uses the API versions of the target
+                                      cluster. The format is [group/]version/kind.'
                                     items:
                                       type: string
                                     type: array
@@ -3142,9 +3275,11 @@ spec:
                                       type: string
                                     type: array
                                   kubeVersion:
-                                    description: |-
-                                      KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                      uses the Kubernetes version of the target cluster.
+                                    description: 'KubeVersion specifies the Kubernetes
+                                      API version to pass to Helm when templating
+                                      manifests. By default, Argo CD
+
+                                      uses the Kubernetes version of the target cluster.'
                                     type: string
                                   labelWithoutSelector:
                                     description: LabelWithoutSelector specifies whether
@@ -3289,18 +3424,24 @@ spec:
                                   (Git or Helm) that contains the application manifests
                                 type: string
                               targetRevision:
-                                description: |-
-                                  TargetRevision defines the revision of the source to sync the application to.
-                                  In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                                  In case of Helm, this is a semver tag for the Chart's version.
+                                description: 'TargetRevision defines the revision
+                                  of the source to sync the application to.
+
+                                  In case of Git, this can be commit, tag, or branch.
+                                  If omitted, will equal to HEAD.
+
+                                  In case of Helm, this is a semver tag for the Chart''s
+                                  version.'
                                 type: string
                             required:
                             - repoURL
                             type: object
                           sources:
-                            description: |-
-                              Sources overrides the source definition set in the application.
-                              This is typically set in a Rollback operation and is nil during a Sync operation
+                            description: 'Sources overrides the source definition
+                              set in the application.
+
+                              This is typically set in a Rollback operation and is
+                              nil during a Sync operation'
                             items:
                               description: ApplicationSource contains all required
                                 information about the source of an application
@@ -3381,9 +3522,12 @@ spec:
                                   description: Helm holds helm specific options
                                   properties:
                                     apiVersions:
-                                      description: |-
-                                        APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                        Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                      description: 'APIVersions specifies the Kubernetes
+                                        resource API versions to pass to Helm when
+                                        templating manifests. By default,
+
+                                        Argo CD uses the API versions of the target
+                                        cluster. The format is [group/]version/kind.'
                                       items:
                                         type: string
                                       type: array
@@ -3412,9 +3556,12 @@ spec:
                                         to helm template --values
                                       type: boolean
                                     kubeVersion:
-                                      description: |-
-                                        KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                        uses the Kubernetes version of the target cluster.
+                                      description: 'KubeVersion specifies the Kubernetes
+                                        API version to pass to Helm when templating
+                                        manifests. By default, Argo CD
+
+                                        uses the Kubernetes version of the target
+                                        cluster.'
                                       type: string
                                     namespace:
                                       description: Namespace is an optional namespace
@@ -3494,9 +3641,12 @@ spec:
                                     options
                                   properties:
                                     apiVersions:
-                                      description: |-
-                                        APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                        Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                      description: 'APIVersions specifies the Kubernetes
+                                        resource API versions to pass to Helm when
+                                        templating manifests. By default,
+
+                                        Argo CD uses the API versions of the target
+                                        cluster. The format is [group/]version/kind.'
                                       items:
                                         type: string
                                       type: array
@@ -3544,9 +3694,12 @@ spec:
                                         type: string
                                       type: array
                                     kubeVersion:
-                                      description: |-
-                                        KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                        uses the Kubernetes version of the target cluster.
+                                      description: 'KubeVersion specifies the Kubernetes
+                                        API version to pass to Helm when templating
+                                        manifests. By default, Argo CD
+
+                                        uses the Kubernetes version of the target
+                                        cluster.'
                                       type: string
                                     labelWithoutSelector:
                                       description: LabelWithoutSelector specifies
@@ -3693,10 +3846,14 @@ spec:
                                     (Git or Helm) that contains the application manifests
                                   type: string
                                 targetRevision:
-                                  description: |-
-                                    TargetRevision defines the revision of the source to sync the application to.
-                                    In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                                    In case of Helm, this is a semver tag for the Chart's version.
+                                  description: 'TargetRevision defines the revision
+                                    of the source to sync the application to.
+
+                                    In case of Git, this can be commit, tag, or branch.
+                                    If omitted, will equal to HEAD.
+
+                                    In case of Helm, this is a semver tag for the
+                                    Chart''s version.'
                                   type: string
                               required:
                               - repoURL
@@ -3717,10 +3874,13 @@ spec:
                                   to perform the sync.
                                 properties:
                                   force:
-                                    description: |-
-                                      Force indicates whether or not to supply the --force flag to `kubectl apply`.
-                                      The --force flag deletes and re-create the resource, when PATCH encounters conflict and has
-                                      retried for 5 times.
+                                    description: 'Force indicates whether or not to
+                                      supply the --force flag to `kubectl apply`.
+
+                                      The --force flag deletes and re-create the resource,
+                                      when PATCH encounters conflict and has
+
+                                      retried for 5 times.'
                                     type: boolean
                                 type: object
                               hook:
@@ -3728,10 +3888,13 @@ spec:
                                   to perform the sync. This is the default strategy
                                 properties:
                                   force:
-                                    description: |-
-                                      Force indicates whether or not to supply the --force flag to `kubectl apply`.
-                                      The --force flag deletes and re-create the resource, when PATCH encounters conflict and has
-                                      retried for 5 times.
+                                    description: 'Force indicates whether or not to
+                                      supply the --force flag to `kubectl apply`.
+
+                                      The --force flag deletes and re-create the resource,
+                                      when PATCH encounters conflict and has
+
+                                      retried for 5 times.'
                                     type: boolean
                                 type: object
                             type: object
@@ -3775,9 +3938,10 @@ spec:
                               description: Group specifies the API group of the resource
                               type: string
                             hookPhase:
-                              description: |-
-                                HookPhase contains the state of any operation associated with this resource OR hook
-                                This can also contain values for non-hook resources.
+                              description: 'HookPhase contains the state of any operation
+                                associated with this resource OR hook
+
+                                This can also contain values for non-hook resources.'
                               type: string
                             hookType:
                               description: HookType specifies the type of the hook.
@@ -3903,9 +4067,12 @@ spec:
                             description: Helm holds helm specific options
                             properties:
                               apiVersions:
-                                description: |-
-                                  APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                  Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                description: 'APIVersions specifies the Kubernetes
+                                  resource API versions to pass to Helm when templating
+                                  manifests. By default,
+
+                                  Argo CD uses the API versions of the target cluster.
+                                  The format is [group/]version/kind.'
                                 items:
                                   type: string
                                 type: array
@@ -3932,9 +4099,11 @@ spec:
                                   locally by not appending them to helm template --values
                                 type: boolean
                               kubeVersion:
-                                description: |-
-                                  KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                  uses the Kubernetes version of the target cluster.
+                                description: 'KubeVersion specifies the Kubernetes
+                                  API version to pass to Helm when templating manifests.
+                                  By default, Argo CD
+
+                                  uses the Kubernetes version of the target cluster.'
                                 type: string
                               namespace:
                                 description: Namespace is an optional namespace to
@@ -4010,9 +4179,12 @@ spec:
                             description: Kustomize holds kustomize specific options
                             properties:
                               apiVersions:
-                                description: |-
-                                  APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                  Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                description: 'APIVersions specifies the Kubernetes
+                                  resource API versions to pass to Helm when templating
+                                  manifests. By default,
+
+                                  Argo CD uses the API versions of the target cluster.
+                                  The format is [group/]version/kind.'
                                 items:
                                   type: string
                                 type: array
@@ -4058,9 +4230,11 @@ spec:
                                   type: string
                                 type: array
                               kubeVersion:
-                                description: |-
-                                  KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                  uses the Kubernetes version of the target cluster.
+                                description: 'KubeVersion specifies the Kubernetes
+                                  API version to pass to Helm when templating manifests.
+                                  By default, Argo CD
+
+                                  uses the Kubernetes version of the target cluster.'
                                 type: string
                               labelWithoutSelector:
                                 description: LabelWithoutSelector specifies whether
@@ -4203,10 +4377,14 @@ spec:
                               or Helm) that contains the application manifests
                             type: string
                           targetRevision:
-                            description: |-
-                              TargetRevision defines the revision of the source to sync the application to.
-                              In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                              In case of Helm, this is a semver tag for the Chart's version.
+                            description: 'TargetRevision defines the revision of the
+                              source to sync the application to.
+
+                              In case of Git, this can be commit, tag, or branch.
+                              If omitted, will equal to HEAD.
+
+                              In case of Helm, this is a semver tag for the Chart''s
+                              version.'
                             type: string
                         required:
                         - repoURL
@@ -4292,9 +4470,12 @@ spec:
                               description: Helm holds helm specific options
                               properties:
                                 apiVersions:
-                                  description: |-
-                                    APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                    Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                  description: 'APIVersions specifies the Kubernetes
+                                    resource API versions to pass to Helm when templating
+                                    manifests. By default,
+
+                                    Argo CD uses the API versions of the target cluster.
+                                    The format is [group/]version/kind.'
                                   items:
                                     type: string
                                   type: array
@@ -4323,9 +4504,11 @@ spec:
                                     --values
                                   type: boolean
                                 kubeVersion:
-                                  description: |-
-                                    KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                    uses the Kubernetes version of the target cluster.
+                                  description: 'KubeVersion specifies the Kubernetes
+                                    API version to pass to Helm when templating manifests.
+                                    By default, Argo CD
+
+                                    uses the Kubernetes version of the target cluster.'
                                   type: string
                                 namespace:
                                   description: Namespace is an optional namespace
@@ -4403,9 +4586,12 @@ spec:
                               description: Kustomize holds kustomize specific options
                               properties:
                                 apiVersions:
-                                  description: |-
-                                    APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                    Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                  description: 'APIVersions specifies the Kubernetes
+                                    resource API versions to pass to Helm when templating
+                                    manifests. By default,
+
+                                    Argo CD uses the API versions of the target cluster.
+                                    The format is [group/]version/kind.'
                                   items:
                                     type: string
                                   type: array
@@ -4452,9 +4638,11 @@ spec:
                                     type: string
                                   type: array
                                 kubeVersion:
-                                  description: |-
-                                    KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                    uses the Kubernetes version of the target cluster.
+                                  description: 'KubeVersion specifies the Kubernetes
+                                    API version to pass to Helm when templating manifests.
+                                    By default, Argo CD
+
+                                    uses the Kubernetes version of the target cluster.'
                                   type: string
                                 labelWithoutSelector:
                                   description: LabelWithoutSelector specifies whether
@@ -4598,10 +4786,14 @@ spec:
                                 or Helm) that contains the application manifests
                               type: string
                             targetRevision:
-                              description: |-
-                                TargetRevision defines the revision of the source to sync the application to.
-                                In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                                In case of Helm, this is a semver tag for the Chart's version.
+                              description: 'TargetRevision defines the revision of
+                                the source to sync the application to.
+
+                                In case of Git, this can be commit, tag, or branch.
+                                If omitted, will equal to HEAD.
+
+                                In case of Helm, this is a semver tag for the Chart''s
+                                version.'
                               type: string
                           required:
                           - repoURL
@@ -4628,9 +4820,10 @@ spec:
                 description: Resources is a list of Kubernetes resources managed by
                   this application
                 items:
-                  description: |-
-                    ResourceStatus holds the current sync and health status of a resource
-                    TODO: describe members of this type
+                  description: 'ResourceStatus holds the current sync and health status
+                    of a resource
+
+                    TODO: describe members of this type'
                   properties:
                     group:
                       type: string
@@ -4733,9 +4926,12 @@ spec:
                             - targetRevision
                             type: object
                           hydrateTo:
-                            description: |-
-                              HydrateTo specifies an optional "staging" location to push hydrated manifests to. An external system would then
-                              have to move manifests to the SyncSource, e.g. by pull request.
+                            description: 'HydrateTo specifies an optional "staging"
+                              location to push hydrated manifests to. An external
+                              system would then
+
+                              have to move manifests to the SyncSource, e.g. by pull
+                              request.'
                             properties:
                               targetBranch:
                                 description: TargetBranch is the branch to which hydrated
@@ -4749,9 +4945,12 @@ spec:
                               manifests from.
                             properties:
                               path:
-                                description: |-
-                                  Path is a directory path within the git repository where hydrated manifests should be committed to and synced
-                                  from. If hydrateTo is set, this is just the path from which hydrated manifests will be synced.
+                                description: 'Path is a directory path within the
+                                  git repository where hydrated manifests should be
+                                  committed to and synced
+
+                                  from. If hydrateTo is set, this is just the path
+                                  from which hydrated manifests will be synced.'
                                 type: string
                               targetBranch:
                                 description: TargetBranch is the branch to which hydrated
@@ -4812,9 +5011,12 @@ spec:
                             - targetRevision
                             type: object
                           hydrateTo:
-                            description: |-
-                              HydrateTo specifies an optional "staging" location to push hydrated manifests to. An external system would then
-                              have to move manifests to the SyncSource, e.g. by pull request.
+                            description: 'HydrateTo specifies an optional "staging"
+                              location to push hydrated manifests to. An external
+                              system would then
+
+                              have to move manifests to the SyncSource, e.g. by pull
+                              request.'
                             properties:
                               targetBranch:
                                 description: TargetBranch is the branch to which hydrated
@@ -4828,9 +5030,12 @@ spec:
                               manifests from.
                             properties:
                               path:
-                                description: |-
-                                  Path is a directory path within the git repository where hydrated manifests should be committed to and synced
-                                  from. If hydrateTo is set, this is just the path from which hydrated manifests will be synced.
+                                description: 'Path is a directory path within the
+                                  git repository where hydrated manifests should be
+                                  committed to and synced
+
+                                  from. If hydrateTo is set, this is just the path
+                                  from which hydrated manifests will be synced.'
                                 type: string
                               targetBranch:
                                 description: TargetBranch is the branch to which hydrated
@@ -4891,9 +5096,11 @@ spec:
                               if Server is not set.
                             type: string
                           namespace:
-                            description: |-
-                              Namespace specifies the target namespace for the application's resources.
-                              The namespace will only be set for namespace-scoped resources that have not set a value for .metadata.namespace
+                            description: 'Namespace specifies the target namespace
+                              for the application''s resources.
+
+                              The namespace will only be set for namespace-scoped
+                              resources that have not set a value for .metadata.namespace'
                             type: string
                           server:
                             description: Server specifies the URL of the target cluster's
@@ -4922,9 +5129,12 @@ spec:
                             kind:
                               type: string
                             managedFieldsManagers:
-                              description: |-
-                                ManagedFieldsManagers is a list of trusted managers. Fields mutated by those managers will take precedence over the
-                                desired state defined in the SCM and won't be displayed in diffs
+                              description: 'ManagedFieldsManagers is a list of trusted
+                                managers. Fields mutated by those managers will take
+                                precedence over the
+
+                                desired state defined in the SCM and won''t be displayed
+                                in diffs'
                               items:
                                 type: string
                               type: array
@@ -5011,9 +5221,12 @@ spec:
                             description: Helm holds helm specific options
                             properties:
                               apiVersions:
-                                description: |-
-                                  APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                  Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                description: 'APIVersions specifies the Kubernetes
+                                  resource API versions to pass to Helm when templating
+                                  manifests. By default,
+
+                                  Argo CD uses the API versions of the target cluster.
+                                  The format is [group/]version/kind.'
                                 items:
                                   type: string
                                 type: array
@@ -5040,9 +5253,11 @@ spec:
                                   locally by not appending them to helm template --values
                                 type: boolean
                               kubeVersion:
-                                description: |-
-                                  KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                  uses the Kubernetes version of the target cluster.
+                                description: 'KubeVersion specifies the Kubernetes
+                                  API version to pass to Helm when templating manifests.
+                                  By default, Argo CD
+
+                                  uses the Kubernetes version of the target cluster.'
                                 type: string
                               namespace:
                                 description: Namespace is an optional namespace to
@@ -5118,9 +5333,12 @@ spec:
                             description: Kustomize holds kustomize specific options
                             properties:
                               apiVersions:
-                                description: |-
-                                  APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                  Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                description: 'APIVersions specifies the Kubernetes
+                                  resource API versions to pass to Helm when templating
+                                  manifests. By default,
+
+                                  Argo CD uses the API versions of the target cluster.
+                                  The format is [group/]version/kind.'
                                 items:
                                   type: string
                                 type: array
@@ -5166,9 +5384,11 @@ spec:
                                   type: string
                                 type: array
                               kubeVersion:
-                                description: |-
-                                  KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                  uses the Kubernetes version of the target cluster.
+                                description: 'KubeVersion specifies the Kubernetes
+                                  API version to pass to Helm when templating manifests.
+                                  By default, Argo CD
+
+                                  uses the Kubernetes version of the target cluster.'
                                 type: string
                               labelWithoutSelector:
                                 description: LabelWithoutSelector specifies whether
@@ -5311,10 +5531,14 @@ spec:
                               or Helm) that contains the application manifests
                             type: string
                           targetRevision:
-                            description: |-
-                              TargetRevision defines the revision of the source to sync the application to.
-                              In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                              In case of Helm, this is a semver tag for the Chart's version.
+                            description: 'TargetRevision defines the revision of the
+                              source to sync the application to.
+
+                              In case of Git, this can be commit, tag, or branch.
+                              If omitted, will equal to HEAD.
+
+                              In case of Helm, this is a semver tag for the Chart''s
+                              version.'
                             type: string
                         required:
                         - repoURL
@@ -5400,9 +5624,12 @@ spec:
                               description: Helm holds helm specific options
                               properties:
                                 apiVersions:
-                                  description: |-
-                                    APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                    Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                  description: 'APIVersions specifies the Kubernetes
+                                    resource API versions to pass to Helm when templating
+                                    manifests. By default,
+
+                                    Argo CD uses the API versions of the target cluster.
+                                    The format is [group/]version/kind.'
                                   items:
                                     type: string
                                   type: array
@@ -5431,9 +5658,11 @@ spec:
                                     --values
                                   type: boolean
                                 kubeVersion:
-                                  description: |-
-                                    KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                    uses the Kubernetes version of the target cluster.
+                                  description: 'KubeVersion specifies the Kubernetes
+                                    API version to pass to Helm when templating manifests.
+                                    By default, Argo CD
+
+                                    uses the Kubernetes version of the target cluster.'
                                   type: string
                                 namespace:
                                   description: Namespace is an optional namespace
@@ -5511,9 +5740,12 @@ spec:
                               description: Kustomize holds kustomize specific options
                               properties:
                                 apiVersions:
-                                  description: |-
-                                    APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,
-                                    Argo CD uses the API versions of the target cluster. The format is [group/]version/kind.
+                                  description: 'APIVersions specifies the Kubernetes
+                                    resource API versions to pass to Helm when templating
+                                    manifests. By default,
+
+                                    Argo CD uses the API versions of the target cluster.
+                                    The format is [group/]version/kind.'
                                   items:
                                     type: string
                                   type: array
@@ -5560,9 +5792,11 @@ spec:
                                     type: string
                                   type: array
                                 kubeVersion:
-                                  description: |-
-                                    KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD
-                                    uses the Kubernetes version of the target cluster.
+                                  description: 'KubeVersion specifies the Kubernetes
+                                    API version to pass to Helm when templating manifests.
+                                    By default, Argo CD
+
+                                    uses the Kubernetes version of the target cluster.'
                                   type: string
                                 labelWithoutSelector:
                                   description: LabelWithoutSelector specifies whether
@@ -5706,10 +5940,14 @@ spec:
                                 or Helm) that contains the application manifests
                               type: string
                             targetRevision:
-                              description: |-
-                                TargetRevision defines the revision of the source to sync the application to.
-                                In case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.
-                                In case of Helm, this is a semver tag for the Chart's version.
+                              description: 'TargetRevision defines the revision of
+                                the source to sync the application to.
+
+                                In case of Git, this can be commit, tag, or branch.
+                                If omitted, will equal to HEAD.
+
+                                In case of Helm, this is a semver tag for the Chart''s
+                                version.'
                               type: string
                           required:
                           - repoURL
@@ -23220,28 +23458,42 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: |-
-          AppProject provides a logical grouping of applications, providing controls for:
+        description: 'AppProject provides a logical grouping of applications, providing
+          controls for:
+
           * where the apps may deploy to (cluster whitelist)
+
           * what may be deployed (repository whitelist, resource whitelist/blacklist)
+
           * who can access these applications (roles, OIDC group claims bindings)
+
           * and what they can do (RBAC policies)
-          * automation access to these roles (JWT tokens)
+
+          * automation access to these roles (JWT tokens)'
         properties:
           apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object.
+
+              Servers should convert recognized schemas to the latest internal value,
+              and
+
               may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
+            description: 'Kind is a string value representing the REST resource this
+              object represents.
+
+              Servers may infer this from the endpoint the client submits requests
+              to.
+
               Cannot be updated.
+
               In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -23252,9 +23504,10 @@ spec:
                 description: ClusterResourceBlacklist contains list of blacklisted
                   cluster level resources
                 items:
-                  description: |-
-                    GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying
-                    concepts during lookup stages without having partially valid types
+                  description: 'GroupKind specifies a Group and a Kind, but does not
+                    force a version.  This is useful for identifying
+
+                    concepts during lookup stages without having partially valid types'
                   properties:
                     group:
                       type: string
@@ -23269,9 +23522,10 @@ spec:
                 description: ClusterResourceWhitelist contains list of whitelisted
                   cluster level resources
                 items:
-                  description: |-
-                    GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying
-                    concepts during lookup stages without having partially valid types
+                  description: 'GroupKind specifies a Group and a Kind, but does not
+                    force a version.  This is useful for identifying
+
+                    concepts during lookup stages without having partially valid types'
                   properties:
                     group:
                       type: string
@@ -23324,9 +23578,11 @@ spec:
                         not set.
                       type: string
                     namespace:
-                      description: |-
-                        Namespace specifies the target namespace for the application's resources.
-                        The namespace will only be set for namespace-scoped resources that have not set a value for .metadata.namespace
+                      description: 'Namespace specifies the target namespace for the
+                        application''s resources.
+
+                        The namespace will only be set for namespace-scoped resources
+                        that have not set a value for .metadata.namespace'
                       type: string
                     server:
                       description: Server specifies the URL of the target cluster's
@@ -23339,9 +23595,10 @@ spec:
                 description: NamespaceResourceBlacklist contains list of blacklisted
                   namespace level resources
                 items:
-                  description: |-
-                    GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying
-                    concepts during lookup stages without having partially valid types
+                  description: 'GroupKind specifies a Group and a Kind, but does not
+                    force a version.  This is useful for identifying
+
+                    concepts during lookup stages without having partially valid types'
                   properties:
                     group:
                       type: string
@@ -23356,9 +23613,10 @@ spec:
                 description: NamespaceResourceWhitelist contains list of whitelisted
                   namespace level resources
                 items:
-                  description: |-
-                    GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying
-                    concepts during lookup stages without having partially valid types
+                  description: 'GroupKind specifies a Group and a Kind, but does not
+                    force a version.  This is useful for identifying
+
+                    concepts during lookup stages without having partially valid types'
                   properties:
                     group:
                       type: string
@@ -23628,7 +23886,7 @@ metadata:
   name: argocd-application-controller
 rules:
 - apiGroups:
-  - ""
+  - ''
   resources:
   - secrets
   - configmaps
@@ -23650,7 +23908,7 @@ rules:
   - patch
   - delete
 - apiGroups:
-  - ""
+  - ''
   resources:
   - events
   verbs:
@@ -23705,7 +23963,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - ""
+  - ''
   resources:
   - events
   verbs:
@@ -23715,7 +23973,7 @@ rules:
   - patch
   - watch
 - apiGroups:
-  - ""
+  - ''
   resources:
   - secrets
   - configmaps
@@ -23743,7 +24001,7 @@ metadata:
   name: argocd-dex-server
 rules:
 - apiGroups:
-  - ""
+  - ''
   resources:
   - secrets
   - configmaps
@@ -23773,7 +24031,7 @@ rules:
   - update
   - patch
 - apiGroups:
-  - ""
+  - ''
   resources:
   - configmaps
   - secrets
@@ -23781,7 +24039,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - ""
+  - ''
   resourceNames:
   - argocd-notifications-cm
   resources:
@@ -23789,7 +24047,7 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - ""
+  - ''
   resourceNames:
   - argocd-notifications-secret
   resources:
@@ -23807,7 +24065,7 @@ metadata:
   name: argocd-redis
 rules:
 - apiGroups:
-  - ""
+  - ''
   resourceNames:
   - argocd-redis
   resources:
@@ -23815,7 +24073,7 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - ""
+  - ''
   resources:
   - secrets
   verbs:
@@ -23831,7 +24089,7 @@ metadata:
   name: argocd-server
 rules:
 - apiGroups:
-  - ""
+  - ''
   resources:
   - secrets
   - configmaps
@@ -23858,7 +24116,7 @@ rules:
   - delete
   - patch
 - apiGroups:
-  - ""
+  - ''
   resources:
   - events
   verbs:
@@ -23925,7 +24183,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - ""
+  - ''
   resources:
   - events
   verbs:
@@ -23935,7 +24193,7 @@ rules:
   - patch
   - watch
 - apiGroups:
-  - ""
+  - ''
   resources:
   - configmaps
   verbs:
@@ -23947,7 +24205,7 @@ rules:
   - patch
   - watch
 - apiGroups:
-  - ""
+  - ''
   resources:
   - secrets
   verbs:
@@ -23994,13 +24252,13 @@ rules:
   - get
   - patch
 - apiGroups:
-  - ""
+  - ''
   resources:
   - events
   verbs:
   - list
 - apiGroups:
-  - ""
+  - ''
   resources:
   - pods
   - pods/log
@@ -24190,6 +24448,8 @@ metadata:
     app.kubernetes.io/name: argocd-cmd-params-cm
     app.kubernetes.io/part-of: argocd
   name: argocd-cmd-params-cm
+data:
+  server.insecure: 'true'
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -24218,22 +24478,38 @@ metadata:
 ---
 apiVersion: v1
 data:
-  ssh_known_hosts: |
-    # This file was automatically generated by hack/update-ssh-known-hosts.sh. DO NOT EDIT
+  ssh_known_hosts: '# This file was automatically generated by hack/update-ssh-known-hosts.sh.
+    DO NOT EDIT
+
     [ssh.github.com]:443 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+
     [ssh.github.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+
     [ssh.github.com]:443 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
+
     bitbucket.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPIQmuzMBuKdWeF4+a2sjSSpBK0iqitSQ+5BM9KhpexuGt20JpTVM7u5BDZngncgrqDMbWdxMWWOGtZ9UgbqgZE=
+
     bitbucket.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIazEu89wgQZ4bqs3d63QSMzYVa0MuJ2e2gKTKqu+UUO
+
     bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDQeJzhupRu0u0cdegZIa8e86EG2qOCsIsD1Xw0xSeiPDlCr7kq97NLmMbpKTX6Esc30NuoqEEHCuc7yWtwp8dI76EEEB1VqY9QJq6vk+aySyboD5QF61I/1WeTwu+deCbgKMGbUijeXhtfbxSxm6JwGrXrhBdofTsbKRUsrN1WoNgUa8uqN1Vx6WAJw1JHPhglEGGHea6QICwJOAr/6mrui/oB7pkaWKHj3z7d1IC4KWLtY47elvjbaTlkN04Kc/5LFEirorGYVbt15kAUlqGM65pk6ZBxtaO3+30LVlORZkxOh+LKL/BvbZ/iRNhItLqNyieoQj/uh/7Iv4uyH/cV/0b4WDSd3DptigWq84lJubb9t/DnZlrJazxyDCulTmKdOR7vs9gMTo+uoIrPSb8ScTtvw65+odKAlBj59dhnVp9zd7QUojOpXlL62Aw56U4oO+FALuevvMjiWeavKhJqlR7i5n9srYcrNV7ttmDw7kf/97P5zauIhxcjX+xHv4M=
+
     github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+
     github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+
     github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
+
     gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMqzJeV9rUzU4kWitGjeR4PWSa29SPqJ1fVkhtj3Hw9xjLVXVYrU9QlYWrOLXBpQ6KWjbjTDTdDkoohFzgbEY=
+
     gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf
+
     gitlab.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCsj2bNKTBSpIYDEGk9KxsGh3mySTRgMtXL583qmBpzeQ+jqCMRgBqB98u3z++J1sKlXHWfM9dyhSevkMwSbhoR8XIq/U0tCNyokEi/ueaBMCvbcTHhO7FcwzY92WK4Yt0aGROY5qX2UKSeOvuP4D6TPqKF1onrSzH9bx9XUf2lEdWT/ia1NEKjunUqu1xOB/StKDHMoX4/OKyIzuS0q/T1zOATthvasJFoPrAjkohTyaDUz2LN5JoH839hViyEG82yB+MjcFV5MU3N1l1QL3cVUCh93xSaua1N85qivl+siMkPGbO5xR/En4iEY6K2XPASUEMaieWVNTRCtJ4S8H+9
+
     ssh.dev.azure.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7Hr1oTWqNqOlzGJOfGJ4NakVyIzf1rXYd4d7wo6jBlkLvCA4odBlL0mDUyZ0/QUfTTqeu+tm22gOsv+VrVTMk6vwRU75gY/y9ut5Mb3bR5BV58dKXyq9A9UeB5Cakehn5Zgm6x1mKoVyf+FFn26iYqXJRgzIZZcZ5V6hrE0Qg39kZm4az48o0AUbf6Sp4SLdvnuMa2sVNwHBboS7EJkm57XQPVU3/QpyNLHbWDdzwtrlS+ez30S3AdYhLKEOxAG8weOnyrtLJAUen9mTkol8oII1edf7mWWbWVf0nBmly21+nZcmCTISQBtdcyPaEno7fFQMDD26/s0lfKob4Kw8H
+
     vs-ssh.visualstudio.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7Hr1oTWqNqOlzGJOfGJ4NakVyIzf1rXYd4d7wo6jBlkLvCA4odBlL0mDUyZ0/QUfTTqeu+tm22gOsv+VrVTMk6vwRU75gY/y9ut5Mb3bR5BV58dKXyq9A9UeB5Cakehn5Zgm6x1mKoVyf+FFn26iYqXJRgzIZZcZ5V6hrE0Qg39kZm4az48o0AUbf6Sp4SLdvnuMa2sVNwHBboS7EJkm57XQPVU3/QpyNLHbWDdzwtrlS+ez30S3AdYhLKEOxAG8weOnyrtLJAUen9mTkol8oII1edf7mWWbWVf0nBmly21+nZcmCTISQBtdcyPaEno7fFQMDD26/s0lfKob4Kw8H
+
+    '
 kind: ConfigMap
 metadata:
   labels:
@@ -24896,9 +25172,9 @@ spec:
       containers:
       - args:
         - --save
-        - ""
+        - ''
         - --appendonly
-        - "no"
+        - 'no'
         - --requirepass $(REDIS_PASSWORD)
         env:
         - name: REDIS_PASSWORD
@@ -25724,7 +26000,7 @@ spec:
               key: auth
               name: argocd-redis
         - name: ARGOCD_CONTROLLER_REPLICAS
-          value: "1"
+          value: '1'
         - name: ARGOCD_RECONCILIATION_TIMEOUT
           valueFrom:
             configMapKeyRef:
