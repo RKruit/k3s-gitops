@@ -5,10 +5,8 @@ metadata:
   namespace: openbao
 data:
   config.hcl: |
-    disable_cache = true
     telemetry {
       prometheus_retention_time = "24h"
-      disable = false
     }
     storage "file" {
       path = "/openbao/data"
@@ -19,6 +17,5 @@ data:
     }
     api_addr = "http://127.0.0.1:8200"
     cluster_addr = "http://127.0.0.1:8201"
-    max_request_concurrent = 0
     default_lease_ttl = "768h"
     max_lease_ttl = "8760h"
