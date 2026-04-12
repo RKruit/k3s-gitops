@@ -8,45 +8,50 @@ data:
     #!/bin/sh
     KEY_FILE="/unseal-key/unseal-key"
     BAO_ADDR="http://127.0.0.1:8200"
-    MAX_RETRIES=30
+    SETTLE=10
+    MAX_RETRIES=20
     RETRY_DELAY=5
 
-    echo "[autounseal] Waiting for OpenBao to start..."
-    for i in $(seq 1 $MAX_RETRIES); do
-        if wget -q -O- --timeout=3 "${BAO_ADDR}/v1/sys/health?droperationok=true" 2>/dev/null | grep -q '"initialized"'; then
-            echo "[autounseal] OpenBao is responding"
-            break
-        fi
-        echo "[autounseal] Waiting... ($i/$MAX_RETRIES)"
-        sleep $RETRY_DELAY
-    done
+    echo "[autounseal] Waiting ${SETTLE}s for OpenBao to settle..."
+    sleep $SETTLE
 
     if [ ! -f "$KEY_FILE" ]; then
-        echo "[autounseal] ERROR: Unseal key file not found at $KEY_FILE"
+        echo "[autounseal] ERROR: Unseal key file not found"
         exit 1
     fi
 
-    UNSEAL_KEY=$(cat "$KEY_FILE")
+    UNSEAL_KEY=$(cat "$KEY_FILE" | tr -d '\n\r')
     if [ -z "$UNSEAL_KEY" ]; then
         echo "[autounseal] ERROR: Unseal key is empty"
         exit 1
     fi
+    echo "[autounseal] Unseal key loaded (${#UNSEAL_KEY} chars)"
 
-    echo "[autounseal] Unseal key loaded, attempting to unseal..."
+    echo "[autounseal] Attempting to unseal..."
 
     for i in $(seq 1 $MAX_RETRIES); do
         STATUS=$(wget -q -O- --timeout=5 "${BAO_ADDR}/v1/sys/seal-status" 2>/dev/null)
-        if echo "$STATUS" | grep -q '"sealed":false'; then
-            echo "[autounseal] OpenBao is already unsealed!"
+        SEALED=$(echo "$STATUS" | grep -o '"sealed":[^,}]*' | cut -d: -f2 | tr -d ' ')
+        echo "[autounseal] sealed=$SEALED (attempt $i/$MAX_RETRIES)"
+
+        if [ "$SEALED" = "false" ]; then
+            echo "[autounseal] Already unsealed!"
             exit 0
         fi
 
-        echo "[autounseal] OpenBao is sealed, attempting unseal... ($i/$MAX_RETRIES)"
-        wget -q -O- --timeout=5 --post-data="{\"key\":\"$UNSEAL_KEY\"}" \
-            "${BAO_ADDR}/v1/sys/unseal" 2>/dev/null | grep -o '"sealed":[^,}]*'
+        echo "[autounseal] Sending unseal key..."
+        RESULT=$(wget -q -O- --timeout=5 --post-data="{\"key\":\"$UNSEAL_KEY\"}" \
+            "${BAO_ADDR}/v1/sys/unseal" 2>/dev/null)
+        NEW_SEALED=$(echo "$RESULT" | grep -o '"sealed":[^,}]*' | cut -d: -f2 | tr -d ' ')
+        echo "[autounseal] Result: sealed=$NEW_SEALED"
 
-        sleep 2
+        if [ "$NEW_SEALED" = "false" ]; then
+            echo "[autounseal] Successfully unsealed!"
+            exit 0
+        fi
+
+        sleep $RETRY_DELAY
     done
 
-    echo "[autounseal] WARNING: Gave up waiting for OpenBao to unseal."
+    echo "[autounseal] WARNING: Could not unseal after $MAX_RETRIES attempts"
     exit 0
