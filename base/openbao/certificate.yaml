@@ -8,6 +8,5 @@ spec:
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
-    group: cert-manager.io
   dnsNames:
     - openbao.oostrandpark.com
