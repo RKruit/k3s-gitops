@@ -4,5 +4,4 @@ namespace: argocd
 resources:
   - argocd-install/install.yaml
   - argocd-app-openbao.yaml
-  - argocd-app-monitoring.yaml
   - argocd-app-nfs-provisioner.yaml
