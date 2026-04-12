@@ -8,3 +8,5 @@ resources:
   - scripts-configmap.yaml
   - deployment.yaml
   - service.yaml
+  - ingress.yaml
+  - middleware.yaml
