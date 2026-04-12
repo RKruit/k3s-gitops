@@ -43,18 +43,6 @@ spec:
               memory: "128Mi"
             limits:
               memory: "256Mi"
-          readinessProbe:
-            httpGet:
-              path: /v1/sys/health
-              port: 8200
-            initialDelaySeconds: 5
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /v1/sys/health
-              port: 8200
-            initialDelaySeconds: 10
-            periodSeconds: 10
           volumeMounts:
             - name: config
               mountPath: /openbao/config
