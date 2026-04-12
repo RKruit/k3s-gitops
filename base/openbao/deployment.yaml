@@ -24,6 +24,17 @@ spec:
             - name: data
               mountPath: /openbao/data
       containers:
+        - name: auto-unseal
+          image: docker.io/library/alpine:3.19
+          imagePullPolicy: IfNotPresent
+          command: ["/scripts/auto-unseal.sh"]
+          volumeMounts:
+            - name: unseal-key
+              mountPath: /unseal-key
+              readOnly: true
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
         - name: openbao
           image: docker.io/openbao/openbao:2.5.2
           imagePullPolicy: IfNotPresent
@@ -56,3 +67,10 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: openbao-data
+        - name: unseal-key
+          secret:
+            secretName: openbao-unseal-key
+            defaultMode: 0400
+        - name: scripts
+          configMap:
+            name: openbao-scripts
