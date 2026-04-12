@@ -27,7 +27,7 @@ spec:
         - name: auto-unseal
           image: docker.io/library/alpine:3.19
           imagePullPolicy: IfNotPresent
-          command: ["/scripts/auto-unseal.sh"]
+          command: ["sh", "-c", "/scripts/auto-unseal.sh"]
           volumeMounts:
             - name: unseal-key
               mountPath: /unseal-key
