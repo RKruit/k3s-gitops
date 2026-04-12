@@ -74,3 +74,4 @@ spec:
         - name: scripts
           configMap:
             name: openbao-scripts
+            defaultMode: 0777
