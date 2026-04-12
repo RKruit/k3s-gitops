@@ -17,7 +17,7 @@ spec:
     spec:
       initContainers:
         - name: init
-          image: docker.io/openbao/openbao:3.0
+          image: docker.io/openbao/openbao:2.5.2
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "mkdir -p /openbao/data /openbao/config && chown -R 100:100 /openbao"]
           volumeMounts:
@@ -27,7 +27,7 @@ spec:
               mountPath: /openbao/config
       containers:
         - name: openbao
-          image: docker.io/openbao/openbao:3.0
+          image: docker.io/openbao/openbao:2.5.2
           imagePullPolicy: IfNotPresent
           command: ["bao"]
           args:
