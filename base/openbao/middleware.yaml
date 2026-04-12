@@ -1,7 +1,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: https-redirect
+  name: openbao-https-redirect
   namespace: openbao
 spec:
   redirectScheme:
