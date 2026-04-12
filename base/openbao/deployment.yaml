@@ -19,12 +19,10 @@ spec:
         - name: init
           image: docker.io/openbao/openbao:2.5.2
           imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "mkdir -p /openbao/data /openbao/config && chown -R 100:100 /openbao"]
+          command: ["sh", "-c", "mkdir -p /openbao/data && chown -R 100:100 /openbao/data"]
           volumeMounts:
             - name: data
               mountPath: /openbao/data
-            - name: config
-              mountPath: /openbao/config
       containers:
         - name: openbao
           image: docker.io/openbao/openbao:2.5.2
