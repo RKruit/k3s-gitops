@@ -1,0 +1,33 @@
+# Netdata Helm values for single-node k3s
+# Resource limits
+child:
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 500m
+    requests:
+      memory: 256Mi
+      cpu: 100m
+  
+  persistence:
+    enabled: true
+    storageclass: "nfs"
+    size: 2Gi
+
+# Disable parent/child architecture - standalone mode
+parent:
+  enabled: false
+
+# Disable k8s state
+k8sState:
+  enabled: false
+
+# NodePort service
+service:
+  enabled: true
+  type: NodePort
+  nodePort: 30990
+
+# No ingress
+ingress:
+  enabled: false

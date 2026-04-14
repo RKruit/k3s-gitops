@@ -5,3 +5,4 @@ resources:
   - argocd-install/install.yaml
   - argocd-app-openbao.yaml
   - argocd-app-nfs-provisioner.yaml
+  - argocd-app-netdata.yaml

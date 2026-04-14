@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+  - name: netdata
+    repo: https://netdata.github.io/helmchart/
+    version: "3.7.163"
+    releaseName: netdata
+    namespace: monitoring
+    valuesFile: values.yaml
+
+namespace: monitoring
+
+resources:
+  - namespace.yaml
