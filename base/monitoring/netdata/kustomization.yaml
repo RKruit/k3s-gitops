@@ -14,3 +14,5 @@ namespace: monitoring
 resources:
   - service.yaml
   - namespace.yaml
+  - ingress.yaml
+  - certificate.yaml
