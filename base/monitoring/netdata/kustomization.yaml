@@ -12,4 +12,5 @@ helmCharts:
 namespace: monitoring
 
 resources:
+  - service.yaml
   - namespace.yaml
