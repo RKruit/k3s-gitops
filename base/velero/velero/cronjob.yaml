@@ -23,6 +23,23 @@ spec:
         spec:
           restartPolicy: OnFailure
           serviceAccountName: velero-backup
+          initContainers:
+            - name: init-repo
+              image: docker.io/restic/restic:0.17.3
+              command:
+                - sh
+                - -c
+                - |
+                  restic --repo /nfs/k8sv2/backups/restic init || true
+              env:
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: restic-backup-creds
+                      key: password
+              volumeMounts:
+                - name: nas-backups
+                  mountPath: /nfs/k8sv2
           volumes:
             # Mount Synology NFS directly — contains all PVC subdirectories
             - name: nas-backups
