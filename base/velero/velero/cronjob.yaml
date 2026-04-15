@@ -1,6 +1,6 @@
 ---
-# Nightly backup cronjob — backs up all PVCs to NFS via restic
-# schedule: 02:00 daily
+# Nightly restic backup — mounts Synology NFS directly, backs up all PVCs
+# Runs at 02:00 daily
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -24,15 +24,11 @@ spec:
           restartPolicy: OnFailure
           serviceAccountName: velero-backup
           volumes:
-            - name: backup-data
-              persistentVolumeClaim:
-                claimName: velero-backups
-            - name: n8n-data
-              persistentVolumeClaim:
-                claimName: n8n-data
-            - name: uptime-kuma-data
-              persistentVolumeClaim:
-                claimName: uptime-kuma-data
+            # Mount Synology NFS directly — contains all PVC subdirectories
+            - name: nas-backups
+              nfs:
+                server: 192.168.1.2
+                path: /volume1/k8sv2
           containers:
             - name: restic
               image: docker.io/restic/restic:0.17.3
@@ -43,27 +39,18 @@ spec:
                 - sv01
                 - --tag
                 - k8s-backup
-                - /backup-pvcs/n8n
-                - /backup-pvcs/uptime-kuma
+                - --exclude
+                - "**/lost+found"
+                - /nfs/k8sv2
               env:
                 - name: RESTIC_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       name: restic-backup-creds
                       key: password
-                - name: AWS_ACCESS_KEY_ID
-                  value: dummy
-                - name: AWS_SECRET_ACCESS_KEY
-                  value: dummy
               volumeMounts:
-                - name: backup-data
-                  mountPath: /backup-pvcs
-                - name: n8n-data
-                  mountPath: /backup-pvcs/n8n
-                  readOnly: true
-                - name: uptime-kuma-data
-                  mountPath: /backup-pvcs/uptime-kuma
-                  readOnly: true
+                - name: nas-backups
+                  mountPath: /nfs/k8sv2
               resources:
                 requests:
                   cpu: 100m
@@ -72,14 +59,12 @@ spec:
                   cpu: 500m
                   memory: 128Mi
 ---
-# ServiceAccount for velero backup
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: velero-backup
   namespace: velero
 ---
-# Role for velero backup job
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -90,7 +75,6 @@ rules:
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list"]
 ---
-# RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
