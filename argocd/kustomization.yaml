@@ -7,3 +7,4 @@ resources:
   - argocd-app-netdata.yaml
   - argocd-app-n8n.yaml
   - argocd-app-uptime-kuma.yaml
+  - argocd-app-velero.yaml

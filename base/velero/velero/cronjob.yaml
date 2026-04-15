@@ -1,0 +1,106 @@
+---
+# Nightly backup cronjob — backs up all PVCs to NFS via restic
+# schedule: 02:00 daily
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: velero-backup
+  namespace: velero
+spec:
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      labels:
+        app: velero-backup
+    spec:
+      template:
+        metadata:
+          labels:
+            app: velero-backup
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: velero-backup
+          volumes:
+            - name: backup-data
+              persistentVolumeClaim:
+                claimName: velero-backups
+            - name: n8n-data
+              persistentVolumeClaim:
+                claimName: n8n-data
+            - name: uptime-kuma-data
+              persistentVolumeClaim:
+                claimName: uptime-kuma-data
+          containers:
+            - name: restic
+              image: docker.io/restic/restic:0.17.3
+              args:
+                - backup
+                - --verbose
+                - --host
+                - sv01
+                - --tag
+                - k8s-backup
+                - /backup-pvcs/n8n
+                - /backup-pvcs/uptime-kuma
+              env:
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: restic-backup-creds
+                      key: password
+                - name: AWS_ACCESS_KEY_ID
+                  value: dummy
+                - name: AWS_SECRET_ACCESS_KEY
+                  value: dummy
+              volumeMounts:
+                - name: backup-data
+                  mountPath: /backup-pvcs
+                - name: n8n-data
+                  mountPath: /backup-pvcs/n8n
+                  readOnly: true
+                - name: uptime-kuma-data
+                  mountPath: /backup-pvcs/uptime-kuma
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+                limits:
+                  cpu: 500m
+                  memory: 128Mi
+---
+# ServiceAccount for velero backup
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: velero-backup
+  namespace: velero
+---
+# Role for velero backup job
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: velero-backup
+  namespace: velero
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list"]
+---
+# RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: velero-backup
+  namespace: velero
+subjects:
+  - kind: ServiceAccount
+    name: velero-backup
+    namespace: velero
+roleRef:
+  kind: Role
+  name: velero-backup
+  apiGroup: rbac.authorization.k8s.io

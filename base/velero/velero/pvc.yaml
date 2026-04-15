@@ -1,0 +1,14 @@
+---
+# NFS-backed PVC for restic backup repository
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: velero-backups
+  namespace: velero
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 20Gi
