@@ -3,6 +3,6 @@ kind: Kustomization
 namespace: argocd
 resources:
   - argocd-install/install.yaml
-  - argocd-app-openbao.yaml
   - argocd-app-nfs-provisioner.yaml
   - argocd-app-netdata.yaml
+  - argocd-app-n8n.yaml

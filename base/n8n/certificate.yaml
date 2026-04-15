@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: n8n-tls
+  namespace: n8n
+  labels:
+    app.kubernetes.io/instance: n8n
+spec:
+  dnsNames:
+  - n8n.oostrandpark.com
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: n8n-tls

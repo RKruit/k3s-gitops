@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: n8n
+  namespace: n8n
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.io/ingress-backend: traefik.io/v1alpha1
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: n8n.oostrandpark.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: n8n
+            port:
+              number: 5678
+  tls:
+  - hosts:
+    - n8n.oostrandpark.com
+    secretName: n8n-tls
