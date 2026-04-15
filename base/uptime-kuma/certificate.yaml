@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: uptime-kuma-tls
+  namespace: uptime-kuma
+  labels:
+    app.kubernetes.io/instance: uptime-kuma
+spec:
+  dnsNames:
+  - kuma.oostrandpark.com
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: uptime-kuma-tls

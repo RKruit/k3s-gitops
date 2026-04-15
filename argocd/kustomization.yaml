@@ -6,3 +6,4 @@ resources:
   - argocd-app-nfs-provisioner.yaml
   - argocd-app-netdata.yaml
   - argocd-app-n8n.yaml
+  - argocd-app-uptime-kuma.yaml
