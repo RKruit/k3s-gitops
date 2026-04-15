@@ -10,8 +10,23 @@ bootstrap/           # ArgoCD bootstrap (run once)
 argocd-install/      # ArgoCD install manifests (v2.14.3)
 argocd/              # ArgoCD AppProject + Application
 base/                # Cluster apps
-  openbao/           # OpenBao secrets manager
+  openbao/           # OpenBao secrets manager (dev only)
+  netdata/           # Monitoring & metrics
+  n8n/               # Workflow automation
+  uptime-kuma/       # Uptime monitoring
 ```
+
+## Apps
+
+| App | URL | Port | Notes |
+|-----|-----|------|-------|
+| ArgoCD | https://argocd.oostrandpark.com | 30880 | GitOps engine |
+| n8n | https://n8n.oostrandpark.com | 5678 | Workflow automation |
+| Uptime Kuma | https://kuma.oostrandpark.com | 3002 | Uptime monitoring |
+| Netdata | https://netdata.oostrandpark.com | 19999 | System monitoring |
+| OpenBao | http://sv01:30820 | 8200 | Secrets (dev mode only) |
+
+Traefik (ingress) + cert-manager (TLS) handle routing and certificates.
 
 ## Quick Start
 
@@ -48,7 +63,7 @@ The `argocd/` Application tells ArgoCD to sync `base/` → cluster.
 1. Edit or add manifests in `base/<app>/`
 2. Commit and push:
    ```bash
-   git add . && git commit -m "Update openbao" && git push
+   git add . && git commit -m "Update netdata config" && git push
    ```
 3. ArgoCD detects changes → syncs to cluster automatically ✓
 
