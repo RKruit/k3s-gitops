@@ -48,6 +48,8 @@ spec:
                     secretKeyRef:
                       name: restic-backup-creds
                       key: password
+                - name: RESTIC_REPOSITORY
+                  value: /nfs/k8sv2/backups/restic
               volumeMounts:
                 - name: nas-backups
                   mountPath: /nfs/k8sv2
