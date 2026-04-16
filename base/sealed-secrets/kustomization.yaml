@@ -12,10 +12,3 @@ helmCharts:
     version: "v0.27.1"
     releaseName: sealed-secrets
     namespace: sealed-secrets
-    values: |
-      controller:
-        # Use a persistent volume for the encryption keys if you want
-        # persistence:
-          # enabled: true
-          # storageclass: "nfs"
-          # size: 1Gi
