@@ -4,5 +4,4 @@ resources:
   - traefik/traefik-app.yaml
   - cert-manager/cert-manager-app.yaml
   - sealed-secrets/sealed-secrets-app.yaml
-  - n8n/n8n-app.yaml
   - uptime-kuma/uptime-kuma-app.yaml
