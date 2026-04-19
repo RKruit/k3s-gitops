@@ -86,10 +86,10 @@ spec:
         resources:
           requests:
             memory: "16Gi"
-            cpu: "2"
+            cpu: "500m"
           limits:
             memory: "16Gi"
-            cpu: "6"
+            cpu: "4"
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
