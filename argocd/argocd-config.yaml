@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Custom health check for Ingress resources
+  # Fixes Traefik not populating status.loadBalancer
+  resource.customizations.health.networking.k8s.io_Ingress: |
+    hs = {}
+    if obj.status ~= nil then
+      if obj.status.loadBalancer ~= nil then
+        if obj.status.loadBalancer.ingress ~= nil and #obj.status.loadBalancer.ingress > 0 then
+          hs.status = "Healthy"
+          hs.message = "Ingress is active with load balancer"
+          return hs
+        end
+      end
+    end
+    -- If no loadBalancer status, check if ingress has rules defined
+    if obj.spec ~= nil then
+      if (obj.spec.rules ~= nil and #obj.spec.rules > 0) or obj.spec.defaultBackend ~= nil then
+        hs.status = "Healthy"
+        hs.message = "Ingress has rules defined"
+        return hs
+      end
+    end
+    hs.status = "Progressing"
+    hs.message = "Waiting for ingress rules or load balancer"
+    return hs
