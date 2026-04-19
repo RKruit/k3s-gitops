@@ -10,3 +10,4 @@ resources:
   - service.yaml
   - certificate.yaml
   - ingress.yaml
+  - kuma2-external.yaml
