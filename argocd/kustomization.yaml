@@ -4,7 +4,6 @@ namespace: argocd
 resources:
   - argocd-install
   - argocd-app-bootstrap.yaml
-  - argocd-app-sv02-bootstrap.yaml
   - argocd-app-nfs-provisioner.yaml
   - argocd-app-netdata.yaml
   - argocd-app-uptime-kuma.yaml
