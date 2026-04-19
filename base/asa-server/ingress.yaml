@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: asa-server
+  namespace: asa-server
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+  - host: asa.oostrandpark.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: asa-server
+            port:
+              number: 27020
+  tls:
+  - hosts:
+    - asa.oostrandpark.com
+    secretName: asa-server-tls

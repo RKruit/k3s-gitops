@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: argocd
 resources:
   - argocd-install
+  - argocd-app-asa-server.yaml
   - argocd-app-bootstrap.yaml
   - argocd-app-nfs-provisioner.yaml
   - argocd-app-netdata.yaml
