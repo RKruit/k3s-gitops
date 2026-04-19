@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: argocd
 resources:
   - argocd-install/install.yaml
+  - argocd-config.yaml
   - argocd-app-nfs-provisioner.yaml
   - argocd-app-netdata.yaml
   - argocd-app-n8n.yaml
@@ -13,4 +14,3 @@ resources:
   - argocd-app-sv02-traefik.yaml
   - argocd-app-sv02-n8n.yaml
   - argocd-app-sv02-uptime-kuma.yaml
-  - argocd-app-sv02-test-site.yaml
