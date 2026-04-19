@@ -9,3 +9,6 @@ resources:
   - argocd-app-uptime-kuma.yaml
   - argocd-app-sealed-secrets.yaml
   - argocd-app-velero.yaml
+  - argocd-app-cert-manager.yaml
+  - argocd-app-traefik.yaml
+  - argocd-app-sv02-bootstrap.yaml
