@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: headlamp-tls
+  namespace: headlamp
+spec:
+  dnsNames:
+  - headlamp.oostrandpark.com
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: headlamp-tls
