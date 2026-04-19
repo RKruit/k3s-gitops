@@ -61,7 +61,6 @@ data:
     providers:
       kubernetesIngress:
         ingressClass: traefik
-        disableEndpointsSlice: true
     logs:
       level: INFO
 ---
