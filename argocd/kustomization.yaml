@@ -12,3 +12,4 @@ resources:
   - argocd-app-cert-manager.yaml
   - argocd-app-sv02-traefik.yaml
   - argocd-app-sv02-uptime-kuma.yaml
+  - argocd-config.yaml
