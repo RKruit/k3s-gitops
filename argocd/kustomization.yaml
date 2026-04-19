@@ -13,3 +13,4 @@ resources:
   - argocd-app-sv02-traefik.yaml
   - argocd-app-sv02-n8n.yaml
   - argocd-app-sv02-uptime-kuma.yaml
+  - argocd-app-sv02-test-site.yaml
