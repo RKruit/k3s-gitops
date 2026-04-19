@@ -8,3 +8,8 @@ patches:
     target:
       kind: Deployment
       name: argocd-server
+  # Add custom Ingress health check
+  - path: ingress-healthcheck-patch.yaml
+    target:
+      kind: ConfigMap
+      name: argocd-cm
