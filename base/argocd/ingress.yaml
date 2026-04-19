@@ -2,17 +2,18 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: argocd-server
-  namespace: argocd
+  namespace: default
   annotations:
     traefik.io/ingress-backend: traefik.io/v1alpha1
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
-        - argocd.oostrandpark.com
+        - argotalos.oostrandpark.com
       secretName: argocd-tls
   rules:
-    - host: argocd.oostrandpark.com
+    - host: argotalos.oostrandpark.com
       http:
         paths:
           - path: /
@@ -21,4 +22,4 @@ spec:
               service:
                 name: argocd-server
                 port:
-                  number: 80
+                  number: 8080
