@@ -10,4 +10,6 @@ resources:
   - argocd-app-sealed-secrets.yaml
   - argocd-app-velero.yaml
   - argocd-app-cert-manager.yaml
-  - argocd-app-sv02-bootstrap.yaml
+  - argocd-app-sv02-traefik.yaml
+  - argocd-app-sv02-n8n.yaml
+  - argocd-app-sv02-uptime-kuma.yaml
