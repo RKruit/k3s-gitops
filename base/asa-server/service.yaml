@@ -4,7 +4,7 @@ metadata:
   name: asa-server
   namespace: asa-server
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app.kubernetes.io/name: asa-server
   ports:
@@ -12,14 +12,11 @@ spec:
     port: 7777
     targetPort: 7777
     protocol: TCP
-    nodePort: 30777
   - name: game-udp
     port: 7777
     targetPort: 7777
     protocol: UDP
-    nodePort: 30777
   - name: rcon
     port: 27020
     targetPort: 27020
     protocol: TCP
-    nodePort: 30020
