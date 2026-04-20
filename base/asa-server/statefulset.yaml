@@ -81,10 +81,7 @@ spec:
           value: "TRUE"
         volumeMounts:
         - name: data
-          mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame
-        - name: data
           mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/common/ARK Survival Ascended Dedicated Server
-          subPath: server-binaries
         resources:
           requests:
             memory: "16Gi"
