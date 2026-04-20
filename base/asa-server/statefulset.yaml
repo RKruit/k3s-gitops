@@ -93,6 +93,29 @@ spec:
         securityContext:
           runAsNonRoot: false
           privileged: true
+        startupProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - ArkServer
+          failureThreshold: 60
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - ArkServer
+          initialDelaySeconds: 300
+          periodSeconds: 60
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 7777
+          initialDelaySeconds: 300
+          periodSeconds: 30
+          failureThreshold: 5
       volumes:
       - name: data
         persistentVolumeClaim:
