@@ -77,6 +77,8 @@ spec:
           value: ""
         - name: CUSTOM_SERVER_ARGS
           value: ""
+        - name: DISABLE_POK_MONITOR
+          value: "TRUE"
         volumeMounts:
         - name: data
           mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/common/ARK Survival Ascended Dedicated Server/ShooterGame
