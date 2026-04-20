@@ -3,9 +3,11 @@ kind: StatefulSet
 metadata:
   name: asa-server
   namespace: asa-server
+  labels:
+    app.kubernetes.io/instance: asa-server
 spec:
-  serviceName: asa-server
   replicas: 1
+  serviceName: asa-server
   selector:
     matchLabels:
       app.kubernetes.io/name: asa-server
@@ -14,19 +16,21 @@ spec:
       labels:
         app.kubernetes.io/name: asa-server
     spec:
-      restartPolicy: Always
+      nodeSelector:
+        kubernetes.io/hostname: sv01
       containers:
       - name: asa-server
         image: docker.io/acekorneya/asa_server:latest
+        imagePullPolicy: Always
         ports:
-        - name: game
-          containerPort: 7777
+        - containerPort: 7777
+          name: game
           protocol: TCP
-        - name: game-udp
-          containerPort: 7777
+        - containerPort: 7777
+          name: game-udp
           protocol: UDP
-        - name: rcon
-          containerPort: 27020
+        - containerPort: 27020
+          name: rcon
           protocol: TCP
         env:
         - name: PUID
@@ -52,19 +56,19 @@ spec:
         - name: ENABLE_MOTD
           value: "FALSE"
         - name: MAP_NAME
-          value: "TheIsland"
+          value: TheIsland
         - name: SESSION_NAME
-          value: "TokkieTown"
+          value: TokkieTown
         - name: SERVER_ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: asa-server-secret
               key: admin-password
+              name: asa-server-secret
         - name: SERVER_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: asa-server-secret
               key: server-password
+              name: asa-server-secret
         - name: ASA_PORT
           value: "7777"
         - name: RCON_PORT
@@ -72,50 +76,60 @@ spec:
         - name: MAX_PLAYERS
           value: "70"
         - name: CLUSTER_ID
-          value: "cluster"
+          value: cluster
         - name: MOD_IDS
           value: ""
         - name: CUSTOM_SERVER_ARGS
           value: ""
         - name: DISABLE_POK_MONITOR
           value: "TRUE"
-        volumeMounts:
-        - name: data
-          mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/common/ARK Survival Ascended Dedicated Server
         resources:
           requests:
-            memory: "16Gi"
-            cpu: "500m"
+            cpu: 500m
+            memory: 8Gi
           limits:
-            memory: "16Gi"
             cpu: "4"
+            memory: 16Gi
         securityContext:
-          runAsNonRoot: false
           privileged: true
+        volumeMounts:
+        - name: data
+          mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/common
+        - name: steam-temp
+          mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/downloading
+        - name: steam-temp
+          mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/temp
         startupProbe:
           exec:
             command:
             - pgrep
             - -f
-            - ArkServer
-          failureThreshold: 60
+            - ArkAscended
           periodSeconds: 10
+          failureThreshold: 180
         livenessProbe:
           exec:
             command:
             - pgrep
             - -f
-            - ArkServer
-          initialDelaySeconds: 300
+            - ArkAscended
           periodSeconds: 60
           failureThreshold: 3
-        readinessProbe:
-          tcpSocket:
-            port: 7777
           initialDelaySeconds: 300
+        readinessProbe:
+          exec:
+            command:
+            - pgrep
+            - -f
+            - ArkAscended
           periodSeconds: 30
           failureThreshold: 5
+          initialDelaySeconds: 300
       volumes:
       - name: data
-        persistentVolumeClaim:
-          claimName: asa-server-data
+        hostPath:
+          path: /opt/asa-server-data
+          type: DirectoryOrCreate
+      - name: steam-temp
+        emptyDir:
+          sizeLimit: 20Gi
