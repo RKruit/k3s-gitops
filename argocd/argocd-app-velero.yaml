@@ -9,12 +9,13 @@ spec:
   project: default
   source:
     repoURL: https://vmware-tanzu.github.io/helm-charts
-    targetRevision: 9.1.3
+    targetRevision: 8.2.0
     chart: velero
     helm:
       releaseName: velero
       values: |
         configuration:
+          provider: nfs
           backupStorageLocation:
             - name: default
               provider: velero.io/nfs
@@ -48,8 +49,8 @@ spec:
             cpu: 500m
             memory: 512Mi
         backupsEnabled: true
-        deployNodeAgent: true
-        nodeAgent:
+        deployRestic: true
+        restic:
           podVolumeBackups:
             enabled: true
           resources:
