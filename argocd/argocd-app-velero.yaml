@@ -9,12 +9,13 @@ spec:
   project: default
   source:
     repoURL: https://vmware-tanzu.github.io/helm-charts
-    targetRevision: 8.4.0
+    targetRevision: 7.4.0
     chart: velero
     helm:
       releaseName: velero
       values: |
-        config:
+        configuration:
+          provider: nfs
           backupStorageLocation:
             - name: default
               provider: velero.io/nfs
