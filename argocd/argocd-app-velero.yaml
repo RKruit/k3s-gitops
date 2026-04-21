@@ -49,8 +49,8 @@ spec:
             cpu: 500m
             memory: 512Mi
         backupsEnabled: true
-        deployRestic: true
-        restic:
+        deployNodeAgent: true
+        nodeAgent:
           podVolumeBackups:
             enabled: true
           resources:
