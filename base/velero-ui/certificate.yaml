@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: velero-ui-tls
+  namespace: velero-ui
+spec:
+  secretName: velero-ui-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: velero.oostrandpark.com
+  dnsNames:
+  - velero.oostrandpark.com

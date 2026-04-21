@@ -14,3 +14,4 @@ resources:
   - argocd-app-sv02-traefik.yaml
   - argocd-app-sv02-uptime-kuma.yaml
   - argocd-app-headlamp.yaml
+  - argocd-app-velero-ui.yaml
