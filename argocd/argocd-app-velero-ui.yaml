@@ -8,9 +8,51 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/RKruit/k3s-gitops
-    targetRevision: main
-    path: base/velero-ui
+    repoURL: https://otwld.github.io/helm-charts
+    targetRevision: 0.14.0
+    chart: velero-ui
+    helm:
+      releaseName: velero-ui
+      values: |
+        replicaCount: 1
+        image:
+          repository: otwld/velero-ui
+          pullPolicy: IfNotPresent
+        configuration:
+          logLevel: "info"
+          general:
+            veleroNamespace: "velero"
+            grafanaUrl: ""
+            secretPassPhrase:
+              useSecret: true
+              value: "velero-ui-secret-passphrase-change-me"
+        service:
+          type: ClusterIP
+          port: 3000
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            traefik.ingress.kubernetes.io/router.tls: "true"
+          hosts:
+            - host: velero.oostrandpark.com
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: velero-ui-tls
+              hosts:
+                - velero.oostrandpark.com
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        rbac:
+          create: true
+          clusterAdministrator: true
   destination:
     server: https://kubernetes.default.svc
     namespace: velero-ui

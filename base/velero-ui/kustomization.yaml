@@ -1,54 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-helmCharts:
-  - name: velero-ui
-    repo: https://otwld.github.io/helm-charts
-    version: "0.14.0"
-    releaseName: velero-ui
-    namespace: velero-ui
-    valuesInline:
-      replicaCount: 1
-      image:
-        repository: otwld/velero-ui
-        pullPolicy: IfNotPresent
-        tag: ""
-      configuration:
-        logLevel: "info"
-        general:
-          veleroNamespace: "velero"
-          grafanaUrl: ""
-          secretPassPhrase:
-            useSecret: true
-            value: "velero-ui-secret-passphrase-change-me"
-      service:
-        type: ClusterIP
-        port: 3000
-      ingress:
-        enabled: false
-      resources:
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
-        limits:
-          memory: "256Mi"
-          cpu: "500m"
-      livenessProbe:
-        enabled: true
-        path: /health
-        initialDelaySeconds: 60
-        periodSeconds: 10
-      readinessProbe:
-        enabled: true
-        path: /health
-        initialDelaySeconds: 30
-        periodSeconds: 5
-      rbac:
-        create: true
-        clusterAdministrator: true
-
 namespace: velero-ui
 
 resources:
   - certificate.yaml
-  - ingress.yaml
