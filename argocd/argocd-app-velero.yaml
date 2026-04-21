@@ -14,6 +14,9 @@ spec:
     helm:
       releaseName: velero
       values: |
+        upgradeCRDs: false
+        crds:
+          keep: true
         configuration:
           provider: nfs
           backupStorageLocation:
