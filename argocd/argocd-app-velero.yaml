@@ -15,7 +15,6 @@ spec:
       releaseName: velero
       values: |
         configuration:
-          provider: nfs
           backupStorageLocation:
             - name: default
               provider: velero.io/nfs
