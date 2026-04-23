@@ -1,0 +1,18 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  labels:
+    component: velero
+  name: default
+  namespace: velero
+spec:
+  accessMode: ReadWrite
+  config:
+    region: us-east-1
+    s3ForcePathStyle: 'true'
+    s3Url: http://192.168.1.2:9540
+  default: true
+  objectStorage:
+    bucket: velero
+    prefix: ''
+  provider: aws
