@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myst
+  namespace: myst
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: myst
+  template:
+    metadata:
+      labels:
+        app: myst
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: myst
+        image: mysteriumnetwork/myst:latest
+        imagePullPolicy: Always
+        args:
+          - service
+          - --agreed-terms-and-conditions
+        ports:
+        - containerPort: 4449
+          name: webui
+          protocol: TCP
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/myst_node
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: myst-node-data
+      restartPolicy: Always
