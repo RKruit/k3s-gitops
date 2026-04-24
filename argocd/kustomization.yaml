@@ -17,4 +17,5 @@ resources:
   - argocd-app-velero-s3.yaml
   - argocd-app-sv02-earnfm.yaml
   - argocd-app-sv02-myst.yaml
+  - argocd-app-myst.yaml
   - argocd-app-sv02-sealed-secrets.yaml
