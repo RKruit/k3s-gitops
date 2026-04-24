@@ -15,3 +15,4 @@ resources:
   - argocd-app-headlamp.yaml
   - argocd-app-velero-ui.yaml
   - argocd-app-velero-s3.yaml
+  - argocd-app-sv02-earnfm.yaml

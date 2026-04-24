@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: earnfm-client
+  namespace: earnfm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: earnfm-client
+  template:
+    metadata:
+      labels:
+        app: earnfm-client
+    spec:
+      containers:
+      - name: earnfm-client
+        image: earnfm/earnfm-client:latest
+        imagePullPolicy: Always
+        env:
+        - name: EARNFM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: earnfm-client
+              key: EARNFM_TOKEN
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
