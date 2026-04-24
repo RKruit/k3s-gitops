@@ -6,5 +6,6 @@ resources:
 - sa.yaml
 - secret.yaml
 - bsl.yaml
+- schedule-daily.yaml
 - crds.yaml
 - clusterrolebinding.yaml

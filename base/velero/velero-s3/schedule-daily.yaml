@@ -1,0 +1,21 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-cluster-backup
+  namespace: velero
+  labels:
+    component: velero
+spec:
+  schedule: 0 21 * * *
+  template:
+    storageLocation: default
+    ttl: 720h0m0s
+    snapshotVolumes: false
+    includedNamespaces:
+      - "*"
+    includedResources:
+      - "*"
+    excludedNamespaces: []
+    excludedResources: []
+    includeClusterResources: true
+    defaultVolumesToFsBackup: true
