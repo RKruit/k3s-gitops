@@ -1,0 +1,15 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  creationTimestamp: null
+  name: velero-ui-auth
+  namespace: velero-ui
+spec:
+  encryptedData:
+    password: AgCEP+17RHI6Am1yek1zhhEJapwrHlnS0DVfw5HhMhe8eSoiEofCdhgz7P9+W+6ekqUY9u7VTQsNF/nXPsLGJpW5wu3s1woPBPkdqP9ykGY0ftcNAIoKEyXc1yDfpJZ8Rus/9iU/TzYLs9J4rjWPfurI3qUyGTVEwYgNg8taUQwMDi4WnH2f+z17LLhKF7e9x41Uro9KzAXilVY1ibEdvwTk0FK1i/pHt4btrrZ+0VMGc9OwW7nC7s1fxzLn273gkV9mrbUblMAUZTBR5ZBywe5rhqHuIlQhPReaWxPW1PymJdp9UthQVr62IpHmXp5ztrFcgL1jKSOnCPzUT5VebSBY1cJJHtoK4OB5tOoOqUQQTo5wdw3XFkLYfP2ZxKozlNrTKX56urBsCIuw6JO4pOyVYFv3NRGFfpgpPvtHQif70wwzJp9kX6RTwZaBR6F44o92OrJpre4B1f8G0grk+eNxNClqz1wdzU1VL3qxp51UgPXCEw1NFImwa4oO/GFXlXlrAXA4XtAlNarPCn9kVG3QwkW0Ouw632pKdfLpC+oXz7TM4xh3pT/gmuclDdVU8lwnt8Nknl2gjmDVl7q3YhU05n/9mbymjuJe3Ple3k/upDz2D47m8UH9wQUel0m6p/rZMEI7/drUBAbbK2+Cccfz+360qXETGVA9OIHqikIQ6JeG7bYnR7Znrbt9HpfMqQoIW109QLIAoS4=
+  template:
+    metadata:
+      creationTimestamp: null
+      name: velero-ui-auth
+      namespace: velero-ui

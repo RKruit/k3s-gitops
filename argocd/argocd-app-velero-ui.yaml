@@ -52,6 +52,14 @@ spec:
             cpu: "500m"
         rbac:
           create: false
+        env:
+          - name: BASIC_AUTH_ENABLED
+            value: "true"
+          - name: BASIC_AUTH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: velero-ui-auth
+                key: password
 # Note: cluster-admin ClusterRoleBinding already exists for velero-ui SA
   destination:
     server: https://kubernetes.default.svc
