@@ -48,11 +48,11 @@ spec:
             memory: "128Mi"
             cpu: "100m"
           limits:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "500m"
         rbac:
-          create: true
-          clusterAdministrator: true
+          create: false
+# Note: cluster-admin ClusterRoleBinding already exists for velero-ui SA
   destination:
     server: https://kubernetes.default.svc
     namespace: velero-ui
