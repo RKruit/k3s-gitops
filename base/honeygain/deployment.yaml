@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: honeygain
+  namespace: earn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: honeygain
+  template:
+    metadata:
+      labels:
+        app: honeygain
+    spec:
+      containers:
+      - name: honeygain
+        image: honeygain/honeygain:latest
+        imagePullPolicy: Always
+        args:
+        - -tou-accept
+        - -email=rkruit@gmail.com
+        - -pass=$(HONEYGAIN_PASSWORD)
+        - -device=HG_SV02_Talos
+        env:
+        - name: HONEYGAIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: honeygain-credentials
+              key: password
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      restartPolicy: Always
