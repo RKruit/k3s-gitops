@@ -6,3 +6,4 @@ metadata:
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/warn: baseline
     pod-security.kubernetes.io/audit: baseline
+    app.kubernetes.io/managed-by: argocd
