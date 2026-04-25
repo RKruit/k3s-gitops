@@ -4,4 +4,3 @@ namespace: traefik
 resources:
   - namespace.yaml
   - release.yaml
-  - ArgoCDApp.yaml
