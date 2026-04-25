@@ -24,7 +24,6 @@ spec:
             secretKeyRef:
               name: traffmonetizer-client
               key: TOKEN
-        command: ["traffmonetizer"]
         args:
           - "start"
           - "accept"
