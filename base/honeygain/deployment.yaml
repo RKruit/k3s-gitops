@@ -22,7 +22,7 @@ spec:
         - -tou-accept
         - -email=rkruit@gmail.com
         - -pass=$(HONEYGAIN_PASSWORD)
-        - -device=HG_SV02_Talos
+        - -device=HG_SV02_GitOps
         env:
         - name: HONEYGAIN_PASSWORD
           valueFrom:
