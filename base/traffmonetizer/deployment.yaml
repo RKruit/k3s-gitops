@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffmonetizer-client
+  namespace: traffmonetizer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traffmonetizer-client
+  template:
+    metadata:
+      labels:
+        app: traffmonetizer-client
+    spec:
+      containers:
+      - name: traffmonetizer-client
+        image: traffmonetizer/cli_v2:latest
+        imagePullPolicy: Always
+        env:
+        - name: TM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: traffmonetizer-client
+              key: TOKEN
+        command: ["traffmonetizer"]
+        args:
+          - "start"
+          - "accept"
+          - "--token"
+          - "$(TM_TOKEN)"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always

@@ -20,3 +20,4 @@ resources:
   - argocd-app-sv02-myst.yaml
   - argocd-app-myst.yaml
   - argocd-app-sv02-sealed-secrets.yaml
+  - argocd-app-sv02-traffmonetizer.yaml
