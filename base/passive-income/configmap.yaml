@@ -1,0 +1,322 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: passive-income-html
+  namespace: passive-income
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Passive Income Tracker ~</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --bg: #1a1a2e;
+                --card: #16213e;
+                --accent: #e94560;
+                --honey: #ffb347;
+                --text: #eee;
+                --muted: #a0a0a0;
+                --success: #00d9ff;
+            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+                font-family: 'Nunito', sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                min-height: 100vh;
+                padding: 2rem;
+                background-image: radial-gradient(circle at 10% 20%, rgba(233, 69, 96, 0.1) 0%, transparent 40%),
+                                  radial-gradient(circle at 90% 80%, rgba(255, 179, 71, 0.08) 0%, transparent 40%);
+            }
+            .container { max-width: 1200px; margin: 0 auto; }
+            header {
+                text-align: center;
+                margin-bottom: 3rem;
+                position: relative;
+            }
+            header h1 {
+                font-size: 2.5rem;
+                font-weight: 800;
+                background: linear-gradient(135deg, var(--honey), var(--accent), var(--success));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 0.5rem;
+            }
+            header p { color: var(--muted); font-size: 1.1rem; }
+            .total-card {
+                background: linear-gradient(135deg, rgba(233, 69, 96, 0.2), rgba(255, 179, 71, 0.15));
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 24px;
+                padding: 2rem;
+                text-align: center;
+                margin-bottom: 2rem;
+                backdrop-filter: blur(10px);
+                position: relative;
+                overflow: hidden;
+            }
+            .total-card::before {
+                content: '';
+                position: absolute;
+                top: -50%; left: -50%; width: 200%; height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+                animation: pulse 4s ease-in-out infinite;
+            }
+            @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+            .total-label { font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; position: relative; }
+            .total-amount { font-size: 3.5rem; font-weight: 800; margin: 0.5rem 0; position: relative; }
+            .total-amount span { font-size: 1.5rem; vertical-align: super; opacity: 0.7; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+            .card {
+                background: var(--card);
+                border-radius: 20px;
+                padding: 1.5rem;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                transition: transform 0.2s, box-shadow 0.2s;
+                position: relative;
+                overflow: hidden;
+            }
+            .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+            .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+            .platform-name { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+            .platform-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+            .honeygain { background: rgba(255, 179, 71, 0.15); color: var(--honey); }
+            .status { font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 20px; background: rgba(0, 217, 255, 0.1); color: var(--success); font-weight: 600; }
+            .month-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+            .month-row:last-child { border-bottom: none; }
+            .month-name { color: var(--muted); font-size: 0.9rem; }
+            .month-input {
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.1);
+                color: var(--text);
+                padding: 0.3rem 0.8rem;
+                border-radius: 8px;
+                width: 80px;
+                text-align: right;
+                font-family: inherit;
+                font-size: 0.9rem;
+                transition: all 0.2s;
+            }
+            .month-input:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.08); }
+            .platform-total {
+                margin-top: 1rem;
+                padding-top: 1rem;
+                border-top: 2px solid rgba(255,255,255,0.05);
+                display: flex;
+                justify-content: space-between;
+                font-weight: 700;
+                font-size: 1.1rem;
+            }
+            .chart-container {
+                background: var(--card);
+                border-radius: 20px;
+                padding: 1.5rem;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                margin-bottom: 2rem;
+            }
+            .chart-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--muted); }
+            .add-btn {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--accent), var(--honey));
+                border: none;
+                color: white;
+                font-size: 1.8rem;
+                cursor: pointer;
+                box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+                transition: transform 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .add-btn:hover { transform: scale(1.1) rotate(90deg); }
+            .emoji { font-style: normal; }
+            @media (max-width: 600px) {
+                body { padding: 1rem; }
+                .total-amount { font-size: 2.5rem; }
+                header h1 { font-size: 1.8rem; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Passive Income Tracker</h1>
+                <p>Watch your money work for you ~ ✨</p>
+            </header>
+
+            <div class="total-card">
+                <div class="total-label">Total Earned (YTD)</div>
+                <div class="total-amount"><span>$</span><span id="grandTotal">0.00</span></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Monthly Overview ~</div>
+                <canvas id="mainChart" height="100"></canvas>
+            </div>
+
+            <div class="grid" id="cardsContainer"></div>
+        </div>
+
+        <button class="add-btn" onclick="addPlatform()" title="Add new platform">+</button>
+
+        <script>
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const currentMonth = new Date().getMonth();
+            
+            let platforms = JSON.parse(localStorage.getItem('passiveIncome')) || [
+                {
+                    id: 'honeygain',
+                    name: 'Honeygain',
+                    icon: '🍯',
+                    class: 'honeygain',
+                    color: '#ffb347',
+                    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                }
+            ];
+
+            function save() {
+                localStorage.setItem('passiveIncome', JSON.stringify(platforms));
+                render();
+            }
+
+            function formatMoney(n) {
+                return Number(n).toFixed(2);
+            }
+
+            function getPlatformTotal(p) {
+                return p.data.reduce((a, b) => a + (Number(b) || 0), 0);
+            }
+
+            function getGrandTotal() {
+                return platforms.reduce((sum, p) => sum + getPlatformTotal(p), 0);
+            }
+
+            function getMonthlyTotals() {
+                return months.map((_, i) => 
+                    platforms.reduce((sum, p) => sum + (Number(p.data[i]) || 0), 0)
+                );
+            }
+
+            function render() {
+                const container = document.getElementById('cardsContainer');
+                container.innerHTML = '';
+                
+                platforms.forEach((p, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    const total = getPlatformTotal(p);
+                    
+                    let rows = '';
+                    months.forEach((m, i) => {
+                        const isFuture = i > currentMonth;
+                        rows += `
+                            <div class="month-row">
+                                <span class="month-name" style="${i === currentMonth ? 'color: var(--accent); font-weight: 700;' : ''}">${m}</span>
+                                <input type="number" step="0.01" class="month-input" 
+                                    value="${p.data[i] || 0}" 
+                                    ${isFuture ? 'disabled style="opacity:0.3;"' : ''}
+                                    onchange="updateValue(${idx}, ${i}, this.value)">
+                            </div>
+                        `;
+                    });
+                    
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <div class="platform-name">
+                                <div class="platform-icon ${p.class}">${p.icon}</div>
+                                ${p.name}
+                            </div>
+                            <span class="status">Active</span>
+                        </div>
+                        ${rows}
+                        <div class="platform-total">
+                            <span>Total</span>
+                            <span>$${formatMoney(total)}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                document.getElementById('grandTotal').textContent = formatMoney(getGrandTotal());
+                updateChart();
+            }
+
+            let chartInstance = null;
+            function updateChart() {
+                const ctx = document.getElementById('mainChart').getContext('2d');
+                const monthlyTotals = getMonthlyTotals();
+                
+                if (chartInstance) chartInstance.destroy();
+                
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: platforms.map(p => ({
+                            label: p.name,
+                            data: p.data,
+                            borderColor: p.color || '#e94560',
+                            backgroundColor: (p.color || '#e94560') + '20',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { labels: { color: '#a0a0a0', font: { family: 'Nunito' } } }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255,255,255,0.03)' },
+                                ticks: { color: '#a0a0a0', font: { family: 'Nunito' }, callback: v => '$' + v }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#a0a0a0', font: { family: 'Nunito' } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateValue(platformIdx, monthIdx, value) {
+                platforms[platformIdx].data[monthIdx] = Number(value) || 0;
+                save();
+            }
+
+            function addPlatform() {
+                const name = prompt('Platform name? (e.g., EarnApp, PacketStream)');
+                if (!name) return;
+                const icon = prompt('Emoji icon? (e.g., 💰, 📡)') || '💎';
+                const colors = ['#00d9ff', '#a855f7', '#22c55e', '#f472b6', '#fbbf24'];
+                platforms.push({
+                    id: name.toLowerCase().replace(/\s+/g, '-'),
+                    name: name,
+                    icon: icon,
+                    class: '',
+                    color: colors[platforms.length % colors.length],
+                    data: new Array(12).fill(0)
+                });
+                save();
+            }
+
+            render();
+        </script>
+    </body>
+    </html>

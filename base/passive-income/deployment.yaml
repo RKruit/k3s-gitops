@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: passive-income
+  namespace: passive-income
+  labels:
+    app: passive-income
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: passive-income
+  template:
+    metadata:
+      labels:
+        app: passive-income
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 100m
+            requests:
+              memory: 64Mi
+              cpu: 10m
+      volumes:
+        - name: html
+          configMap:
+            name: passive-income-html

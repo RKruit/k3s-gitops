@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: passive-income
+  namespace: passive-income
+  labels:
+    app: passive-income
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: passive-income

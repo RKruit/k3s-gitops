@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: passive-income-tls
+  namespace: passive-income
+  labels:
+    app.kubernetes.io/instance: passive-income
+spec:
+  dnsNames:
+  - passive-income.oostrandpark.com
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: passive-income-tls
