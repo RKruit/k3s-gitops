@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iproyalpawns-client
+  namespace: iproyalpawns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iproyalpawns-client
+  template:
+    metadata:
+      labels:
+        app: iproyalpawns-client
+    spec:
+      containers:
+      - name: iproyalpawns-client
+        image: iproyal/pawns-cli:latest
+        imagePullPolicy: Always
+        env:
+        - name: DEVICE_NAME
+          value: "Talos"
+        - name: DEVICE_ID
+          value: "talos1"
+        - name: PAWS_EMAIL
+          value: "rkruit@gmail.com"
+        - name: PAWS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: iproyalpawns-credentials
+              key: password
+        args:
+          - "-email=$(PAWS_EMAIL)"
+          - "-password=$(PAWS_PASSWORD)"
+          - "-device-name=$(DEVICE_NAME)"
+          - "-device-id=$(DEVICE_ID)"
+          - "-accept-tos"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
