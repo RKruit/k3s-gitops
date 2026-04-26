@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: passive-income-scraper
+  namespace: passive-income
+data:
+  scraper.py: |
+    #!/usr/bin/env python3
+    import urllib.request, urllib.error, json, os
+    from datetime import datetime, timezone
+
+    TOKEN_PATH = '/secrets/token'
+    DATA_PATH  = '/data/earnings.json'
+    API        = 'https://dashboard.honeygain.com/api/v1'
+    YEAR       = datetime.now(timezone.utc).year
+
+    def read_token():
+        with open(TOKEN_PATH) as f:
+            return f.read().strip()
+
+    def fetch(path):
+        req = urllib.request.Request(
+            f'{API}/{path}',
+            headers={'Authorization': f'Bearer {read_token()}', 'Accept': 'application/json'}
+        )
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode('utf-8'))
+
+    def main():
+        print(f'[{datetime.now(timezone.utc).isoformat()}] Scraping Honeygain...')
+        stats    = fetch('earnings/stats')
+        today    = fetch('earnings/today')
+        balances = fetch('users/balances')
+
+        monthly = {}
+        for date_str, day_data in stats.items():
+            if not str(date_str).startswith(str(YEAR)):
+                continue
+            month_key = str(date_str)[:7]     # YYYY-MM
+            day_total = (
+                day_data.get('gathering',          {}).get('credits', 0) +
+                day_data.get('content_delivery',   {}).get('credits', 0) +
+                day_data.get('referrals',          {}).get('credits', 0) +
+                day_data.get('winnings',           {}).get('credits', 0) +
+                day_data.get('other',              {}).get('credits', 0)
+            )
+            monthly[month_key] = monthly.get(month_key, 0) + day_total
+
+        # credits → USD  (1 credit = $0.001)
+        monthly_usd = {k: round(v / 1000, 2) for k, v in sorted(monthly.items())}
+
+        data = {
+            '_meta': {
+                'lastUpdated': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+                'year': YEAR,
+            },
+            'honeygain': {
+                'monthly': monthly_usd,
+                'today': {
+                    'credits': today.get('total', {}).get('credits', 0),
+                    'usd': round(today.get('total', {}).get('credits', 0) / 1000, 2),
+                    'gathering_bytes': today.get('gathering', {}).get('bytes', 0),
+                },
+                'balance': {
+                    'credits': balances.get('data', {}).get('payout', {}).get('credits', 0),
+                    'usd_cents': balances.get('data', {}).get('payout', {}).get('usd_cents', 0),
+                }
+            }
+        }
+
+        os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
+        with open(DATA_PATH, 'w') as f:
+            json.dump(data, f, indent=2)
+
+        print(f'Saved {DATA_PATH}')
+        print(json.dumps(data, indent=2))
+
+    if __name__ == '__main__':
+        main()

@@ -24,6 +24,10 @@ spec:
           volumeMounts:
             - name: html
               mountPath: /usr/share/nginx/html
+            - name: data
+              mountPath: /usr/share/nginx/html/data
+            - name: scraper-script
+              mountPath: /scraper
           resources:
             limits:
               memory: 128Mi
@@ -35,3 +39,9 @@ spec:
         - name: html
           configMap:
             name: passive-income-html
+        - name: data
+          persistentVolumeClaim:
+            claimName: passive-income-data
+        - name: scraper-script
+          configMap:
+            name: passive-income-scraper

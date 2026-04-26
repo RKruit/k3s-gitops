@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: passive-income-scraper
+  namespace: passive-income
+spec:
+  schedule: "55 23 * * *"
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 180
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: scraper
+              image: python:3.13-alpine
+              command: ["python", "/scraper/scraper.py"]
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+                - name: token
+                  mountPath: /secrets
+                  readOnly: true
+                - name: scraper-script
+                  mountPath: /scraper
+                  readOnly: true
+              resources:
+                limits:
+                  memory: 128Mi
+                  cpu: 100m
+                requests:
+                  memory: 64Mi
+                  cpu: 10m
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: passive-income-data
+            - name: token
+              secret:
+                secretName: honeygain-jwt
+                items:
+                  - key: token
+                    path: token
+            - name: scraper-script
+              configMap:
+                name: passive-income-scraper
