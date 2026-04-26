@@ -22,3 +22,4 @@ resources:
   - argocd-app-sv02-sealed-secrets.yaml
   - argocd-app-sv02-traffmonetizer.yaml
   - argocd-app-sv02-iproyalpawns.yaml
+  - argocd-app-sv02-repocket.yaml

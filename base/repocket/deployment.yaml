@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: repocket-client
+  namespace: repocket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: repocket-client
+  template:
+    metadata:
+      labels:
+        app: repocket-client
+    spec:
+      containers:
+      - name: repocket-client
+        image: repocket/repocket:latest
+        imagePullPolicy: Always
+        env:
+        - name: RP_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: repocket-credentials
+              key: RP_EMAIL
+        - name: RP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: repocket-credentials
+              key: RP_API_KEY
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
