@@ -11,8 +11,8 @@ data:
 
     DATA_PATH   = '/data/earnings.json'
     API         = 'https://dashboard.honeygain.com/api/v1'
-    AUTH_FILE   = '/secrets/auth.json'
-    TOKEN_FILE  = '/secrets/token'
+    AUTH_FILE   = '/secrets/auth/auth.json'
+    TOKEN_FILE  = '/secrets/token/token'
     YEAR        = datetime.now(timezone.utc).year
 
     def read_json(path):
