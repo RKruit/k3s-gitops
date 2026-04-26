@@ -6,53 +6,115 @@ metadata:
 data:
   scraper.py: |
     #!/usr/bin/env python3
-    import urllib.request, urllib.error, json, os
+    import urllib.request, json, os, ssl, sys
     from datetime import datetime, timezone
 
-    TOKEN_PATH = '/secrets/token'
-    DATA_PATH  = '/data/earnings.json'
-    API        = 'https://dashboard.honeygain.com/api/v1'
-    YEAR       = datetime.now(timezone.utc).year
+    DATA_PATH   = '/data/earnings.json'
+    API         = 'https://dashboard.honeygain.com/api/v1'
+    AUTH_FILE   = '/secrets/auth.json'
+    TOKEN_FILE  = '/secrets/token'
+    YEAR        = datetime.now(timezone.utc).year
+
+    def read_json(path):
+        with open(path) as f:
+            return json.load(f)
 
     def read_token():
-        with open(TOKEN_PATH) as f:
+        with open(TOKEN_FILE) as f:
             return f.read().strip()
 
-    def fetch(path):
+    def login():
+        if not os.path.exists(AUTH_FILE):
+            return None
+        try:
+            creds = read_json(AUTH_FILE)
+            email = creds.get('email', '')
+            password = creds.get('password', '')
+            if not email or not password:
+                return None
+
+            payload = json.dumps({'email': email, 'password': password}).encode()
+            req = urllib.request.Request(
+                f'{API}/users/tokens',
+                data=payload,
+                headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+                method='POST'
+            )
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
+                body = json.loads(r.read().decode())
+                token = (body.get('data', {}).get('token') or
+                         body.get('token') or
+                         body.get('access_token'))
+                print(f'Login OK - got fresh token.')
+                return token
+        except urllib.error.HTTPError as e:
+            err = e.read().decode()[:200]
+            print(f'Login failed ({e.code}): {err}')
+            return None
+        except Exception as e:
+            print(f'Login failed: {type(e).__name__}: {e}')
+            return None
+
+    def fetch(token, path):
         req = urllib.request.Request(
             f'{API}/{path}',
-            headers={'Authorization': f'Bearer {read_token()}', 'Accept': 'application/json'}
+            headers={'Authorization': f'Bearer {token}', 'Accept': 'application/json'}
         )
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return json.loads(r.read().decode('utf-8'))
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
+            return json.loads(r.read().decode())
 
     def main():
-        print(f'[{datetime.now(timezone.utc).isoformat()}] Scraping Honeygain...')
-        stats    = fetch('earnings/stats')
-        today    = fetch('earnings/today')
-        balances = fetch('users/balances')
+        ts = datetime.now(timezone.utc).isoformat()
+        print(f'[{ts}] Starting scraper...')
+
+        token = login()
+        login_used = bool(token)
+        if not token:
+            print('Login not available, falling back to static JWT.')
+            try:
+                token = read_token()
+            except Exception as e:
+                print(f'No token: {e}')
+                sys.exit(1)
+
+        try:
+            stats = fetch(token, 'earnings/stats')
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                print('Token rejected (401) - manual intervention needed.')
+                sys.exit(2)
+            raise
+
+        today    = fetch(token, 'earnings/today')
+        balances = fetch(token, 'users/balances')
 
         monthly = {}
         for date_str, day_data in stats.items():
             if not str(date_str).startswith(str(YEAR)):
                 continue
-            month_key = str(date_str)[:7]     # YYYY-MM
+            month_key = str(date_str)[:7]
             day_total = (
-                day_data.get('gathering',          {}).get('credits', 0) +
-                day_data.get('content_delivery',   {}).get('credits', 0) +
-                day_data.get('referrals',          {}).get('credits', 0) +
-                day_data.get('winnings',           {}).get('credits', 0) +
-                day_data.get('other',              {}).get('credits', 0)
+                day_data.get('gathering', {}).get('credits', 0) +
+                day_data.get('content_delivery', {}).get('credits', 0) +
+                day_data.get('referrals', {}).get('credits', 0) +
+                day_data.get('winnings', {}).get('credits', 0) +
+                day_data.get('other', {}).get('credits', 0)
             )
             monthly[month_key] = monthly.get(month_key, 0) + day_total
 
-        # credits → USD  (1 credit = $0.001)
         monthly_usd = {k: round(v / 1000, 2) for k, v in sorted(monthly.items())}
 
         data = {
             '_meta': {
                 'lastUpdated': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'year': YEAR,
+                'loginMethod': 'auto' if login_used else 'fallback'
             },
             'honeygain': {
                 'monthly': monthly_usd,

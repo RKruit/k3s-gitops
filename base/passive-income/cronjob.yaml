@@ -19,7 +19,10 @@ spec:
                 - name: data
                   mountPath: /data
                 - name: token
-                  mountPath: /secrets
+                  mountPath: /secrets/token
+                  readOnly: true
+                - name: creds
+                  mountPath: /secrets/auth
                   readOnly: true
                 - name: scraper-script
                   mountPath: /scraper
@@ -41,6 +44,12 @@ spec:
                 items:
                   - key: token
                     path: token
+            - name: creds
+              secret:
+                secretName: honeygain-creds
+                items:
+                  - key: auth.json
+                    path: auth.json
             - name: scraper-script
               configMap:
                 name: passive-income-scraper
