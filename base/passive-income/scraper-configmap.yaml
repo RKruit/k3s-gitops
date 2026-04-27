@@ -10,7 +10,8 @@ data:
     from datetime import datetime, timezone
 
     DATA_PATH   = '/data/earnings.json'
-    API         = 'https://dashboard.honeygain.com/api/v1'
+    HONEY_API   = 'https://dashboard.honeygain.com/api/v1'
+    MYST_TEQUIL = 'http://127.0.0.1:4050'
     AUTH_FILE   = '/secrets/auth/auth.json'
     TOKEN_FILE  = '/secrets/token/token'
     YEAR        = datetime.now(timezone.utc).year
@@ -23,7 +24,7 @@ data:
         with open(TOKEN_FILE) as f:
             return f.read().strip()
 
-    def login():
+    def honey_login():
         if not os.path.exists(AUTH_FILE):
             return None
         try:
@@ -32,10 +33,9 @@ data:
             password = creds.get('password', '')
             if not email or not password:
                 return None
-
             payload = json.dumps({'email': email, 'password': password}).encode()
             req = urllib.request.Request(
-                f'{API}/users/tokens',
+                f'{HONEY_API}/users/tokens',
                 data=payload,
                 headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
                 method='POST'
@@ -48,19 +48,15 @@ data:
                 token = (body.get('data', {}).get('token') or
                          body.get('token') or
                          body.get('access_token'))
-                print(f'Login OK - got fresh token.')
+                print(f'Honeygain login OK.')
                 return token
-        except urllib.error.HTTPError as e:
-            err = e.read().decode()[:200]
-            print(f'Login failed ({e.code}): {err}')
-            return None
         except Exception as e:
-            print(f'Login failed: {type(e).__name__}: {e}')
+            print(f'Honeygain login failed: {e}')
             return None
 
-    def fetch(token, path):
+    def honey_fetch(token, path):
         req = urllib.request.Request(
-            f'{API}/{path}',
+            f'{HONEY_API}/{path}',
             headers={'Authorization': f'Bearer {token}', 'Accept': 'application/json'}
         )
         ctx = ssl.create_default_context()
@@ -69,66 +65,117 @@ data:
         with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
             return json.loads(r.read().decode())
 
+    def myst_fetch(path):
+        req = urllib.request.Request(f'{MYST_TEQUIL}/{path}')
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.loads(r.read().decode())
+
     def main():
         ts = datetime.now(timezone.utc).isoformat()
         print(f'[{ts}] Starting scraper...')
 
-        token = login()
+        # Honeygain
+        token = honey_login()
         login_used = bool(token)
         if not token:
-            print('Login not available, falling back to static JWT.')
             try:
                 token = read_token()
             except Exception as e:
-                print(f'No token: {e}')
-                sys.exit(1)
+                print(f'No Honeygain token: {e}')
+            else:
+                print('Using static JWT for Honeygain.')
 
+        if token:
+            try:
+                stats = honey_fetch(token, 'earnings/stats')
+                today = honey_fetch(token, 'earnings/today')
+                balances = honey_fetch(token, 'users/balances')
+
+                monthly = {}
+                for date_str, day_data in stats.items():
+                    if not str(date_str).startswith(str(YEAR)):
+                        continue
+                    month_key = str(date_str)[:7]
+                    day_total = (
+                        day_data.get('gathering', {}).get('credits', 0) +
+                        day_data.get('content_delivery', {}).get('credits', 0) +
+                        day_data.get('referrals', {}).get('credits', 0) +
+                        day_data.get('winnings', {}).get('credits', 0) +
+                        day_data.get('other', {}).get('credits', 0)
+                    )
+                    monthly[month_key] = monthly.get(month_key, 0) + day_total
+
+                hg_data = {
+                    'monthly': {k: round(v / 1000, 2) for k, v in sorted(monthly.items())},
+                    'today': {
+                        'credits': today.get('total', {}).get('credits', 0),
+                        'usd': round(today.get('total', {}).get('credits', 0) / 1000, 2),
+                        'gathering_bytes': today.get('gathering', {}).get('bytes', 0),
+                    },
+                    'balance': {
+                        'credits': balances.get('data', {}).get('payout', {}).get('credits', 0),
+                        'usd_cents': balances.get('data', {}).get('payout', {}).get('usd_cents', 0),
+                    }
+                }
+            except urllib.error.HTTPError as e:
+                if e.code == 401:
+                    print('Honeygain token rejected (401).')
+                    hg_data = None
+                else:
+                    raise
+            except Exception as e:
+                print(f'Honeygain fetch failed: {e}')
+                hg_data = None
+        else:
+            print('No Honeygain token available.')
+            hg_data = None
+
+        # Mysterium
         try:
-            stats = fetch(token, 'earnings/stats')
-        except urllib.error.HTTPError as e:
-            if e.code == 401:
-                print('Token rejected (401) - manual intervention needed.')
-                sys.exit(2)
-            raise
+            ident_list = myst_fetch('identities')
+            ident = {}
+            if ident_list.get('identities'):
+                ident_id = ident_list['identities'][0]['id']
+                ident = myst_fetch(f'identities/{ident_id}')
+            loc = myst_fetch('location')
+            myst_data = {
+                'identity': ident.get('id', ''),
+                'status': ident.get('registration_status', 'Unknown'),
+                'balance_wei': ident.get('balance', 0),
+                'earnings_wei': ident.get('earnings', 0),
+                'earnings_total_wei': ident.get('earnings_total', 0),
+                'stake': ident.get('stake', 0),
+                'hermes': ident.get('hermes_id', ''),
+                'channel': ident.get('channel_address', ''),
+                'location': {
+                    'country': loc.get('country', ''),
+                    'city': loc.get('city', ''),
+                    'isp': loc.get('isp', ''),
+                    'ip_type': loc.get('ip_type', ''),
+                }
+            }
+        except Exception as e:
+            print(f'Mysterium fetch failed: {e}')
+            myst_data = {
+                'status': 'Offline',
+                'balance_wei': 0,
+                'earnings_wei': 0,
+                'location': {}
+            }
 
-        today    = fetch(token, 'earnings/today')
-        balances = fetch(token, 'users/balances')
-
-        monthly = {}
-        for date_str, day_data in stats.items():
-            if not str(date_str).startswith(str(YEAR)):
-                continue
-            month_key = str(date_str)[:7]
-            day_total = (
-                day_data.get('gathering', {}).get('credits', 0) +
-                day_data.get('content_delivery', {}).get('credits', 0) +
-                day_data.get('referrals', {}).get('credits', 0) +
-                day_data.get('winnings', {}).get('credits', 0) +
-                day_data.get('other', {}).get('credits', 0)
-            )
-            monthly[month_key] = monthly.get(month_key, 0) + day_total
-
-        monthly_usd = {k: round(v / 1000, 2) for k, v in sorted(monthly.items())}
-
+        # Combine
         data = {
             '_meta': {
                 'lastUpdated': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'year': YEAR,
                 'loginMethod': 'auto' if login_used else 'fallback'
-            },
-            'honeygain': {
-                'monthly': monthly_usd,
-                'today': {
-                    'credits': today.get('total', {}).get('credits', 0),
-                    'usd': round(today.get('total', {}).get('credits', 0) / 1000, 2),
-                    'gathering_bytes': today.get('gathering', {}).get('bytes', 0),
-                },
-                'balance': {
-                    'credits': balances.get('data', {}).get('payout', {}).get('credits', 0),
-                    'usd_cents': balances.get('data', {}).get('payout', {}).get('usd_cents', 0),
-                }
             }
         }
+
+        if hg_data:
+            data['honeygain'] = hg_data
+
+        data['mysterium'] = myst_data
 
         os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
         with open(DATA_PATH, 'w') as f:
