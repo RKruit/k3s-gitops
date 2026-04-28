@@ -22,3 +22,5 @@ resources:
   - argocd-app-sv02-traffmonetizer.yaml
   - argocd-app-sv02-iproyalpawns.yaml
   - argocd-app-sv02-repocket.yaml
+  - argocd-app-passive-income.yaml
+  - argocd-app-xwiki.yaml

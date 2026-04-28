@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: xwiki
+  namespace: xwiki
+spec:
+  secretName: xwiki-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: cloudflare
+  dnsNames:
+    - xwiki.oostrandpark.com
