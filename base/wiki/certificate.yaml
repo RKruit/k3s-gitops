@@ -7,6 +7,6 @@ spec:
   secretName: xwiki-tls
   issuerRef:
     kind: ClusterIssuer
-    name: cloudflare
+    name: letsencrypt-prod
   dnsNames:
     - xwiki.oostrandpark.com
