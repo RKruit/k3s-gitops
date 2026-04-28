@@ -12,8 +12,8 @@ data:
     DATA_PATH   = '/data/earnings.json'
     HONEY_API   = 'https://dashboard.honeygain.com/api/v1'
     MYST_TEQUIL = 'http://127.0.0.1:14050'
-    AUTH_FILE='/secrets/auth/auth.json'
-    TOKEN_FILE='/secrets/token/token'
+    AUTH_FILE='/secre...json'
+    TOKEN_FILE='/secre...oken'
     TALOS_KUBECONFIG = '/secrets/talos/kubeconfig'
     YEAR        = datetime.now(timezone.utc).year
 
