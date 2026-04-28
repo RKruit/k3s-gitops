@@ -31,6 +31,9 @@ spec:
                 - name: talos-kubeconfig
                   mountPath: /secrets/talos/kubeconfig
                   readOnly: true
+                - name: kubectl-binary
+                  mountPath: /usr/local/bin/kubectl
+                  readOnly: true
               resources:
                 limits:
                   memory: 256Mi
@@ -60,4 +63,8 @@ spec:
             - name: talos-kubeconfig
               hostPath:
                 path: /home/rkruit/gitops/talos/kubeconfig
+                type: File
+            - name: kubectl-binary
+              hostPath:
+                path: /usr/local/bin/kubectl
                 type: File
