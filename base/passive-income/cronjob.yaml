@@ -4,7 +4,7 @@ metadata:
   name: passive-income-scraper
   namespace: passive-income
 spec:
-  schedule: "55 23 * * *"
+  schedule: "0 0,6,12,18 * * *"
   jobTemplate:
     spec:
       activeDeadlineSeconds: 180
