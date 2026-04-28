@@ -6,14 +6,15 @@ metadata:
 data:
   scraper.py: |
     #!/usr/bin/env python3
-    import urllib.request, json, os, ssl, sys
+    import urllib.request, json, os, ssl, sys, subprocess
     from datetime import datetime, timezone
 
     DATA_PATH   = '/data/earnings.json'
     HONEY_API   = 'https://dashboard.honeygain.com/api/v1'
     MYST_TEQUIL = 'http://127.0.0.1:14050'
-    AUTH_FILE   = '/secrets/auth/auth.json'
-    TOKEN_FILE  = '/secrets/token/token'
+    AUTH_FILE='/secrets/auth/auth.json'
+    TOKEN_FILE='/secrets/token/token'
+    TALOS_KUBECONFIG = '/secrets/talos/kubeconfig'
     YEAR        = datetime.now(timezone.utc).year
 
     def read_json(path):
@@ -69,6 +70,44 @@ data:
         req = urllib.request.Request(f'{MYST_TEQUIL}/{path}')
         with urllib.request.urlopen(req, timeout=10) as r:
             return json.loads(r.read().decode())
+
+    def repocket_check():
+        """Check Repocket pod status on Talos cluster. No public earnings API available."""
+        if not os.path.exists(TALOS_KUBECONFIG):
+            print('Repocket: Talos kubeconfig not mounted.')
+            return {'status': 'Unknown', 'note': 'kubeconfig missing'}
+        try:
+            # Check pod status
+            result = subprocess.run(
+                ['kubectl', '--kubeconfig', TALOS_KUBECONFIG, 'get', 'pod',
+                 '-n', 'repocket', '-l', 'app=repocket-client',
+                 '-o', 'jsonpath={.items[0].status.phase}'],
+                capture_output=True, text=True, timeout=10
+            )
+            pod_status = result.stdout.strip()
+
+            # Check recent logs for connection markers
+            result2 = subprocess.run(
+                ['kubectl', '--kubeconfig', TALOS_KUBECONFIG, 'logs',
+                 '-n', 'repocket', '-l', 'app=repocket-client', '--tail=30'],
+                capture_output=True, text=True, timeout=10
+            )
+            logs = result2.stdout + result2.stderr
+            is_connected = 'peer connected' in logs or 'Connection established' in logs
+            error_count = logs.count('ECONNREFUSED') + logs.count('ECONNRESET')
+
+            if pod_status == 'Running' and is_connected and error_count < 5:
+                return {'status': 'Active', 'pod_status': 'Running',
+                        'note': 'earnings not available via API'}
+            elif pod_status == 'Running':
+                return {'status': 'Intermittent', 'pod_status': 'Running',
+                        'errors': error_count, 'note': 'failing connections to proxy'}
+            else:
+                return {'status': 'Inactive', 'pod_status': pod_status,
+                        'note': 'pod not running'}
+        except Exception as e:
+            print(f'Repocket check error: {e}')
+            return {'status': 'Unknown', 'error': str(e)}
 
     def main():
         ts = datetime.now(timezone.utc).isoformat()
@@ -163,6 +202,9 @@ data:
                 'location': {}
             }
 
+        # Repocket
+        rp_data = repocket_check()
+
         # Combine
         data = {
             '_meta': {
@@ -176,6 +218,7 @@ data:
             data['honeygain'] = hg_data
 
         data['mysterium'] = myst_data
+        data['repocket'] = rp_data
 
         os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
         with open(DATA_PATH, 'w') as f:

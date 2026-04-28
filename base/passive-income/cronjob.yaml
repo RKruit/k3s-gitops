@@ -28,13 +28,16 @@ spec:
                 - name: scraper-script
                   mountPath: /scraper
                   readOnly: true
+                - name: talos-kubeconfig
+                  mountPath: /secrets/talos/kubeconfig
+                  readOnly: true
               resources:
                 limits:
-                  memory: 128Mi
-                  cpu: 100m
+                  memory: 256Mi
+                  cpu: 200m
                 requests:
-                  memory: 64Mi
-                  cpu: 10m
+                  memory: 128Mi
+                  cpu: 20m
           volumes:
             - name: data
               persistentVolumeClaim:
@@ -54,3 +57,7 @@ spec:
             - name: scraper-script
               configMap:
                 name: passive-income-scraper
+            - name: talos-kubeconfig
+              hostPath:
+                path: /home/rkruit/gitops/talos/kubeconfig
+                type: File
