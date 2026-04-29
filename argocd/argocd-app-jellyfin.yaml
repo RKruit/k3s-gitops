@@ -1,0 +1,92 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jellyfin
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://jellyfin.github.io/jellyfin-helm
+    targetRevision: 3.2.0
+    chart: jellyfin
+    helm:
+      releaseName: jellyfin
+      values: |
+        image:
+          repository: docker.io/jellyfin/jellyfin
+          pullPolicy: IfNotPresent
+
+        service:
+          type: ClusterIP
+          port: 8096
+
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          hosts:
+            - host: jellyfin.oostrandpark.com
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - secretName: jellyfin-tls
+              hosts:
+                - jellyfin.oostrandpark.com
+
+        persistence:
+          config:
+            enabled: true
+            storageClass: nfs
+            accessMode: ReadWriteOnce
+            size: 5Gi
+
+          media:
+            enabled: false
+
+          cache:
+            enabled: true
+            type: pvc
+            storageClass: nfs
+            accessMode: ReadWriteOnce
+            size: 10Gi
+
+        volumes:
+          - name: movies
+            nfs:
+              server: 192.168.1.2
+              path: /volume1/movies
+          - name: series
+            nfs:
+              server: 192.168.1.2
+              path: /volume1/Series
+
+        volumeMounts:
+          - name: movies
+            mountPath: /media/movies
+          - name: series
+            mountPath: /media/series
+
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "2"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jellyfin
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Prune=true
