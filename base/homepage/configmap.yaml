@@ -30,7 +30,7 @@ data:
             widget:
               type: argocd
               url: https://argocd.oostrandpark.com
-              key: "{{HOMEPAGE_VAR_ARGOCD_KEY}}"
+              key: {{HOMEPAGE_VAR_ARGOCD_KEY}}
     - Media:
         - Jellyfin:
             href: https://jellyfin.oostrandpark.com
