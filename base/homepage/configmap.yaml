@@ -61,7 +61,4 @@ data:
     - search:
         provider: duckduckgo
         target: _blank
-    - argocd:
-        url: https://argocd.oostrandpark.com
-        key: "{{HOMEPAGE_VAR_ARGOCD_KEY}}"
   docker.yaml: ""
