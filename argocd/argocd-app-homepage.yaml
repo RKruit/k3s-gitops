@@ -11,20 +11,9 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    chart: homepage
-    helm:
-      releaseName: homepage
-      values: "\ningress:\n  enabled: true\n  className: traefik\n  annotations:\n\
-        \    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure\n   \
-        \ traefik.io/ingress-backend: traefik.io/v1alpha1\n    cert-manager.io/cluster-issuer:\
-        \ \"letsencrypt-prod\"\n  hosts:\n    - host: homepage.oostrandpark.com\n\
-        \      paths:\n        - path: /\n          pathType: Prefix\n  tls:\n   \
-        \ - secretName: homepage-tls\n      hosts:\n        - homepage.oostrandpark.com\n\
-        \npersistence:\n  enabled: true\n  storageClass: nfs\n  size: 2Gi\n\nresources:\n\
-        \  requests:\n    memory: \"128Mi\"\n    cpu: \"100m\"\n  limits:\n    memory:\
-        \ \"512Mi\"\n    cpu: \"500m\"\n"
-    repoURL: https://homepage.chartmuseum.io/
-    targetRevision: 0.12.0
+    repoURL: https://github.com/RKruit/k3s-gitops
+    targetRevision: main
+    path: base/homepage
   syncPolicy:
     automated:
       prune: true
