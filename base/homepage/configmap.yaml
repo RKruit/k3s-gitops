@@ -27,6 +27,10 @@ data:
         - ArgoCD:
             href: https://argocd.oostrandpark.com
             description: GitOps deployments
+            widget:
+              type: argocd
+              url: https://argocd.oostrandpark.com
+              key: "{{HOMEPAGE_VAR_ARGOCD_KEY}}"
     - Media:
         - Jellyfin:
             href: https://jellyfin.oostrandpark.com
@@ -57,4 +61,7 @@ data:
     - search:
         provider: duckduckgo
         target: _blank
+    - argocd:
+        url: https://argocd.oostrandpark.com
+        key: "{{HOMEPAGE_VAR_ARGOCD_KEY}}"
   docker.yaml: ""

@@ -9,6 +9,7 @@ resources:
   - sa-token.yaml
   - clusterrole.yaml
   - clusterrolebinding.yaml
+  - sealed-argocd-key.yaml
   - configmap.yaml
   - service.yaml
   - deployment.yaml
