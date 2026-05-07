@@ -4,61 +4,29 @@ metadata:
   name: homepage
   namespace: homepage
   labels:
+    app.kubernetes.io/instance: homepage
     app.kubernetes.io/name: homepage
 data:
-  kubernetes.yaml: |
-    mode: cluster
-  settings.yaml: ""
-  custom.css: ""
-  custom.js: ""
-  bookmarks.yaml: |
-    - Development:
-        - Github:
-            - abbr: GH
-              href: https://github.com/
-  services.yaml: |
-    - Infrastructure:
-        - Netdata:
-            href: https://netdata.oostrandpark.com
-            description: Server monitoring
-        - Uptime Kuma:
-            href: https://uptime.oostrandpark.com
-            description: Status monitoring
-        - ArgoCD:
-            href: https://argocd.oostrandpark.com
-            description: GitOps deployments
-            widget:
-              type: argocd
-              url: https://argocd.oostrandpark.com
-              key: {{HOMEPAGE_VAR_ARGOCD_KEY}}
-    - Media:
-        - Jellyfin:
-            href: https://jellyfin.oostrandpark.com
-            description: Media server
-    - Passive Income:
-        - Dashboard:
-            href: https://passive.oostrandpark.com
-            description: Earnings dashboard
-  widgets.yaml: |
-    - kubernetes:
-        cluster:
-          show: true
-          cpu: true
-          memory: true
-          showLabel: true
-          label: "sv01"
-        nodes:
-          show: true
-          cpu: true
-          memory: true
-          showLabel: true
-    - resources:
-        backend: resources
-        expanded: true
-        cpu: true
-        memory: true
-        network: default
-    - search:
-        provider: duckduckgo
-        target: _blank
-  docker.yaml: ""
+  bookmarks.yaml: "- Development:\n    - Github:\n        - abbr: GH\n          href:\
+    \ https://github.com/\n"
+  custom.css: ''
+  custom.js: ''
+  docker.yaml: ''
+  kubernetes.yaml: 'mode: cluster
+
+    '
+  services.yaml: "- Infrastructure:\n    - Netdata:\n        href: https://netdata.oostrandpark.com\n\
+    \        description: Server monitoring\n    - Uptime Kuma:\n        href: https://uptime.oostrandpark.com\n\
+    \        description: Status monitoring\n    - ArgoCD:\n        href: https://argocd.oostrandpark.com\n\
+    \        description: GitOps deployments\n        widget:\n          type: argocd\n\
+    \          url: https://argocd.oostrandpark.com\n          key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJob21lcGFnZTphcGlLZXkiLCJuYmYiOjE3NzgxMDc2NzgsImlhdCI6MTc3ODEwNzY3OCwianRpIjoiYWJhMGI1Y2QtZTBhZC00NGMyLWFjZjAtZmRiMjlmODIxOTExIn0.tWxD8Nr4_HGx8VX5wxhZz8dopufMMVGdbviwTTYbwZs\n\
+    - Media:\n    - Jellyfin:\n        href: https://jellyfin.oostrandpark.com\n \
+    \       description: Media server\n- Passive Income:\n    - Dashboard:\n     \
+    \   href: https://passive.oostrandpark.com\n        description: Earnings dashboard\n"
+  settings.yaml: ''
+  widgets.yaml: "- kubernetes:\n    cluster:\n      show: true\n      cpu: true\n\
+    \      memory: true\n      showLabel: true\n      label: \"sv01\"\n    nodes:\n\
+    \      show: true\n      cpu: true\n      memory: true\n      showLabel: true\n\
+    - resources:\n    backend: resources\n    expanded: true\n    cpu: true\n    memory:\
+    \ true\n    network: default\n- search:\n    provider: duckduckgo\n    target:\
+    \ _blank\n"
