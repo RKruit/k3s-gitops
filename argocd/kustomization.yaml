@@ -26,3 +26,4 @@ resources:
   - argocd-app-passive-income.yaml
   - argocd-app-jellyfin.yaml
   - argocd-app-it-tools.yaml
+  - argocd-app-authentik.yaml

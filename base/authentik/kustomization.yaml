@@ -1,0 +1,68 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: authentik
+
+resources:
+  - namespace.yaml
+  - certificate.yaml
+  - sealed-secret.yaml
+
+helmCharts:
+  - name: authentik
+    repo: https://charts.goauthentik.io
+    version: "2026.2.2"
+    releaseName: authentik
+    namespace: authentik
+    valuesInline:
+      authentik:
+        log_level: info
+        error_reporting:
+          enabled: false
+        existingSecret:
+          secretName: authentik-secrets
+        postgresql:
+          host: authentik-postgresql
+          port: 5432
+          name: authentik
+          user: authentik
+
+      server:
+        ingress:
+          enabled: true
+          ingressClassName: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+          hosts:
+            - auth.oostrandpark.com
+          tls:
+            - secretName: authentik-tls
+              hosts:
+                - auth.oostrandpark.com
+
+      postgresql:
+        enabled: true
+        auth:
+          username: authentik
+          database: authentik
+          existingSecret: authentik-secrets
+          secretKeys:
+            userPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+        primary:
+          persistence:
+            enabled: true
+            storageClass: nfs
+            size: 5Gi
+
+      redis:
+        enabled: true
+        architecture: standalone
+        auth:
+          enabled: false
+        master:
+          persistence:
+            enabled: true
+            storageClass: nfs
+            size: 1Gi
