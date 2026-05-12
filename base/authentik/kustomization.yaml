@@ -15,17 +15,28 @@ helmCharts:
     releaseName: authentik
     namespace: authentik
     valuesInline:
+      global:
+        env:
+          - name: AUTHENTIK_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: authentik-secrets
+                key: AUTHENTIK_SECRET_KEY
+
       authentik:
         log_level: info
         error_reporting:
           enabled: false
-        existingSecret:
-          secretName: authentik-secrets
         postgresql:
           host: authentik-postgresql
           port: 5432
           name: authentik
           user: authentik
+          password: ""
+          use_pgpass: true
+          pgpass_secret:
+            name: authentik-secrets
+            key: AUTHENTIK_POSTGRESQL__PASSWORD
 
       server:
         ingress:
