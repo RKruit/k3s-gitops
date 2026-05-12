@@ -22,6 +22,11 @@ helmCharts:
               secretKeyRef:
                 name: authentik-secrets
                 key: AUTHENTIK_SECRET_KEY
+          - name: AUTHENTIK_POSTGRESQL__PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: authentik-secrets
+                key: AUTHENTIK_POSTGRESQL__PASSWORD
 
       authentik:
         log_level: info
@@ -32,11 +37,6 @@ helmCharts:
           port: 5432
           name: authentik
           user: authentik
-          password: ""
-          use_pgpass: true
-          pgpass_secret:
-            name: authentik-secrets
-            key: AUTHENTIK_POSTGRESQL__PASSWORD
 
       server:
         ingress:
