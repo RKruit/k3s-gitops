@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+data:
+  url: https://argocd.oostrandpark.com
+  oidc.config: |
+    name: Authentik
+    issuer: https://auth.oostrandpark.com/application/o/argocd/
+    clientID: gskpOazwKtg1GarCLG30TiqrWhKNzVOvNmNTbvhq
+    clientSecret: $oidc.authentik.clientSecret
+    requestedScopes:
+      - openid
+      - profile
+      - email
+      - groups
+    requestedIDTokenClaims:
+      groups:
+        essential: true
