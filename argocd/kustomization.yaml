@@ -25,3 +25,4 @@ resources:
   - argocd-app-sv02-repocket.yaml
   - argocd-app-passive-income.yaml
   - argocd-app-jellyfin.yaml
+  - argocd-app-it-tools.yaml
