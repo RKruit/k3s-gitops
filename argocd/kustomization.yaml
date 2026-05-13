@@ -27,3 +27,4 @@ resources:
   - argocd-app-jellyfin.yaml
   - argocd-app-it-tools.yaml
   - argocd-app-authentik.yaml
+  - argocd-app-sv02-open-webui.yaml
