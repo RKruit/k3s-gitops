@@ -1,25 +1,28 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: headlamp
-  namespace: headlamp
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.tls: "true"
+    # Uncomment the line below to use Traefik ForwardAuth instead of native OIDC
+    # traefik.ingress.kubernetes.io/router.middlewares: headlamp-authentik-forward-auth@kubernetescrd
   labels:
+    app.kubernetes.io/instance: headlamp
     app.kubernetes.io/name: headlamp
+  name: headlamp
+  namespace: headlamp
 spec:
   rules:
   - host: headlamp.oostrandpark.com
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
+      - backend:
           service:
             name: headlamp
             port:
               number: 80
+        path: /
+        pathType: Prefix
   tls:
   - hosts:
     - headlamp.oostrandpark.com

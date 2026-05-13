@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: headlamp
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: headlamp
+    app.kubernetes.io/version: "0.33.0"
+    helm.sh/chart: headlamp-0.33.0
+  name: headlamp
+  namespace: headlamp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: headlamp
+      app.kubernetes.io/name: headlamp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: headlamp
+        app.kubernetes.io/name: headlamp
+    spec:
+      containers:
+      - args:
+        - -in-cluster
+        - -plugins-dir=/headlamp/plugins
+        - -oidc-client-id=$(OIDC_CLIENT_ID)
+        - -oidc-client-secret=$(OIDC_CLIENT_SECRET)
+        - -oidc-issuer-url=https://auth.oostrandpark.com/application/o/headlamp/
+        - -oidc-scopes=openid,profile,email,groups
+        env:
+        - name: OIDC_CLIENT_ID
+          value: "uCNSfaAKRgrBg3aGMk1NEJ3vF95gvuIHGCr2TQhU"
+        - name: OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: headlamp-oidc-secret
+              key: client-secret
+        image: ghcr.io/headlamp-k8s/headlamp:v0.33.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+        name: headlamp
+        ports:
+        - containerPort: 4466
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          periodSeconds: 10
+        resources: {}
+        securityContext:
+          privileged: false
+          runAsGroup: 101
+          runAsNonRoot: true
+          runAsUser: 100
+      securityContext: {}
+      serviceAccountName: headlamp

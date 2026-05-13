@@ -1,21 +1,12 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-helmCharts:
-  - name: headlamp
-    repo: https://kubernetes-sigs.github.io/headlamp
-    version: "0.33.0"
-    releaseName: headlamp
-    namespace: headlamp
-    valuesInline:
-      ingress:
-        enabled: false
-      service:
-        type: ClusterIP
-        port: 80
-
-namespace: headlamp
-
 resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - clusterrolebinding.yaml
   - certificate.yaml
+  - service.yaml
+  - deployment.yaml
   - ingress.yaml
+  - forwardauth-middleware.yaml
+  - sealed-secret.yaml
