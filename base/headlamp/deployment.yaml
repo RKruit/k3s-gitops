@@ -27,7 +27,7 @@ spec:
         - -plugins-dir=/headlamp/plugins
         - -oidc-client-id=$(OIDC_CLIENT_ID)
         - -oidc-client-secret=$(OIDC_CLIENT_SECRET)
-        - -oidc-issuer-url=https://auth.oostrandpark.com/application/o/headlamp/
+        - -oidc-idp-issuer-url=https://auth.oostrandpark.com/application/o/headlamp/
         - -oidc-scopes=openid,profile,email,groups
         env:
         - name: OIDC_CLIENT_ID
