@@ -85,7 +85,7 @@ spec:
         - name: MOD_IDS
           value: ""
         - name: CUSTOM_SERVER_ARGS
-          value: ""
+          value: "?XPMultiplier=2.0"
         - name: DISABLE_POK_MONITOR
           value: "TRUE"
         resources:
