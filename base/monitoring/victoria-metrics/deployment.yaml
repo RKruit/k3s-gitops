@@ -20,7 +20,6 @@ spec:
           image: victoriametrics/victoria-metrics:v1.111.0
           args:
             - "-retentionPeriod=7d"
-            - "-search.maxUniqueTimeSeries=500000"
             - "-promscrape.config=/etc/prometheus/prometheus.yml"
             - "-promscrape.config.strictParsing=false"
           ports:
