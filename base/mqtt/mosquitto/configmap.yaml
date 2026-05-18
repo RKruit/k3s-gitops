@@ -5,7 +5,7 @@ metadata:
   namespace: mqtt
 data:
   mosquitto.conf: |
-    listener 1883 mqtt
+    listener 1883
     allow_anonymous false
     password_file /mosquitto/data/passwd
     persistence false
