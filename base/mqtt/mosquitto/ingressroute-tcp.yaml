@@ -7,8 +7,7 @@ spec:
   entryPoints:
     - mqtt
   routes:
-    - kind: Rule
-      match: HostSNI(`*`)
+    - match: HostSNI(`*`)
       services:
         - name: mosquitto
           port: 1883
