@@ -20,3 +20,8 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  ignoreDifferences:
+    - group: traefik.io
+      kind: IngressRouteTCP
+      jsonPointers:
+        - /status
