@@ -21,7 +21,6 @@ spec:
           args:
             - "-retentionPeriod=7d"
             - "-promscrape.config=/etc/prometheus/prometheus.yml"
-            - "-promscrape.config.strictParsing=false"
           ports:
             - name: http
               containerPort: 8428
