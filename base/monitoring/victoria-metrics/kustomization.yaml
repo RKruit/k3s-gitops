@@ -5,6 +5,9 @@ namespace: monitoring
 
 resources:
   - namespace.yaml
+  - serviceaccount.yaml
+  - clusterrole.yaml
+  - clusterrolebinding.yaml
   - configmap.yaml
   - pvc.yaml
   - deployment.yaml
