@@ -7,7 +7,7 @@ resources:
   - argocd-app-asa-server.yaml
   - argocd-app-bootstrap.yaml
   - argocd-app-nfs-provisioner.yaml
-  - argocd-app-netdata.yaml
+  - argocd-app-victoria-metrics.yaml
   - argocd-app-uptime-kuma.yaml
   - argocd-app-sealed-secrets.yaml
   - argocd-app-cert-manager.yaml

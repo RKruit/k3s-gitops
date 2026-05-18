@@ -1,14 +1,14 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: netdata-tls
+  name: victoria-metrics-tls
   namespace: monitoring
   labels:
-    app.kubernetes.io/instance: netdata
+    app: victoria-metrics
 spec:
   dnsNames:
-  - netdata.oostrandpark.com
+    - monsv01.oostrandpark.com
   issuerRef:
     kind: ClusterIssuer
     name: letsencrypt-prod
-  secretName: netdata-tls
+  secretName: victoria-metrics-tls
