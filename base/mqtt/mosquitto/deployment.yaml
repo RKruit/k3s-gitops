@@ -21,7 +21,10 @@ spec:
             - |
               USERNAME=$(cat /etc/mosquitto-creds/username)
               PASSWORD=$(cat /etc/mosquitto-creds/password)
+              mkdir -p /mosquitto-data
+              touch /mosquitto-data/passwd
               mosquitto_passwd -b /mosquitto-data/passwd "${USERNAME}" "${PASSWORD}"
+              echo "--- passwd file contents ---"
               cat /mosquitto-data/passwd
           volumeMounts:
             - name: passwd-data
@@ -29,6 +32,13 @@ spec:
             - name: mosquitto-creds
               mountPath: /etc/mosquitto-creds
               readOnly: true
+          resources:
+            limits:
+              cpu: 100m
+              memory: 32Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2
@@ -47,10 +57,6 @@ spec:
               port: 1883
             initialDelaySeconds: 5
             periodSeconds: 10
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            runAsUser: 1883
           volumeMounts:
             - name: mosquitto-config
               mountPath: /mosquitto/config/mosquitto.conf
@@ -59,6 +65,13 @@ spec:
               mountPath: /mosquitto/data
             - name: tmp
               mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
       volumes:
         - name: mosquitto-config
           configMap:
@@ -75,5 +88,3 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
-      securityContext:
-        fsGroup: 1883
