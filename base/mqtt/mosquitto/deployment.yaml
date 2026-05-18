@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: mqtt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      initContainers:
+        - name: passwd-init
+          image: eclipse-mosquitto:2
+          command: ["sh", "-c"]
+          args:
+            - |
+              USERNAME=$(cat /etc/mosquitto-creds/username)
+              PASSWORD=$(cat /etc/mosquitto-creds/password)
+              mosquitto_passwd -b /mosquitto-data/passwd "${USERNAME}" "${PASSWORD}"
+              cat /mosquitto-data/passwd
+          volumeMounts:
+            - name: passwd-data
+              mountPath: /mosquitto-data
+            - name: mosquitto-creds
+              mountPath: /etc/mosquitto-creds
+              readOnly: true
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mqtt
+              containerPort: 1883
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 1883
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 1883
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1883
+          volumeMounts:
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: passwd-data
+              mountPath: /mosquitto/data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
+        - name: mosquitto-creds
+          secret:
+            secretName: mosquitto-password
+            items:
+              - key: username
+                path: username
+              - key: password
+                path: password
+        - name: passwd-data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+      securityContext:
+        fsGroup: 1883
