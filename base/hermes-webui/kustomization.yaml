@@ -5,6 +5,8 @@ namespace: hermes-webui
 
 resources:
   - namespace.yaml
+  - clusterrole.yaml
+  - clusterrolebinding.yaml
   - sealedsecret.yaml
   - deployment.yaml
   - svc.yaml
