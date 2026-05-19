@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/RKruit/talos-gitops
+    repoURL: https://github.com/RKruit/k3s-gitops
     targetRevision: main
     path: base/monitoring/victoria-metrics
   destination:

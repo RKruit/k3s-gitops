@@ -10,8 +10,12 @@ data:
         static_configs:
           - targets: ['node-exporter.monitoring.svc:9100']
             labels:
-              instance: 'sv01'
+              instance: 'sv02'
         scrape_interval: 15s
+      - job_name: 'kube-state-metrics'
+        static_configs:
+          - targets: ['kube-state-metrics.monitoring.svc:8080']
+        scrape_interval: 30s
       - job_name: 'kubernetes-pods'
         kubernetes_sd_configs:
           - role: pod

@@ -6,12 +6,9 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  tls:
-    - hosts:
-        - dashsv01.oostrandpark.com
-      secretName: cluster-dashboard-tls
+  ingressClassName: traefik
   rules:
-    - host: dashsv01.oostrandpark.com
+    - host: dashsv02.oostrandpark.com
       http:
         paths:
           - path: /
@@ -20,4 +17,8 @@ spec:
               service:
                 name: cluster-dashboard
                 port:
-                  number: 8080
+                  number: 80
+  tls:
+    - hosts:
+        - dashsv02.oostrandpark.com
+      secretName: cluster-dashboard-tls

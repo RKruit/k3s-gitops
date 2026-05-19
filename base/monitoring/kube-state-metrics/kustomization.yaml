@@ -4,15 +4,8 @@ kind: Kustomization
 namespace: monitoring
 
 resources:
-  - namespace.yaml
   - serviceaccount.yaml
   - clusterrole.yaml
   - clusterrolebinding.yaml
-  - configmap.yaml
-  - pvc.yaml
   - deployment.yaml
   - service.yaml
-  - service-nodeexporter.yaml
-  - daemonset.yaml
-  - certificate.yaml
-  - ingress.yaml

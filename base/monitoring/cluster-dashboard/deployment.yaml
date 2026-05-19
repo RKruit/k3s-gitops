@@ -19,11 +19,11 @@ spec:
         - name: nginx
           image: nginx:alpine
           ports:
-            - containerPort: 8080
-              name: http
+            - name: http
+              containerPort: 80
           resources:
             requests:
-              cpu: "20m"
+              cpu: "50m"
               memory: "32Mi"
             limits:
               cpu: "100m"
@@ -33,19 +33,12 @@ spec:
               mountPath: /usr/share/nginx/html
               readOnly: true
             - name: nginx-config
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
+              mountPath: /etc/nginx/conf.d
               readOnly: true
       volumes:
         - name: html
           configMap:
             name: cluster-dashboard
-            items:
-              - key: index.html
-                path: index.html
         - name: nginx-config
           configMap:
-            name: cluster-dashboard
-            items:
-              - key: nginx.conf
-                path: nginx.conf
+            name: cluster-dashboard-nginx

@@ -5,11 +5,10 @@ metadata:
   namespace: monitoring
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.io/ingress-backend: traefik.io/v1alpha1
 spec:
   ingressClassName: traefik
   rules:
-    - host: monsv01.oostrandpark.com
+    - host: monsv02.oostrandpark.com
       http:
         paths:
           - path: /
@@ -21,5 +20,5 @@ spec:
                   number: 8428
   tls:
     - hosts:
-        - monsv01.oostrandpark.com
+        - monsv02.oostrandpark.com
       secretName: victoria-metrics-tls
