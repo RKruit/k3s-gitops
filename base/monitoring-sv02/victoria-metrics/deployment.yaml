@@ -1,0 +1,51 @@
+     1|apiVersion: apps/v1
+     2|kind: Deployment
+     3|metadata:
+     4|  name: victoria-metrics
+     5|  namespace: monitoring
+     6|  labels:
+     7|    app: victoria-metrics
+     8|spec:
+     9|  replicas: 1
+    10|  selector:
+    11|    matchLabels:
+    12|      app: victoria-metrics
+    13|  template:
+    14|    metadata:
+    15|      labels:
+    16|        app: victoria-metrics
+    17|    spec:
+    18|      serviceAccountName: victoria-metrics
+    19|      containers:
+    20|        - name: victoria-metrics
+    21|          image: victoriametrics/victoria-metrics:v1.111.0
+    22|          args:
+    23|            - "-retentionPeriod=7d"
+    24|            - "-promscrape.config=/etc/prometheus/prometheus.yml"
+    25|          ports:
+    26|            - name: http
+    27|              containerPort: 8428
+    28|          resources:
+    29|            requests:
+    30|              cpu: "100m"
+    31|              memory: "256Mi"
+    32|            limits:
+    33|              cpu: "500m"
+    34|              memory: "512Mi"
+    35|          volumeMounts:
+    36|            - name: data
+    37|              mountPath: /victoria-metrics-data
+    38|            - name: config
+    39|              mountPath: /etc/prometheus
+    40|              readOnly: true
+    41|      volumes:
+    42|        - name: data
+    43|          persistentVolumeClaim:
+    44|            claimName: victoria-metrics-data
+    45|        - name: config
+    46|          configMap:
+    47|            name: victoria-metrics-scrape
+    48|            items:
+    49|              - key: prometheus.yml
+    50|                path: prometheus.yml
+    51|

@@ -1,0 +1,15 @@
+     1|apiVersion: v1
+     2|kind: Service
+     3|metadata:
+     4|  name: victoria-metrics
+     5|  namespace: monitoring
+     6|  labels:
+     7|    app: victoria-metrics
+     8|spec:
+     9|  ports:
+    10|    - name: http
+    11|      port: 8428
+    12|      targetPort: 8428
+    13|  selector:
+    14|    app: victoria-metrics
+    15|

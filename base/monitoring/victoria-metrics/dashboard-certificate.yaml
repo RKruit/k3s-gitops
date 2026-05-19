@@ -1,14 +1,14 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: victoria-metrics-tls
+  name: cluster-dashboard-tls
   namespace: monitoring
   labels:
-    app: victoria-metrics
+    app: cluster-dashboard
 spec:
   dnsNames:
-    - monsv01.oostrandpark.com
+    - dashsv01.oostrandpark.com
   issuerRef:
     kind: ClusterIssuer
     name: letsencrypt-prod
-  secretName: victoria-metrics-tls
+  secretName: cluster-dashboard-tls

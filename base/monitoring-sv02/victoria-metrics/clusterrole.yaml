@@ -1,0 +1,12 @@
+     1|apiVersion: rbac.authorization.k8s.io/v1
+     2|kind: ClusterRole
+     3|metadata:
+     4|  name: victoria-metrics
+     5|rules:
+     6|  - apiGroups: [""]
+     7|    resources: ["pods", "nodes", "nodes/proxy", "services", "endpoints"]
+     8|    verbs: ["get", "list", "watch"]
+     9|  - apiGroups: ["apps"]
+    10|    resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+    11|    verbs: ["get", "list", "watch"]
+    12|

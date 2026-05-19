@@ -1,0 +1,13 @@
+     1|apiVersion: v1
+     2|kind: PersistentVolumeClaim
+     3|metadata:
+     4|  name: victoria-metrics-data
+     5|  namespace: monitoring
+     6|spec:
+     7|  storageClassName: nfs
+     8|  accessModes:
+     9|    - ReadWriteOnce
+    10|  resources:
+    11|    requests:
+    12|      storage: 5Gi
+    13|

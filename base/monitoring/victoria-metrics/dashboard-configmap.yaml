@@ -1,0 +1,225 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-dashboard
+  namespace: monitoring
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sv01 Cluster Dashboard</title>
+    <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+    h1 { color: #58a6ff; font-size: 1.4em; margin-bottom: 4px; }
+    .subtitle { color: #8b949e; font-size: 0.8em; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+    .card-title { color: #8b949e; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .card-value { font-size: 1.8em; font-weight: 700; color: #f0f6fc; }
+    .card-sub { font-size: 0.75em; color: #8b949e; margin-top: 2px; }
+    .bar-bg { background: #21262d; border-radius: 4px; height: 8px; margin-top: 6px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+    .green { background: #2ea043; }
+    .yellow { background: #d29922; }
+    .red { background: #f85149; }
+    .blue { background: #58a6ff; }
+    .purple { background: #bc8cff; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8em; }
+    th { text-align: left; padding: 6px 8px; color: #8b949e; border-bottom: 1px solid #30363d; font-weight: 600; }
+    td { padding: 5px 8px; border-bottom: 1px solid #21262d; }
+    .status-ok { color: #2ea043; }
+    .status-warn { color: #d29922; }
+    .status-err { color: #f85149; }
+    .refresh-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .refresh-bar label { color: #8b949e; font-size: 0.75em; }
+    select, button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 4px; padding: 4px 8px; font-size: 0.8em; }
+    button { cursor: pointer; }
+    button:hover { background: #30363d; }
+    .section-title { color: #58a6ff; font-size: 1em; font-weight: 600; margin: 14px 0 8px; }
+    canvas { display: block; width: 100%; height: 44px; }
+    </style>
+    </head>
+    <body>
+    <h1>sv01 Cluster Dashboard</h1>
+    <div class="subtitle">VictoriaMetrics &mdash; auto-refreshes every <span id="interval-label">10</span>s</div>
+
+    <div class="refresh-bar">
+      <button onclick="refresh()">Refresh Now</button>
+      <label>Interval:
+        <select id="refresh-interval" onchange="setRef()">
+          <option value="5">5s</option>
+          <option value="10" selected>10s</option>
+          <option value="30">30s</option>
+        </select>
+      </label>
+      <span id="last-refresh" style="margin-left:auto;color:#8b949e;font-size:0.75em"></span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">CPU Usage</div>
+        <div class="card-value" id="cpu-val">--</div>
+        <div class="card-sub" id="cpu-sub"></div>
+        <div class="bar-bg"><div class="bar-fill green" id="cpu-bar" style="width:0%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Memory</div>
+        <div class="card-value" id="mem-val">--</div>
+        <div class="card-sub" id="mem-sub"></div>
+        <div class="bar-bg"><div class="bar-fill blue" id="mem-bar" style="width:0%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Disk (root)</div>
+        <div class="card-value" id="disk-val">--</div>
+        <div class="card-sub" id="disk-sub"></div>
+        <div class="bar-bg"><div class="bar-fill purple" id="disk-bar" style="width:0%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Load Average</div>
+        <div class="card-value" id="load-val">--</div>
+        <div class="card-sub" id="load-sub"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Network (eth0)</div>
+        <div class="card-value" id="net-val">--</div>
+        <div class="card-sub">rx / tx</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Uptime</div>
+        <div class="card-value" id="uptime-val">--</div>
+        <div class="card-sub" id="cpu-cores"></div>
+      </div>
+    </div>
+
+    <div class="section-title">CPU &amp; Memory History (3h)</div>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card"><div class="card-title">CPU %</div><canvas id="cpu-canvas"></canvas></div>
+      <div class="card"><div class="card-title">Memory %</div><canvas id="mem-canvas"></canvas></div>
+    </div>
+
+    <div class="section-title">Filesystems</div>
+    <div class="card" style="overflow-x:auto;">
+      <table id="disk-table">
+        <thead><tr><th>Mount</th><th>Device</th><th>Total</th><th>Used</th><th>Avail</th><th>Use%</th></tr></thead>
+        <tbody id="disk-tbody"><tr><td colspan="6" style="color:#8b949e">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Network Interfaces</div>
+    <div class="card" style="overflow-x:auto;">
+      <table id="net-table">
+        <thead><tr><th>Interface</th><th>RX Rate</th><th>TX Rate</th><th>MTU</th><th>Carrier</th></tr></thead>
+        <tbody id="net-tbody"><tr><td colspan="5" style="color:#8b949e">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">VM Scrape Targets</div>
+    <div class="card" style="overflow-x:auto;">
+      <table id="targets-table">
+        <thead><tr><th>Job</th><th>Target</th><th>Health</th><th>Last Scrape</th><th>Samples</th></tr></thead>
+        <tbody id="targets-tbody"><tr><td colspan="5" style="color:#8b949e">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <script>
+    const VM='/api/v1';let timer=null,cpuH=[],memH=[];const MH=120;
+    function fB(b){if(b<1024)return b.toFixed(0)+' B';if(b<1048576)return(b/1024).toFixed(1)+' KiB';if(b<1073741824)return(b/1048576).toFixed(1)+' MiB';return(b/1073741824).toFixed(2)+' GiB'}
+    function fR(b){if(b<1024)return b.toFixed(0)+' B/s';if(b<1048576)return(b/1024).toFixed(1)+' KiB/s';return(b/1048576).toFixed(2)+' MiB/s'}
+    function fD(s){const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);if(d>0)return d+'d '+h+'h';if(h>0)return h+'h '+m+'m';return m+'m'}
+    function bC(p){return p>85?'red':p>65?'yellow':'green'}
+    async function q(e){const r=await fetch(VM+'/query?'+new URLSearchParams({query:e}));return r.json()}
+    function dS(id,d,mx){const c=document.getElementById(id);if(!c||!d.length)return;const x=c.getContext('2d'),w=c.offsetWidth,h=c.offsetHeight;c.width=w*2;c.height=h*2;x.scale(2,2);x.clearRect(0,0,w,h);const m=Math.max(mx||0,...d,1);x.beginPath();const st=w/(d.length-1||1);for(let i=0;i<d.length;i++){const px=i*st,y=h-(d[i]/m)*(h-4)-2;i===0?x.moveTo(px,y):x.lineTo(px,y)}x.strokeStyle='#58a6ff';x.lineWidth=1.5;x.stroke();x.lineTo((d.length-1)*st,h);x.lineTo(0,h);x.closePath();x.fillStyle='rgba(88,166,255,0.06)';x.fill()}
+
+    async function refresh(){
+    try{
+      const cpuQ=await q('100 - avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m]) * 100)');
+      const cpuV=cpuQ.data?.result?.[0]?.value?.[1];
+      if(cpuV!==undefined){const v=parseFloat(cpuV);document.getElementById('cpu-val').textContent=v.toFixed(1)+'%';document.getElementById('cpu-bar').style.width=Math.min(v,100)+'%';document.getElementById('cpu-bar').className='bar-fill '+bC(v);cpuH.push(v);if(cpuH.length>MH)cpuH.shift()}
+      const cQ=await q('count(node_cpu_seconds_total{mode="idle"}) without(cpu)');
+      const cr=cQ.data?.result?.[0]?.value?.[1];if(cr)document.getElementById('cpu-cores').textContent=cr+' cores';
+
+      const mpQ=await q('(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100');
+      const mp=mpQ.data?.result?.[0]?.value?.[1];
+      if(mp!==undefined){const v=parseFloat(mp);const tQ=await q('node_memory_MemTotal_bytes'),aQ=await q('node_memory_MemAvailable_bytes');
+      const t=parseFloat(tQ.data?.result?.[0]?.value?.[1]||0),a=parseFloat(aQ.data?.result?.[0]?.value?.[1]||0);
+      document.getElementById('mem-val').textContent=v.toFixed(1)+'%';document.getElementById('mem-sub').textContent=fB(t-a)+' / '+fB(t);
+      document.getElementById('mem-bar').style.width=Math.min(v,100)+'%';document.getElementById('mem-bar').className='bar-fill '+(v>85?'red':v>65?'yellow':'blue');
+      memH.push(v);if(memH.length>MH)memH.shift()}
+
+      const dkQ=await q('(1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100');
+      const dk=dkQ.data?.result?.[0]?.value?.[1];
+      if(dk!==undefined){const v=parseFloat(dk);const dsQ=await q('node_filesystem_size_bytes{mountpoint="/"}'),daQ=await q('node_filesystem_avail_bytes{mountpoint="/"}');
+      const ds=parseFloat(dsQ.data?.result?.[0]?.value?.[1]||0),da=parseFloat(daQ.data?.result?.[0]?.value?.[1]||0);
+      document.getElementById('disk-val').textContent=v.toFixed(1)+'%';document.getElementById('disk-sub').textContent=fB(ds-da)+' / '+fB(ds);
+      document.getElementById('disk-bar').style.width=Math.min(v,100)+'%';document.getElementById('disk-bar').className='bar-fill '+bC(v)}
+
+      const l1=await q('node_load1'),l5=await q('node_load5'),l15=await q('node_load15');
+      if(l1.data?.result?.[0]){document.getElementById('load-val').textContent=parseFloat(l1.data.result[0].value[1]).toFixed(2);
+      document.getElementById('load-sub').textContent='5m: '+parseFloat(l5.data.result[0].value[1]).toFixed(2)+' / 15m: '+parseFloat(l15.data.result[0].value[1]).toFixed(2)}
+
+      const rx=await q('rate(node_network_receive_bytes_total{device="eth0"}[2m])'),tx=await q('rate(node_network_transmit_bytes_total{device="eth0"}[2m])');
+      if(rx.data?.result?.[0])document.getElementById('net-val').textContent=fR(parseFloat(rx.data.result[0].value[1]))+' / '+fR(parseFloat(tx.data.result[0].value[1]));
+
+      const up=await q('time() - node_boot_time_seconds');
+      if(up.data?.result?.[0])document.getElementById('uptime-val').textContent=fD(parseFloat(up.data.result[0].value[1]));
+
+      dS('cpu-canvas',cpuH,100);dS('mem-canvas',memH,100);
+
+      // Filesystems
+      const fs=await q('node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|sysfs|proc|devtmpfs|cgroup|securityfs|debugfs|fusectl|configfs|pstore|bpf|tracefs"}');
+      let dh='';for(const r of(fs.data?.result||[])){const mp=r.metric.mountpoint,dev=r.metric.device||r.metric.fstype;const tot=parseFloat(r.value[1]);
+      const aQ2=await q('node_filesystem_avail_bytes{mountpath="'+mp+'",mountpoint="'+mp+'"}');const av=parseFloat(aQ2.data?.result?.[0]?.value?.[1]||0);
+      const u=tot-av,p=tot>0?(u/tot*100).toFixed(1):0;const c=p>85?'status-err':p>65?'status-warn':'status-ok';
+      dh+='<tr><td>'+mp+'</td><td>'+dev+'</td><td>'+fB(tot)+'</td><td>'+fB(u)+'</td><td>'+fB(av)+'</td><td class="'+c+'">'+p+'%</td></tr>'}
+      document.getElementById('disk-tbody').innerHTML=dh||'<tr><td colspan="6" style="color:#8b949e">No data</td></tr>';
+
+      // Network
+      const ni=await q('node_network_info');let nh='';const seen=new Set();
+      for(const r of(ni.data?.result||[])){const ifc=r.metric.device;if(ifc==='lo'||seen.has(ifc))continue;seen.add(ifc);
+      const cQ2=await q('node_network_carrier{device="'+ifc+'"}');const mt=await q('node_network_mtu_bytes{device="'+ifc+'"}');
+      const ir=await q('rate(node_network_receive_bytes_total{device="'+ifc+'"}[2m])');const it=await q('rate(node_network_transmit_bytes_total{device="'+ifc+'"}[2m])');
+      const car=cQ2.data?.result?.[0]?.value?.[1];const cls=car==='1'?'status-ok':'status-err';
+      nh+='<tr><td>'+ifc+'</td><td>'+(ir.data?.result?.[0]?fR(parseFloat(ir.data.result[0].value[1])):'--')+'</td><td>'+(it.data?.result?.[0]?fR(parseFloat(it.data.result[0].value[1])):'--')+'</td><td>'+(mt.data?.result?.[0]?.value?.[1]||'--')+'</td><td class="'+cls+'">'+(car==='1'?'up':car||'--')+'</td></tr>'}
+      document.getElementById('net-tbody').innerHTML=nh||'<tr><td colspan="5" style="color:#8b949e">No data</td></tr>';
+
+      // Targets
+      const tg=await(await fetch(VM+'/targets')).json();let th2='';
+      for(const t of(tg.data?.activeTargets||[])){const hc=t.health==='up'?'status-ok':'status-err';
+      th2+='<tr><td>'+t.labels.job+'</td><td>'+t.scrapeUrl+'</td><td class="'+hc+'">'+t.health+'</td><td>'+t.lastScrape.replace('T',' ').replace(/\.\d+Z/,'')+'</td><td>'+t.lastSamplesScraped+'</td></tr>'}
+      document.getElementById('targets-tbody').innerHTML=th2||'<tr><td colspan="5" style="color:#8b949e">No targets</td></tr>';
+
+      document.getElementById('last-refresh').textContent=new Date().toLocaleTimeString();
+    }catch(e){console.error(e);document.getElementById('last-refresh').textContent='Error: '+e.message}
+    }
+    function setRef(){const s=parseInt(document.getElementById('refresh-interval').value);document.getElementById('interval-label').textContent=s;if(timer)clearInterval(timer);timer=setInterval(refresh,s*1000)}
+    refresh();setRef();
+    </script>
+    </body>
+    </html>
+  nginx.conf: |
+    worker_processes auto;
+    events { worker_connections 1024; }
+    http {
+      include /etc/nginx/mime.types;
+      default_type application/octet-stream;
+      sendfile on;
+      server {
+        listen 8080;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        location / {
+          try_files $uri $uri/ =404;
+        }
+
+        location /api/v1/ {
+          proxy_pass http://victoria-metrics.monitoring.svc:8428/api/v1/;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+        }
+      }
+    }
