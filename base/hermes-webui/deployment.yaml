@@ -30,6 +30,8 @@ spec:
               value: "1000"
             - name: WANTED_GID
               value: "1000"
+            - name: HERMES_WEBUI_SECURE
+              value: "0"
             - name: HERMES_SKIP_CHMOD
               value: "1"
             - name: HERMES_WEBUI_PASSWORD
