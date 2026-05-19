@@ -43,6 +43,8 @@ spec:
               value: "1"
             - name: TRUST_PROXY
               value: "1"
+            - name: COOKIE_SECURE
+              value: "0"
             - name: HERMES_HOME
               value: "/tmp/hermes"
           resources:
