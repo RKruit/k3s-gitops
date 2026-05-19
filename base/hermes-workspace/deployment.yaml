@@ -39,8 +39,6 @@ spec:
                 secretKeyRef:
                   name: hermes-workspace-secret
                   key: HERMES_PASSWORD
-            - name: COOKIE_SECURE
-              value: "1"
             - name: TRUST_PROXY
               value: "1"
             - name: COOKIE_SECURE

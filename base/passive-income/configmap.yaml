@@ -39,7 +39,7 @@ data:
     .tag.active{background:rgba(16,185,129,.15);color:var(--success)}
     .tag.inactive{background:rgba(217,119,6,.15);color:var(--warn)}
     .tag.offline{background:rgba(115,115,115,.15);color:var(--muted)}
-.tag.warn{background:rgba(217,119,6,.15);color:var(--warn)}
+    .tag.warn{background:rgba(217,119,6,.15);color:var(--warn)}
     .platform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
     .platform-stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
     .platform-stat-value{font-size:13px;font-weight:600;margin-top:2px}
