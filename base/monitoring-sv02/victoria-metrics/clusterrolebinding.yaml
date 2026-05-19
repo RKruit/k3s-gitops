@@ -1,13 +1,12 @@
-     1|apiVersion: rbac.authorization.k8s.io/v1
-     2|kind: ClusterRoleBinding
-     3|metadata:
-     4|  name: victoria-metrics
-     5|roleRef:
-     6|  apiGroup: rbac.authorization.k8s.io
-     7|  kind: ClusterRole
-     8|  name: victoria-metrics
-     9|subjects:
-    10|  - kind: ServiceAccount
-    11|    name: victoria-metrics
-    12|    namespace: monitoring
-    13|
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: victoria-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: victoria-metrics
+subjects:
+  - kind: ServiceAccount
+    name: victoria-metrics
+    namespace: monitoring

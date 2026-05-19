@@ -1,15 +1,14 @@
-     1|apiVersion: v1
-     2|kind: Service
-     3|metadata:
-     4|  name: node-exporter
-     5|  namespace: monitoring
-     6|  labels:
-     7|    app: node-exporter
-     8|spec:
-     9|  ports:
-    10|    - name: metrics
-    11|      port: 9100
-    12|      targetPort: 9100
-    13|  selector:
-    14|    app: node-exporter
-    15|
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+spec:
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+  selector:
+    app: node-exporter
