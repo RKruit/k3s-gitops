@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cluster-dashboard
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  tls:
+    - hosts:
+        - dashsv01.oostrandpark.com
+      secretName: cluster-dashboard-tls
+  rules:
+    - host: dashsv01.oostrandpark.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cluster-dashboard
+                port:
+                  number: 8080

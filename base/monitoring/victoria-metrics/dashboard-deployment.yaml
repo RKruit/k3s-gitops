@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-dashboard
+  namespace: monitoring
+  labels:
+    app: cluster-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-dashboard
+  template:
+    metadata:
+      labels:
+        app: cluster-dashboard
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: "20m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+      volumes:
+        - name: html
+          configMap:
+            name: cluster-dashboard
+            items:
+              - key: index.html
+                path: index.html
+        - name: nginx-config
+          configMap:
+            name: cluster-dashboard
+            items:
+              - key: nginx.conf
+                path: nginx.conf
