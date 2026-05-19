@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermes-workspace
+  namespace: hermes-workspace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hermes-workspace
+  template:
+    metadata:
+      labels:
+        app: hermes-workspace
+    spec:
+      containers:
+        - name: hermes-workspace
+          image: ghcr.io/outsourc-e/hermes-workspace:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "3000"
+            - name: HERMES_API_URL
+              value: "http://192.168.1.10:8642"
+            - name: HERMES_DASHBOARD_URL
+              value: "http://192.168.1.10:9119"
+            - name: HERMES_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-workspace-secret
+                  key: HERMES_API_TOKEN
+            - name: HERMES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hermes-workspace-secret
+                  key: HERMES_PASSWORD
+            - name: COOKIE_SECURE
+              value: "1"
+            - name: TRUST_PROXY
+              value: "1"
+            - name: HERMES_HOME
+              value: "/tmp/hermes"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1024Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            periodSeconds: 10
