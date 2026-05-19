@@ -29,3 +29,5 @@ resources:
   - argocd-app-it-tools.yaml
   - argocd-app-authentik.yaml
   - argocd-app-sv02-open-webui.yaml
+  - argocd-app-hermes-workspace.yaml
+  - argocd-app-hermes-webui.yaml
