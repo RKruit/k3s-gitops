@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sv01 Cluster Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0a0a0a;
+    color: #e5e5e5;
+    padding: 20px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; color: #fff; }
+  .subtitle { color: #737373; font-size: 0.85rem; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .card {
+    background: #141414;
+    border: 1px solid #262626;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a3a3a3;
+    margin-bottom: 12px;
+  }
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px solid #1f1f1f;
+  }
+  .metric:last-child { border-bottom: none; }
+  .metric-label { color: #a3a3a3; font-size: 0.88rem; }
+  .metric-value { font-size: 0.95rem; font-weight: 500; color: #e5e5e5; }
+  .metric-value.good { color: #4ade80; }
+  .metric-value.warn { color: #fbbf24; }
+  .metric-value.bad { color: #f87171; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; color: #a3a3a3; padding: 8px 6px; border-bottom: 1px solid #262626; font-weight: 500; }
+  td { padding: 8px 6px; border-bottom: 1px solid #1a1a1a; color: #d4d4d4; }
+  tr:hover td { background: #171717; }
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .status-dot.running { background: #4ade80; box-shadow: 0 0 4px #4ade80; }
+  .status-dot.other { background: #fbbf24; }
+  .status-dot.error { background: #f87171; }
+  .refresh-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .refresh-bar button {
+    background: #262626;
+    border: 1px solid #404040;
+    color: #e5e5e5;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .refresh-bar button:hover { background: #333; }
+  .refresh-bar .last-updated { color: #737373; font-size: 0.8rem; }
+  .error { color: #f87171; padding: 16px; background: #1a0a0a; border-radius: 6px; }
+  .no-data { color: #737373; padding: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<h1>sv01 Cluster Dashboard</h1>
+<div class="subtitle">k3s single-node &mdash; VictoriaMetrics powered</div>
+
+<div class="refresh-bar">
+  <button onclick="fetchAll()">Refresh Now</button>
+  <span class="last-updated" id="last-updated">Last updated: never</span>
+</div>
+
+<div id="error-box"></div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Node Overview</h2>
+    <div id="node-overview"><div class="no-data">Loading...</div></div>
+  </div>
+  <div class="card">
+    <h2>Cluster Pods</h2>
+    <div id="pod-summary"><div class="no-data">Loading...</div></div>
+  </div>
+  <div class="card">
+    <h2>Resource Usage</h2>
+    <div id="resource-usage"><div class="no-data">Loading...</div></div>
+  </div>
+  <div class="card">
+    <h2>Top Pods by CPU</h2>
+    <div id="top-cpu"><div class="no-data">Loading...</div></div>
+  </div>
+  <div class="card">
+    <h2>Top Pods by Memory</h2>
+    <div id="top-mem"><div class="no-data">Loading...</div></div>
+  </div>
+</div>
+
+<script>
+const VM_API = '/api/';
+
+function q(query) {
+  return fetch(VM_API + 'v1/query?query=' + encodeURIComponent(query))
+    .then(r => r.json());
+}
+
+function fmtBytes(b) {
+  if (b == null || isNaN(b)) return 'N/A';
+  const units = ['B','KiB','MiB','GiB','TiB'];
+  let u = 0;
+  while (Math.abs(b) >= 1024 && u < units.length - 1) { b /= 1024; u++; }
+  return b.toFixed(2) + ' ' + units[u];
+}
+
+function fmtCpu(c) {
+  if (c == null || isNaN(c)) return 'N/A';
+  return c.toFixed(3) + ' cores';
+}
+
+function pct(a, b) {
+  if (!b || b === 0) return 'N/A';
+  return ((a / b) * 100).toFixed(1) + '%';
+}
+
+function classForPct(val) {
+  if (val < 50) return 'good';
+  if (val < 80) return 'warn';
+  return 'bad';
+}
+
+function showError(msg) {
+  document.getElementById('error-box').innerHTML = '<div class="error">' + msg + '</div>';
+}
+
+function clearError() {
+  document.getElementById('error-box').innerHTML = '';
+}
+
+function row(label, value, cls) {
+  return '<div class="metric"><span class="metric-label">' + label + '</span><span class="metric-value ' + (cls || '') + '">' + value + '</span></div>';
+}
+
+async function fetchNodeOverview() {
+  try {
+    const [memTotalR, memFreeR, memAvailR, cpuIdleR, cpuTotalR, uptimeR, loadR, diskR] = await Promise.all([
+      q('node_memory_MemTotal_bytes'),
+      q('node_memory_MemFree_bytes'),
+      q('node_memory_MemAvailable_bytes'),
+      q('avg(rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100'),
+      q('sum(rate(node_cpu_seconds_total[1m]))'),
+      q('node_time_seconds - node_boot_time_seconds'),
+      q('node_load1'),
+      q('100 - (node_filesystem_avail_bytes{fstype!="",fstype!="tmpfs",fstype!="devtmpfs",fstype!="squashfs",fstype!="overlay"} / node_filesystem_size_bytes{fstype!="",fstype!="tmpfs",fstype!="devtmpfs",fstype!="squashfs",fstype!="overlay"} * 100)')
+    ]);
+
+    const memTotal = memTotalR.data?.result[0]?.value[1] || NaN;
+    const memFree = memAvailR.data?.result[0]?.value[1] || memFreeR.data?.result[0]?.value[1] || NaN;
+    const cpuIdle = cpuIdleR.data?.result[0]?.value[1] || NaN;
+    const uptime = uptimeR.data?.result[0]?.value[1] || NaN;
+    const load = loadR.data?.result[0]?.value[1] || NaN;
+    const diskPct = diskR.data?.result[0]?.value[1] || NaN;
+
+    const memUsed = (!isNaN(memTotal) && !isNaN(memFree)) ? (memTotal - memFree) : NaN;
+    const memPct = (!isNaN(memUsed) && !isNaN(memTotal) && memTotal > 0) ? (memUsed / memTotal) * 100 : NaN;
+    const cpuUsed = !isNaN(cpuIdle) ? (100 - parseFloat(cpuIdle)) : NaN;
+
+    let html = '';
+    html += row('CPU Usage', cpuUsed.toFixed(1) + '%', classForPct(cpuUsed));
+    html += row('Memory Usage', pct(memUsed, memTotal) + ' (' + fmtBytes(memUsed) + ' / ' + fmtBytes(memTotal) + ')', classForPct(isNaN(memPct) ? 0 : memPct));
+    html += row('Disk Usage', (!isNaN(diskPct) ? diskPct.toFixed(1) + '%' : 'N/A'), classForPct(diskPct));
+    html += row('Load Avg (1m)', (!isNaN(load) ? parseFloat(load).toFixed(2) : 'N/A'));
+    html += row('Uptime', (!isNaN(uptime) ? Math.floor(uptime / 86400) + 'd ' + Math.floor((uptime % 86400) / 3600) + 'h ' + Math.floor((uptime % 3600) / 60) + 'm' : 'N/A'));
+
+    document.getElementById('node-overview').innerHTML = html;
+  } catch (e) {
+    document.getElementById('node-overview').innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+  }
+}
+
+async function fetchPodSummary() {
+  try {
+    const [runningR, totalR] = await Promise.all([
+      q('count(kube_pod_status_phase{phase="Running"})'),
+      q('count(kube_pod_status_phase)')
+    ]);
+
+    const running = parseFloat(runningR.data?.result[0]?.value[1]) || 0;
+    const total = parseFloat(totalR.data?.result[0]?.value[1]) || 0;
+    const other = total - running;
+
+    let html = '';
+    html += row('Running Pods', '<span class="status-dot running"></span>' + running, 'good');
+    html += row('Other Phase', other, other > 0 ? 'warn' : 'good');
+    html += row('Total Pods', total);
+    document.getElementById('pod-summary').innerHTML = html;
+  } catch (e) {
+    document.getElementById('pod-summary').innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+  }
+}
+
+async function fetchResourceUsage() {
+  try {
+    const [cpuR, memR, allocCpuR, allocMemR] = await Promise.all([
+      q('sum(rate(container_cpu_usage_seconds_total{pod!=""}[1m]))'),
+      q('sum(container_memory_working_set_bytes{pod!=""})'),
+      q('sum(kube_node_status_allocatable{resource="cpu"})'),
+      q('sum(kube_node_status_allocatable{resource="memory"})')
+    ]);
+
+    const cpuUsed = parseFloat(cpuR.data?.result[0]?.value[1]) || NaN;
+    const memUsed = parseFloat(memR.data?.result[0]?.value[1]) || NaN;
+    const cpuAlloc = parseFloat(allocCpuR.data?.result[0]?.value[1]) || NaN;
+    const memAlloc = parseFloat(allocMemR.data?.result[0]?.value[1]) || NaN;
+
+    let html = '';
+    html += row('CPU Used', fmtCpu(cpuUsed), classForPct(!isNaN(cpuUsed && cpuAlloc) ? (cpuUsed/cpuAlloc)*100 : 0));
+    html += row('CPU Allocatable', fmtCpu(cpuAlloc));
+    html += row('Mem Used', fmtBytes(memUsed), classForPct(!isNaN(memUsed && memAlloc) ? (memUsed/memAlloc)*100 : 0));
+    html += row('Mem Allocatable', fmtBytes(memAlloc));
+    document.getElementById('resource-usage').innerHTML = html;
+  } catch (e) {
+    document.getElementById('resource-usage').innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+  }
+}
+
+async function fetchTopCpu() {
+  try {
+    const r = await q('topk(10, sum by (pod, namespace) (rate(container_cpu_usage_seconds_total{pod!=""}[1m])))');
+    const rows = r.data?.result || [];
+    if (rows.length === 0) { document.getElementById('top-cpu').innerHTML = '<div class="no-data">No data</div>'; return; }
+    let html = '<table><tr><th>Pod</th><th>Namespace</th><th>CPU</th></tr>';
+    for (const m of rows) {
+      const pod = m.metric.pod || '?';
+      const ns = m.metric.namespace || '?';
+      const val = parseFloat(m.value[1]) || 0;
+      html += '<tr><td>' + pod + '</td><td>' + ns + '</td><td>' + val.toFixed(3) + '</td></tr>';
+    }
+    html += '</table>';
+    document.getElementById('top-cpu').innerHTML = html;
+  } catch (e) {
+    document.getElementById('top-cpu').innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+  }
+}
+
+async function fetchTopMem() {
+  try {
+    const r = await q('topk(10, sum by (pod, namespace) (container_memory_working_set_bytes{pod!=""}))');
+    const rows = r.data?.result || [];
+    if (rows.length === 0) { document.getElementById('top-mem').innerHTML = '<div class="no-data">No data</div>'; return; }
+    let html = '<table><tr><th>Pod</th><th>Namespace</th><th>Memory</th></tr>';
+    for (const m of rows) {
+      const pod = m.metric.pod || '?';
+      const ns = m.metric.namespace || '?';
+      const val = parseFloat(m.value[1]) || 0;
+      html += '<tr><td>' + pod + '</td><td>' + ns + '</td><td>' + fmtBytes(val) + '</td></tr>';
+    }
+    html += '</table>';
+    document.getElementById('top-mem').innerHTML = html;
+  } catch (e) {
+    document.getElementById('top-mem').innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+  }
+}
+
+async function fetchAll() {
+  clearError();
+  await Promise.all([fetchNodeOverview(), fetchPodSummary(), fetchResourceUsage(), fetchTopCpu(), fetchTopMem()]);
+  document.getElementById('last-updated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+fetchAll();
+setInterval(fetchAll, 30000);
+</script>
+</body>
+</html>
