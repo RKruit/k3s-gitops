@@ -22,7 +22,7 @@ spec:
         kubernetes.io/hostname: sv01
       containers:
       - name: asa-server
-        image: docker.io/acekorneya/asa_server:latest
+        image: docker.io/acekorneya/asa_server:2_1_latest
         imagePullPolicy: Always
         ports:
         - containerPort: 7777
