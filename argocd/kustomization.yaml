@@ -28,7 +28,6 @@ resources:
   - argocd-app-it-tools.yaml
   - argocd-app-authentik.yaml
   - argocd-app-sv02-open-webui.yaml
-  - argocd-app-hermes-workspace.yaml
   - argocd-app-hermes-webui.yaml
   - argocd-app-sv02-victoria-metrics.yaml
   - argocd-app-sv02-kube-state-metrics.yaml
