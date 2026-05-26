@@ -6,5 +6,7 @@ namespace: asa-server
 resources:
   - namespace.yaml
   - secret.yaml
+  - pv.yaml
+  - pvc.yaml
   - statefulset.yaml
   - service.yaml

@@ -98,9 +98,7 @@ spec:
         securityContext:
           privileged: true
         volumeMounts:
-        - name: asa-server-data
-          mountPath: /home/pok/arkserver
-        - name: steam-cache
+        - name: data
           mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/common
         - name: steam-temp
           mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/downloading
@@ -133,10 +131,7 @@ spec:
           failureThreshold: 5
           initialDelaySeconds: 300
       volumes:
-      - name: asa-server-data
-        persistentVolumeClaim:
-          claimName: asa-server-data
-      - name: steam-cache
+      - name: data
         hostPath:
           path: /opt/asa-server-data
           type: DirectoryOrCreate
