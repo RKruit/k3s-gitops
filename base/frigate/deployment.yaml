@@ -91,9 +91,12 @@ spec:
                   name: frigate-secrets
                   key: mqtt-password
             # === Coral USB runtime ===
-            # Standard bind-mount of the host's libedgetpu.so.1 (bookworm
-            # build, glibc 2.36 compatible). The Frigate image is also
-            # bookworm, so the host and container libstdc++ match.
+            # Both libedgetpu.so.1 and libusb-1.0.so.0 are bind-mounted from
+            # /opt/coral-libs/ on the host, where the bookworm-compatible
+            # versions live (extracted from the feranick libedgetpu bookworm
+            # deb and the Frigate 0.16.1 image's own libusb). The host's
+            # /lib and /usr/lib have Ubuntu 24.04 versions that need
+            # glibc 2.38 (too new for the bookworm-based Frigate image).
             - name: LD_LIBRARY_PATH
               value: /usr/local/lib
             # === timezone ===
@@ -256,11 +259,11 @@ spec:
         # === Coral USB: the .so files mounted as files at the right basenames ===
         - name: libedgetpu
           hostPath:
-            path: /lib/x86_64-linux-gnu/libedgetpu.so.1
+            path: /opt/coral-libs/libedgetpu.so.1
             type: File
         - name: libusb
           hostPath:
-            path: /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0
+            path: /opt/coral-libs/libusb-1.0.so.0
             type: File
         - name: usb-dev
           hostPath:
