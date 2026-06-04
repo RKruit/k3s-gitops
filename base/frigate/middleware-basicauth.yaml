@@ -1,0 +1,14 @@
+---
+# Traefik BasicAuth middleware for the Frigate web UI.
+# Because Frigate 0.16 does not let you set the admin password from
+# config (it always generates a random secrets.token_hex(16) on first
+# boot and prints it to logs), we disable Frigate's built-in auth and
+# protect the route with BasicAuth at the ingress instead.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: frigate-basicauth
+  namespace: frigate
+spec:
+  basicAuth:
+    secret: frigate-basicauth

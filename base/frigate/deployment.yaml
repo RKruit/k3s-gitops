@@ -79,12 +79,12 @@ spec:
             - name: rtmp
               containerPort: 1935
           env:
-            # === secrets (injected from SealedSecret) ===
-            - name: FRIGATE_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: frigate-secrets
-                  key: admin-password
+            # === MQTT credentials (injected from SealedSecret) ===
+            # The MQTT user is the same as the one in the mosquitto config
+            # (hardcoded in the mqtt app's configmap as well), so it's
+            # not a secret. The password is the only thing in the SealedSecret.
+            - name: FRIGATE_MQTT_USER
+              value: usermqtt
             - name: FRIGATE_MQTT_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -93,10 +93,9 @@ spec:
             # === Coral USB runtime ===
             # Both libedgetpu.so.1 and libusb-1.0.so.0 are bind-mounted from
             # /opt/coral-libs/ on the host, where the bookworm-compatible
-            # versions live (extracted from the feranick libedgetpu bookworm
-            # deb and the Frigate 0.16.1 image's own libusb). The host's
-            # /lib and /usr/lib have Ubuntu 24.04 versions that need
-            # glibc 2.38 (too new for the bookworm-based Frigate image).
+            # versions live. The host's /lib and /usr/lib have Ubuntu 24.04
+            # versions that need glibc 2.38 (too new for the bookworm-based
+            # Frigate image).
             - name: LD_LIBRARY_PATH
               value: /usr/local/lib
             # === timezone ===
@@ -105,18 +104,15 @@ spec:
             # === performance / shm ===
             - name: YOLO_MODELS
               value: ""
-            # --- Frigate (>=0.16) reads config path from $CONFIG_FILE (verified
-            #     in /opt/frigate/frigate/util/config.py:21) ---
+            # --- Frigate (>=0.16) reads config path from $CONFIG_FILE ---
             - name: CONFIG_FILE
               value: /config/config.yml
             # --- Coral edgetpu library path (used by the edgetpu detector) ---
             - name: EDGETPU_SHARED_LIB
               value: /usr/local/lib/libedgetpu.so.1
-          # --- Frigate main container. Image is s6-overlay based; the default
-          #     service runs `python3 -u -m frigate` with cwd=/opt/frigate. We
-          #     set workingDir so relative paths resolve the same way, and
-          #     $FRIGATE_CONFIG env var so the right config is read (Frigate's
-          #     --config CLI arg was removed in 0.16.x). ---
+          # Image is s6-overlay based; default service runs `python3 -u -m frigate`
+          # with cwd=/opt/frigate. We replicate that explicitly so relative
+          # paths in the bundled config resolve the same way.
           command: ["/usr/bin/python3"]
           args:
             - "-u"
@@ -165,7 +161,7 @@ spec:
               mountPath: /db
             - name: cache
               mountPath: /cache
-            # === Coral USB: the 7 essential pieces ===
+            # === Coral USB: the 4 essential pieces ===
             - name: libedgetpu
               mountPath: /usr/local/lib/libedgetpu.so.1
               readOnly: true
@@ -178,61 +174,6 @@ spec:
               mountPath: /sys/bus/usb
               readOnly: true
 
-        # --- init: render the config (replace ${FRIGATE_MQTT_PASSWORD} and
-        # bcrypt the admin password) and warm up. ---
-        - name: render-config
-          image: docker.io/python:3.12-slim
-          securityContext:
-            privileged: true
-          env:
-            - name: FRIGATE_MQTT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: frigate-secrets
-                  key: mqtt-password
-            - name: FRIGATE_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: frigate-secrets
-                  key: admin-password
-            - name: LD_LIBRARY_PATH
-              value: /usr/local/lib
-          command:
-            - sh
-            - -c
-            - |
-              set -eu
-              pip install --no-cache-dir --quiet bcrypt >/dev/null
-              python3 - <<'PY'
-              import os, re
-              import bcrypt
-              with open('/template/config.yml','r') as f:
-                  cfg = f.read()
-              # Substitute MQTT password placeholder
-              cfg = cfg.replace('${FRIGATE_MQTT_PASSWORD}', os.environ['FRIGATE_MQTT_PASSWORD'])
-              # bcrypt-hash the admin password (Frigate uses bcrypt $2b$ hashes)
-              h = bcrypt.hashpw(os.environ['FRIGATE_ADMIN_PASSWORD'].encode(), bcrypt.gensalt(rounds=12)).decode()
-              # Insert `password_hash: "..."` with the same 2-space indent as `enabled`
-              cfg = re.sub(
-                  r'(auth:\n  enabled: True\n)',
-                  r'\1  password_hash: "' + h + '"\n',
-                  cfg, count=1
-              )
-              with open('/config/config.yml','w') as f:
-                  f.write(cfg)
-              # Remove the image's default /config/config.yaml so Frigate can't fall
-              # back to the placeholder "name_of_your_camera" if it ever reloads.
-              if os.path.exists('/config/config.yaml'):
-                  os.remove('/config/config.yaml')
-              print("Config rendered; admin password bcrypt-hashed; default config.yaml removed")
-              PY
-              chmod 0644 /config/config.yml
-          volumeMounts:
-            - name: config-template
-              mountPath: /template
-            - name: config
-              mountPath: /config
-
       volumes:
         # --- Frigate persistent volumes ---
         - name: dshm
@@ -240,7 +181,11 @@ spec:
             medium: Memory
             sizeLimit: 1Gi
         - name: config
-          emptyDir: {}
+          configMap:
+            name: frigate-config
+            items:
+              - key: config.yml
+                path: config.yml
         - name: db
           emptyDir:
             sizeLimit: 5Gi
@@ -250,12 +195,6 @@ spec:
         - name: media
           persistentVolumeClaim:
             claimName: frigate-media
-        - name: config-template
-          configMap:
-            name: frigate-config
-            items:
-              - key: config.yml
-                path: config.yml
         # === Coral USB: the .so files mounted as files at the right basenames ===
         - name: libedgetpu
           hostPath:

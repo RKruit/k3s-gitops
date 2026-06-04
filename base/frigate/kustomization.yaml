@@ -6,9 +6,11 @@ namespace: frigate
 resources:
   - namespace.yaml
   - sealedsecret.yaml
+  - sealedsecret-basicauth.yaml
   - configmap-config.yaml
   - pvc-media.yaml
   - deployment.yaml
   - service.yaml
+  - middleware-basicauth.yaml
   - ingress.yaml
   - certificate.yaml

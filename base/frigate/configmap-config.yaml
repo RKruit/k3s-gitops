@@ -1,79 +1,40 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: frigate-config
   namespace: frigate
-  labels:
-    app: frigate
 data:
-  # Frigate configuration
-  # https://docs.frigate.video/configuration/
+  # Frigate 0.16.x config — schema-validated.
+  # Source of truth rendered into /config/config.yml in the Frigate pod.
+  # The {VAR} placeholders in EnvString-typed fields (user, password)
+  # are substituted from os.environ at parse time per
+  # frigate/config/env.py:validate_env_string.
+  # We set FRIGATE_MQTT_USER and FRIGATE_MQTT_PASSWORD in the deployment.
+  # Reference: https://github.com/blakeblackshear/frigate/blob/v0.16.1/frigate/config/config.py
   config.yml: |
-    # --- Frigate config schema version: skip auto-migration ---
-    version: 0.16-0
-
     mqtt:
       enabled: True
       host: mqtt.mqtt.svc.cluster.local
       port: 1883
+      user: "{FRIGATE_MQTT_USER}"
+      password: "{FRIGATE_MQTT_PASSWORD}"
       topic_prefix: frigate
       client_id: frigate
-      user: usermqtt
-      # password is set via FRIGATE_MQTT_PASSWORD env var (substituted below)
-      password: "${FRIGATE_MQTT_PASSWORD}"
-      stats_interval: 60
 
-    database:
-      path: /db/cache.db
-
-    # Coral USB Accelerator (Google Edge TPU)
+    # Coral USB Accelerator for object detection
     detectors:
       coral:
         type: edgetpu
         device: usb
 
-    # Model that runs on the Coral
+    # SSD MobileNet v1 from the Frigate image (baked into /)
     model:
       width: 320
       height: 320
-      input_tensor: nhwc
-      input_pixel_range: [0, 1]
+      model_type: ssd
       path: /cpu_model.tflite
       labelmap_path: /cpu_labelmap.txt
-
-    # FFmpeg/stream defaults
-    ffmpeg:
-      global_args: -hide_banner -loglevel warning
-      hwaccel_args:
-        - -c:v
-        - h264_v4l2m2m
-        - -num_capture_buffers
-        - "40"
-      input_args:
-        - -avoid_negative_ts
-        - make_zero
-        - -fflags
-        - nobuffer
-        - -flags
-        - low_delay
-        - -stimeout
-        - "5000000"
-        - -timeout
-        - "5000000"
-        - -r
-        - "10"
-        - -f
-        - mpjpeg
-        - -i
-        - http://127.0.0.1:8081/video.mjpg
-      output_args:
-        - -f
-        - null
-        - -codec
-        - copy
-        - -bsf:v
-        - "null"
-        - -
 
     # Motion / object detection tuning
     motion:
@@ -84,44 +45,50 @@ data:
       frame_height: 100
       mask: []
 
-    # Bird's-eye view of cameras (drawn from camera zones)
+    # Auth: built-in auth is disabled because Frigate 0.16 does not let
+    # you set the admin password from config (always random token_hex).
+    # We protect the UI with Traefik BasicAuth (see ingress.yaml).
+    auth:
+      enabled: False
+
+    # Bird's-eye view of cameras
     birdseye:
       enabled: True
       mode: objects
       quality: 8
 
-    # Auth for the web UI
-    auth:
-      enabled: True
-    # admin password is hashed via FRIGATE_ADMIN_HASH env var substitution at startup.
-    # The auth.password_hash must be set in the rendered config — we patch the
-    # template with a sed in initContainer (see deployment.yaml).
-
-    # Live view
+    # Live view quality
     live:
-      height: 720
       quality: 8
 
-    # Recordings (continuous, 24/7)
-    record:
-      enabled: True
-      retain:
-        days: 7
-        mode: motion
-      events:
-        retain:
-          default: 14
-          mode: active_objects
-
-    # Snapshots
+    # Snapshots (saved on each event)
     snapshots:
       enabled: True
       retain:
         default: 14
 
-    # A representative placeholder camera — Robert will replace with real
-    # RTSP/MJPEG URLs in his own time. Defining one keeps the UI from
-    # crashing on first boot and gives a working "add camera" reference.
+    # Recordings (saved on each event)
+    record:
+      enabled: True
+      retain:
+        days: 14
+        mode: motion
+      detections:
+        pre_capture: 5
+        post_capture: 5
+        retain:
+          default: 14
+          mode: active_objects
+      alerts:
+        pre_capture: 5
+        post_capture: 5
+        retain:
+          default: 14
+          mode: active_objects
+
+    # Placeholder camera. Real RTSP URL must be configured by Robert
+    # after the stack is up. With the placeholder unreachable, Frigate
+    # still starts cleanly and exposes its UI / config / event screen.
     cameras:
       front_door:
         enabled: True
@@ -131,19 +98,10 @@ data:
               roles:
                 - detect
                 - record
-                - rtmp
         detect:
           width: 1280
           height: 720
           fps: 5
-        objects:
-          track:
-            - person
-            - car
-          filters:
-            person:
-              min_area: 5000
-              max_area: 100000
         motion:
           # Comma-separated polygon vertices "x1,y1,x2,y2,..."
           mask:
@@ -153,11 +111,3 @@ data:
             coordinates: 100,100,500,100,500,720,100,720
             objects:
               - person
-
-    # RTMP restream server (consumed by other apps if needed)
-    rtmp:
-      enabled: False
-
-    # Web UI runs on 8971, RTSP restream on 8554 by default
-    ui:
-      use_experimental: False
