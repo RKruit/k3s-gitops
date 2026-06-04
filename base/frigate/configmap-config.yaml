@@ -79,7 +79,7 @@ data:
       delta_alpha: 0.2
       frame_alpha: 0.2
       frame_height: 100
-      mask: ""
+      mask: []
 
     # Bird's-eye view of cameras (drawn from camera zones)
     birdseye:

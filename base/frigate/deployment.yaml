@@ -102,12 +102,20 @@ spec:
             # --- Newer Frigate (>=0.16) reads config path from $FRIGATE_CONFIG ---
             - name: FRIGATE_CONFIG
               value: /config/config.yml
-          # --- Image runs `python3 -m frigate` directly (no /init.sh in >=0.16) ---
-          command: ["python3"]
+            # --- Coral edgetpu library path (used by the edgetpu detector) ---
+            - name: EDGETPU_SHARED_LIB
+              value: /usr/local/lib/libedgetpu.so.1
+          # --- Frigate main container. Image is s6-overlay based; the default
+          #     service runs `python3 -u -m frigate` with cwd=/opt/frigate. We
+          #     set workingDir + --config so the right config is read. ---
+          command: ["/usr/bin/python3"]
           args:
             - "-u"
             - "-m"
             - "frigate"
+            - "--config"
+            - "/config/config.yml"
+          workingDir: /opt/frigate
 
           startupProbe:
             httpGet:
