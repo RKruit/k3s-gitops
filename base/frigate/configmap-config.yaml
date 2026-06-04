@@ -13,6 +13,14 @@ data:
   # We set FRIGATE_MQTT_USER and FRIGATE_MQTT_PASSWORD in the deployment.
   # Reference: https://github.com/blakeblackshear/frigate/blob/v0.16.1/frigate/config/config.py
   config.yml: |
+    # The version field tells Frigate to skip the 0.13->0.16 migration
+    # (CURRENT_CONFIG_VERSION is 0.16-0 in v0.16.1). Without it, the
+    # migration tries to rewrite the config to add default fields, but
+    # the config is mounted from a read-only ConfigMap, so the write
+    # silently fails and the validator then complains about extra
+    # inputs the migration just injected.
+    version: 0.16-0
+
     mqtt:
       enabled: True
       host: mqtt.mqtt.svc.cluster.local
@@ -28,13 +36,15 @@ data:
         type: edgetpu
         device: usb
 
-    # SSD MobileNet v1 from the Frigate image (baked into /)
+    # SSD MobileNet v1 for the Coral EdgeTPU (baked into the image).
+    # /edgetpu_model.tflite is the edgetpu-compiled version; using
+    # /cpu_model.tflite on a Coral detector would fail at load time.
     model:
-      width: 320
-      height: 320
+      width: 300
+      height: 300
       model_type: ssd
-      path: /cpu_model.tflite
-      labelmap_path: /cpu_labelmap.txt
+      path: /edgetpu_model.tflite
+      labelmap_path: /labelmap.txt
 
     # Motion / object detection tuning
     motion:
