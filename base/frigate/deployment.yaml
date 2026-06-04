@@ -95,12 +95,13 @@ spec:
                   name: frigate-secrets
                   key: mqtt-password
             # === Coral USB runtime ===
-            # /opt/libstdcpp has the newer libstdc++ (Ubuntu 24.04 build, has
-            # GLIBCXX_3.4.32) needed by the host's libedgetpu.so.1. Listing
-            # it first in LD_LIBRARY_PATH makes the dynamic linker use it
-            # only for libs the container doesn't already have.
+            # libedgetpu.so.1 (bind-mounted from the host) is patched with
+            # patchelf to have RPATH=/opt/libstdcpp (the libstdc++ in our
+            # custom image). So it picks up the newer libstdc++ on its
+            # own — no global LD_LIBRARY_PATH needed (which would break
+            # cv2 etc., since the Ubuntu 24.04 libstdc++ needs glibc 2.38).
             - name: LD_LIBRARY_PATH
-              value: /opt/libstdcpp:/usr/local/lib
+              value: /usr/local/lib
             # === timezone ===
             - name: TZ
               value: Europe/Amsterdam
