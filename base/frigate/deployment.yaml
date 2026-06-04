@@ -90,9 +90,14 @@ spec:
                 secretKeyRef:
                   name: frigate-secrets
                   key: mqtt-password
-            # === Coral USB runtime (so the dynamic linker finds the .so files) ===
+            # === Coral USB runtime ===
             - name: LD_LIBRARY_PATH
               value: /usr/local/lib
+            # === Force-load the host's newer libstdc++ before the container's
+            #     older one, so libedgetpu.so.1 (which needs GLIBCXX_3.4.32)
+            #     can resolve its symbols. ===
+            - name: LD_PRELOAD
+              value: /usr/local/lib/libstdc++.so.6
             # === timezone ===
             - name: TZ
               value: Europe/Amsterdam
@@ -171,6 +176,14 @@ spec:
             - name: usb-sys
               mountPath: /sys/bus/usb
               readOnly: true
+            # === libstdc++ override: the Frigate image ships an older
+            #     libstdc++.so.6.0.30 (GLIBCXX_3.4.29 max) which is too old for
+            #     the host's libedgetpu.so.1 (needs GLIBCXX_3.4.32). Bind-mount
+            #     the host's libstdc++ at a custom path and LD_PRELOAD it.
+            - name: libstdcpp-host
+              mountPath: /usr/local/lib/libstdc++.so.6
+              subPath: libstdc++.so.6
+              readOnly: true
 
         # --- init: render the config (replace ${FRIGATE_MQTT_PASSWORD} and
         # bcrypt the admin password) and warm up. ---
@@ -202,17 +215,23 @@ spec:
               import bcrypt
               with open('/template/config.yml','r') as f:
                   cfg = f.read()
+              # Substitute MQTT password placeholder
               cfg = cfg.replace('${FRIGATE_MQTT_PASSWORD}', os.environ['FRIGATE_MQTT_PASSWORD'])
               # bcrypt-hash the admin password (Frigate uses bcrypt $2b$ hashes)
               h = bcrypt.hashpw(os.environ['FRIGATE_ADMIN_PASSWORD'].encode(), bcrypt.gensalt(rounds=12)).decode()
+              # Insert `password_hash: "..."` with the same 2-space indent as `enabled`
               cfg = re.sub(
-                  r'(auth:\s*\n\s*enabled: True\s*\n)',
-                  r'\1    password_hash: "' + h + '"\n',
+                  r'(auth:\n  enabled: True\n)',
+                  r'\1  password_hash: "' + h + '"\n',
                   cfg, count=1
               )
               with open('/config/config.yml','w') as f:
                   f.write(cfg)
-              print("Config rendered; admin password bcrypt-hashed")
+              # Remove the image's default /config/config.yaml so Frigate can't fall
+              # back to the placeholder "name_of_your_camera" if it ever reloads.
+              if os.path.exists('/config/config.yaml'):
+                  os.remove('/config/config.yaml')
+              print("Config rendered; admin password bcrypt-hashed; default config.yaml removed")
               PY
               chmod 0644 /config/config.yml
           volumeMounts:
@@ -244,7 +263,7 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
-        # --- Coral USB: the .so files mounted as files at the right basenames ---
+        # === Coral USB: the .so files mounted as files at the right basenames ===
         - name: libedgetpu
           hostPath:
             path: /lib/x86_64-linux-gnu/libedgetpu.so.1
@@ -253,6 +272,11 @@ spec:
           hostPath:
             path: /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0
             type: File
+        # === Host's newer libstdc++ (overrides container's old one) ===
+        - name: libstdcpp-host
+          hostPath:
+            path: /lib/x86_64-linux-gnu
+            type: Directory
         - name: usb-dev
           hostPath:
             path: /dev/bus/usb
