@@ -9,6 +9,9 @@ data:
   # Frigate configuration
   # https://docs.frigate.video/configuration/
   config.yml: |
+    # --- Frigate config schema version: skip auto-migration ---
+    version: 0.16-0
+
     mqtt:
       enabled: True
       host: mqtt.mqtt.svc.cluster.local
