@@ -107,33 +107,30 @@ spec:
         - name: steam-temp
           mountPath: /usr/games/.wine/drive_c/POK/Steam/steamapps/temp
         startupProbe:
-          exec:
-            command:
-            - pgrep
-            - -f
-            - ArkAscended
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
           periodSeconds: 10
           failureThreshold: 180
           timeoutSeconds: 10
         livenessProbe:
-          exec:
-            command:
-            - pgrep
-            - -f
-            - ArkAscended
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
           periodSeconds: 60
           failureThreshold: 3
-          initialDelaySeconds: 300
+          initialDelaySeconds: 60
           timeoutSeconds: 10
         readinessProbe:
-          exec:
-            command:
-            - pgrep
-            - -f
-            - ArkAscended
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
           periodSeconds: 30
           failureThreshold: 5
-          initialDelaySeconds: 300
+          initialDelaySeconds: 60
           timeoutSeconds: 10
       volumes:
       - name: asa-server-data
