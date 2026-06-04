@@ -114,6 +114,7 @@ spec:
             - ArkAscended
           periodSeconds: 10
           failureThreshold: 180
+          timeoutSeconds: 10
         livenessProbe:
           exec:
             command:
@@ -123,6 +124,7 @@ spec:
           periodSeconds: 60
           failureThreshold: 3
           initialDelaySeconds: 300
+          timeoutSeconds: 10
         readinessProbe:
           exec:
             command:
@@ -132,6 +134,7 @@ spec:
           periodSeconds: 30
           failureThreshold: 5
           initialDelaySeconds: 300
+          timeoutSeconds: 10
       volumes:
       - name: asa-server-data
         persistentVolumeClaim:
