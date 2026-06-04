@@ -99,14 +99,16 @@ spec:
             # === performance / shm ===
             - name: YOLO_MODELS
               value: ""
-          # --- Frigate main container. Image no longer ships /init.sh ---
+            # --- Newer Frigate (>=0.16) reads config path from $FRIGATE_CONFIG ---
+            - name: FRIGATE_CONFIG
+              value: /config/config.yml
+          # --- Image runs `python3 -m frigate` directly (no /init.sh in >=0.16) ---
           command: ["python3"]
           args:
             - "-u"
             - "-m"
             - "frigate"
-            - "--config"
-            - "/config/config.yml"
+
           startupProbe:
             httpGet:
               path: /api/version
