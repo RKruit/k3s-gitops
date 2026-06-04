@@ -29,3 +29,4 @@ resources:
   - argocd-app-sv02-kube-state-metrics.yaml
   - argocd-app-sv02-cluster-dashboard.yaml
   - argocd-app-coral.yaml
+  - argocd-app-frigate.yaml

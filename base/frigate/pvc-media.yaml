@@ -1,0 +1,18 @@
+---
+# Frigate: web UI + cache db + recordings/clips on NFS
+# Frigate writes a lot: ~10-50GB/day of continuous recordings is typical.
+# We start with 100Gi on NFS — easy to expand later.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-media
+  namespace: frigate
+  labels:
+    app: frigate
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 100Gi

@@ -1,0 +1,254 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+  namespace: frigate
+  labels:
+    app: frigate
+spec:
+  # Recreate strategy: with a single PVC-backed media volume, a rolling
+  # update would try to mount the same PVC in two pods simultaneously.
+  # Recreate is the safe choice for single-replica + RWO PVC.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: frigate
+  template:
+    metadata:
+      labels:
+        app: frigate
+    spec:
+      # --- Coral USB: pin to the labelled node ---
+      nodeSelector:
+        coral: present
+
+      # Frigate needs root for the rtsp/simplejpeg server and the privileged
+      # Coral device access. Don't try to drop to non-root.
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+
+      containers:
+        # --- main Frigate container ---
+        - name: frigate
+          image: ghcr.io/blakeblackshear/frigate:0.16.1
+          imagePullPolicy: IfNotPresent
+          # The frigate image expects to run as root and bind privileged ports.
+          securityContext:
+            privileged: true
+            # Coral USB char-device access — keep capabilities generous.
+            capabilities:
+              add:
+                - SYS_ADMIN
+                - SYS_RESOURCE
+                - NET_ADMIN
+                - NET_RAW
+                - DAC_OVERRIDE
+                - DAC_READ_SEARCH
+                - CHOWN
+                - FOWNER
+                - SETUID
+                - SETGID
+                - KILL
+                - SYS_CHROOT
+                - AUDIT_WRITE
+                - AUDIT_CONTROL
+                - SYS_PTRACE
+                - SYS_MODULE
+                - LEASE
+                - WAKE_ALARM
+                - BLOCK_SUSPEND
+                - IPC_LOCK
+                - SYS_RAWIO
+                - SYS_TTY_CONFIG
+                - SYS_BOOT
+                - SYS_NICE
+                - SYS_PACCT
+                - SYSLOG
+                - MKNOD
+                - SETFCAP
+                - NET_BIND_SERVICE
+          ports:
+            - name: web
+              containerPort: 8971
+            - name: rtsp
+              containerPort: 8554
+            - name: rtmp
+              containerPort: 1935
+          env:
+            # === secrets (injected from SealedSecret) ===
+            - name: FRIGATE_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: admin-password
+            - name: FRIGATE_MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: mqtt-password
+            # === Coral USB runtime (so the dynamic linker finds the .so files) ===
+            - name: LD_LIBRARY_PATH
+              value: /usr/local/lib
+            # === timezone ===
+            - name: TZ
+              value: Europe/Amsterdam
+            # === performance / shm ===
+            - name: YOLO_MODELS
+              value: ""
+          # --- Frigate main container. The image's ENTRYPOINT is /init.sh;
+          #     it expects a python module. Just run `python3 -u -m frigate`. ---
+          command: ["/init.sh"]
+          args:
+            - "python3"
+            - "-u"
+            - "-m"
+            - "frigate"
+            - "--config"
+            - "/config/config.yml"
+          startupProbe:
+            httpGet:
+              path: /api/version
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /api/version
+              port: web
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /api/version
+              port: web
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 4
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "4000m"
+              memory: "6Gi"
+          # --- shared memory for inter-process communication (FFmpeg etc.) ---
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            - name: config
+              mountPath: /config
+            - name: media
+              mountPath: /media
+            - name: db
+              mountPath: /db
+            - name: cache
+              mountPath: /cache
+            # === Coral USB: the 7 essential pieces ===
+            - name: libedgetpu
+              mountPath: /usr/local/lib/libedgetpu.so.1
+              readOnly: true
+            - name: libusb
+              mountPath: /usr/local/lib/libusb-1.0.so.0
+              readOnly: true
+            - name: usb-dev
+              mountPath: /dev/bus/usb
+            - name: usb-sys
+              mountPath: /sys/bus/usb
+              readOnly: true
+
+        # --- init: render the config (replace ${FRIGATE_MQTT_PASSWORD} and
+        # bcrypt the admin password) and warm up. ---
+        - name: render-config
+          image: docker.io/python:3.12-slim
+          securityContext:
+            privileged: true
+          env:
+            - name: FRIGATE_MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: mqtt-password
+            - name: FRIGATE_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-secrets
+                  key: admin-password
+            - name: LD_LIBRARY_PATH
+              value: /usr/local/lib
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              pip install --no-cache-dir --quiet bcrypt >/dev/null
+              python3 - <<'PY'
+              import os, re
+              import bcrypt
+              with open('/template/config.yml','r') as f:
+                  cfg = f.read()
+              cfg = cfg.replace('${FRIGATE_MQTT_PASSWORD}', os.environ['FRIGATE_MQTT_PASSWORD'])
+              # bcrypt-hash the admin password (Frigate uses bcrypt $2b$ hashes)
+              h = bcrypt.hashpw(os.environ['FRIGATE_ADMIN_PASSWORD'].encode(), bcrypt.gensalt(rounds=12)).decode()
+              cfg = re.sub(
+                  r'(auth:\s*\n\s*enabled: True\s*\n)',
+                  r'\1    password_hash: "' + h + '"\n',
+                  cfg, count=1
+              )
+              with open('/config/config.yml','w') as f:
+                  f.write(cfg)
+              print("Config rendered; admin password bcrypt-hashed")
+              PY
+              chmod 0644 /config/config.yml
+          volumeMounts:
+            - name: config-template
+              mountPath: /template
+            - name: config
+              mountPath: /config
+
+      volumes:
+        # --- Frigate persistent volumes ---
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+        - name: config
+          emptyDir: {}
+        - name: db
+          emptyDir:
+            sizeLimit: 5Gi
+        - name: cache
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: media
+          persistentVolumeClaim:
+            claimName: frigate-media
+        - name: config-template
+          configMap:
+            name: frigate-config
+            items:
+              - key: config.yml
+                path: config.yml
+        # --- Coral USB: the .so files mounted as files at the right basenames ---
+        - name: libedgetpu
+          hostPath:
+            path: /lib/x86_64-linux-gnu/libedgetpu.so.1
+            type: File
+        - name: libusb
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0
+            type: File
+        - name: usb-dev
+          hostPath:
+            path: /dev/bus/usb
+            type: Directory
+        - name: usb-sys
+          hostPath:
+            path: /sys/bus/usb
+            type: Directory

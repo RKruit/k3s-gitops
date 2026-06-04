@@ -1,0 +1,29 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frigate
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argoproj.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RKruit/k3s-gitops
+    targetRevision: main
+    path: base/frigate
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frigate
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  # sv01 Traefik does not populate status.loadBalancer on Ingress; cosmetic only.
+  ignoreDifferences:
+    - group: networking.k8s.io
+      kind: Ingress
+      jsonPointers:
+        - /status/loadBalancer
