@@ -33,9 +33,13 @@ spec:
 
       containers:
         # --- main Frigate container ---
+        # Custom image: ghcr.io/rkruit/frigate-coral:0.16.1 — extends the
+        # official Frigate 0.16.1 with a newer libstdc++ at /opt/libstdcpp
+        # (from Ubuntu 24.04's libstdc++6 deb) so the host's libedgetpu.so.1
+        # (which needs GLIBCXX_3.4.32) can resolve its symbols.
         - name: frigate
-          image: ghcr.io/blakeblackshear/frigate:0.16.1
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/rkruit/frigate-coral:0.16.1
+          imagePullPolicy: Never
           # The frigate image expects to run as root and bind privileged ports.
           securityContext:
             privileged: true
@@ -91,13 +95,12 @@ spec:
                   name: frigate-secrets
                   key: mqtt-password
             # === Coral USB runtime ===
+            # /opt/libstdcpp has the newer libstdc++ (Ubuntu 24.04 build, has
+            # GLIBCXX_3.4.32) needed by the host's libedgetpu.so.1. Listing
+            # it first in LD_LIBRARY_PATH makes the dynamic linker use it
+            # only for libs the container doesn't already have.
             - name: LD_LIBRARY_PATH
-              value: /usr/local/lib
-            # === Force-load the host's newer libstdc++ before the container's
-            #     older one, so libedgetpu.so.1 (which needs GLIBCXX_3.4.32)
-            #     can resolve its symbols. ===
-            - name: LD_PRELOAD
-              value: /usr/local/lib/libstdc++.so.6
+              value: /opt/libstdcpp:/usr/local/lib
             # === timezone ===
             - name: TZ
               value: Europe/Amsterdam
@@ -175,14 +178,6 @@ spec:
               mountPath: /dev/bus/usb
             - name: usb-sys
               mountPath: /sys/bus/usb
-              readOnly: true
-            # === libstdc++ override: the Frigate image ships an older
-            #     libstdc++.so.6.0.30 (GLIBCXX_3.4.29 max) which is too old for
-            #     the host's libedgetpu.so.1 (needs GLIBCXX_3.4.32). Bind-mount
-            #     the host's libstdc++ at a custom path and LD_PRELOAD it.
-            - name: libstdcpp-host
-              mountPath: /usr/local/lib/libstdc++.so.6
-              subPath: libstdc++.so.6
               readOnly: true
 
         # --- init: render the config (replace ${FRIGATE_MQTT_PASSWORD} and
@@ -272,11 +267,6 @@ spec:
           hostPath:
             path: /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0
             type: File
-        # === Host's newer libstdc++ (overrides container's old one) ===
-        - name: libstdcpp-host
-          hostPath:
-            path: /lib/x86_64-linux-gnu
-            type: Directory
         - name: usb-dev
           hostPath:
             path: /dev/bus/usb
