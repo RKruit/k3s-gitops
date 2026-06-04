@@ -1,0 +1,99 @@
+# One-shot Job that runs the Coral inference test and exits.
+# Use this to verify the device works from a pod after every deploy:
+#
+#   kubectl logs -n coral -f job/coral-test-run
+#
+# If it logs "OK Coral USB Accelerator working from inside the pod",
+# the Coral is reachable from the cluster. Cron it later if you want
+# a regular liveness check.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: coral-test-run
+  namespace: coral
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: coral-test
+        run: inference
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        coral: present
+      initContainers:
+        - name: install-deps
+          image: python:3.12-slim
+          command: ["sh", "-c"]
+          args:
+            - |
+              pip install --break-system-packages --quiet ai-edge-litert numpy
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+      containers:
+        - name: test
+          image: python:3.12-slim
+          command: ["/workspace/coral/run-test.sh"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          volumeMounts:
+            - name: coral-libs
+              mountPath: /usr/local/lib/coral
+              readOnly: true
+            - name: usr-lib
+              mountPath: /usr/lib/x86_64-linux-gnu
+              readOnly: true
+            - name: usb-dev
+              mountPath: /dev/bus/usb
+            - name: usb-sys
+              mountPath: /sys/bus/usb
+              readOnly: true
+            - name: dev
+              mountPath: /dev
+            - name: workspace
+              mountPath: /workspace
+            - name: scripts
+              mountPath: /workspace/coral
+              readOnly: true
+      volumes:
+        - name: coral-libs
+          hostPath:
+            path: /lib/x86_64-linux-gnu/libedgetpu.so.1
+            type: File
+        - name: usr-lib
+          hostPath:
+            path: /usr/lib/x86_64-linux-gnu
+            type: Directory
+        - name: usb-dev
+          hostPath:
+            path: /dev/bus/usb
+            type: Directory
+        - name: usb-sys
+          hostPath:
+            path: /sys/bus/usb
+            type: Directory
+        - name: dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: workspace
+          emptyDir: {}
+        - name: scripts
+          configMap:
+            name: coral-test-script
+            defaultMode: 0o755

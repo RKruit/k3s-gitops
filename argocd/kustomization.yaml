@@ -32,3 +32,4 @@ resources:
   - argocd-app-sv02-victoria-metrics.yaml
   - argocd-app-sv02-kube-state-metrics.yaml
   - argocd-app-sv02-cluster-dashboard.yaml
+  - argocd-app-coral.yaml

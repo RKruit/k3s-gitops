@@ -1,0 +1,83 @@
+# A one-shot test pod that proves the Coral works from inside a container.
+#
+# Usage:
+#   kubectl exec -n coral -it coral-test -- /bin/bash
+#   # then in the shell:
+#   pip install --break-system-packages ai-edge-litert numpy
+#   python3 /workspace/coral/test.py
+#
+# The pod is restartPolicy: Never and runs a 24h sleep, so it's a
+# long-lived scratch pod for interactive debugging. For a one-shot
+# verification, use job-test-inference.yaml.
+#
+# This pod requests node sv01 (which has the Coral USB Accelerator)
+# and bind-mounts the host's libedgetpu, libusb, /dev/bus/usb, and
+# /sys/bus/usb so the in-container Python can talk to the TPU via libusb.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: coral-test
+  namespace: coral
+  labels:
+    app: coral-test
+spec:
+  restartPolicy: Never
+  nodeSelector:
+    coral: present
+  containers:
+    - name: test
+      image: python:3.12-slim
+      command: ["sleep", "86400"]
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 1000m
+          memory: 512Mi
+      volumeMounts:
+        - name: coral-libs
+          mountPath: /usr/local/lib/coral
+          readOnly: true
+        - name: usr-lib
+          mountPath: /usr/lib/x86_64-linux-gnu
+          readOnly: true
+        - name: usb-dev
+          mountPath: /dev/bus/usb
+        - name: usb-sys
+          mountPath: /sys/bus/usb
+          readOnly: true
+        - name: dev
+          mountPath: /dev
+        - name: workspace
+          mountPath: /workspace
+        - name: scripts
+          mountPath: /workspace/coral
+          readOnly: true
+  volumes:
+    - name: coral-libs
+      hostPath:
+        path: /lib/x86_64-linux-gnu/libedgetpu.so.1
+        type: File
+    - name: usr-lib
+      hostPath:
+        path: /usr/lib/x86_64-linux-gnu
+        type: Directory
+    - name: usb-dev
+      hostPath:
+        path: /dev/bus/usb
+        type: Directory
+    - name: usb-sys
+      hostPath:
+        path: /sys/bus/usb
+        type: Directory
+    - name: dev
+      hostPath:
+        path: /dev
+        type: Directory
+    - name: workspace
+      emptyDir: {}
+    - name: scripts
+      configMap:
+        name: coral-test-script
+        defaultMode: 0o755
