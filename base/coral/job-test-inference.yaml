@@ -23,27 +23,23 @@ spec:
       restartPolicy: Never
       nodeSelector:
         coral: present
-      initContainers:
-        - name: install-deps
-          image: python:3.12-slim
-          command: ["sh", "-c"]
-          args:
-            - |
-              pip install --break-system-packages --quiet ai-edge-litert numpy
-          volumeMounts:
-            - name: workspace
-              mountPath: /workspace
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 512Mi
       containers:
         - name: test
           image: python:3.12-slim
-          command: ["/workspace/coral/run-test.sh"]
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              echo "Installing Python deps ..."
+              pip install --break-system-packages --quiet ai-edge-litert numpy
+              echo "Running inference test ..."
+              exec python3 /workspace/coral/test.py
+          env:
+            # libedgetpu.so.1 and libusb-1.0.so.0 are bind-mounted into
+            # /usr/local/lib (file-as-mount, see volumes below). The dynamic
+            # linker needs to be told where to find them.
+            - name: LD_LIBRARY_PATH
+              value: /usr/local/lib:$LD_LIBRARY_PATH
           resources:
             requests:
               cpu: 100m
@@ -52,11 +48,11 @@ spec:
               cpu: 1000m
               memory: 512Mi
           volumeMounts:
-            - name: coral-libs
-              mountPath: /usr/local/lib/coral
+            - name: libedgetpu
+              mountPath: /usr/local/lib/libedgetpu.so.1
               readOnly: true
-            - name: usr-lib
-              mountPath: /usr/lib/x86_64-linux-gnu
+            - name: libusb
+              mountPath: /usr/local/lib/libusb-1.0.so.0
               readOnly: true
             - name: usb-dev
               mountPath: /dev/bus/usb
@@ -71,14 +67,14 @@ spec:
               mountPath: /workspace/coral
               readOnly: true
       volumes:
-        - name: coral-libs
+        - name: libedgetpu
           hostPath:
             path: /lib/x86_64-linux-gnu/libedgetpu.so.1
             type: File
-        - name: usr-lib
+        - name: libusb
           hostPath:
-            path: /usr/lib/x86_64-linux-gnu
-            type: Directory
+            path: /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0
+            type: File
         - name: usb-dev
           hostPath:
             path: /dev/bus/usb

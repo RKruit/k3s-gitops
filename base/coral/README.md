@@ -76,30 +76,39 @@ python3 /workspace/coral/test.py
 ### Building a Coral-aware workload
 
 In your own Deployment, copy the volume + volumeMount set from
-`job-test-inference.yaml` — that's the whole trick. The four mounts are:
+`job-test-inference.yaml` — that's the whole trick. The key trick is
+**mount the libedgetpu and libusb files individually as files** (with
+`type: File`) so they land at the right path inside the container:
 
 ```yaml
+env:
+  - name: LD_LIBRARY_PATH
+    value: /usr/local/lib:$LD_LIBRARY_PATH
 volumeMounts:
-  - name: coral-libs     # libedgetpu.so.1
-    mountPath: /usr/local/lib/coral
+  - name: libedgetpu
+    mountPath: /usr/local/lib/libedgetpu.so.1
     readOnly: true
-  - name: usr-lib        # libusb-1.0.so.0
-    mountPath: /usr/lib/x86_64-linux-gnu
+  - name: libusb
+    mountPath: /usr/local/lib/libusb-1.0.so.0
     readOnly: true
-  - name: usb-dev        # /dev/bus/usb
+  - name: usb-dev
     mountPath: /dev/bus/usb
-  - name: usb-sys        # /sys/bus/usb
+  - name: usb-sys
     mountPath: /sys/bus/usb
     readOnly: true
+  - name: dev
+    mountPath: /dev
 volumes:
-  - name: coral-libs
+  - name: libedgetpu
     hostPath: { path: /lib/x86_64-linux-gnu/libedgetpu.so.1, type: File }
-  - name: usr-lib
-    hostPath: { path: /usr/lib/x86_64-linux-gnu, type: Directory }
+  - name: libusb
+    hostPath: { path: /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0, type: File }
   - name: usb-dev
     hostPath: { path: /dev/bus/usb, type: Directory }
   - name: usb-sys
     hostPath: { path: /sys/bus/usb, type: Directory }
+  - name: dev
+    hostPath: { path: /dev, type: Directory }
 ```
 
 Add `nodeSelector: { coral: present }` to schedule on sv01.

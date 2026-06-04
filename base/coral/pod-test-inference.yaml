@@ -1,18 +1,18 @@
-# A one-shot test pod that proves the Coral works from inside a container.
+# A long-lived test pod that proves the Coral works from inside a container.
 #
 # Usage:
 #   kubectl exec -n coral -it coral-test -- /bin/bash
 #   # then in the shell:
+#   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 #   pip install --break-system-packages ai-edge-litert numpy
 #   python3 /workspace/coral/test.py
 #
-# The pod is restartPolicy: Never and runs a 24h sleep, so it's a
-# long-lived scratch pod for interactive debugging. For a one-shot
-# verification, use job-test-inference.yaml.
+# The pod runs a 24h sleep, so it's a scratch pod for interactive debugging.
+# For a one-shot verification, use job-test-inference.yaml.
 #
-# This pod requests node sv01 (which has the Coral USB Accelerator)
-# and bind-mounts the host's libedgetpu, libusb, /dev/bus/usb, and
-# /sys/bus/usb so the in-container Python can talk to the TPU via libusb.
+# This pod requests node sv01 (which has the Coral USB Accelerator) and
+# bind-mounts the host's libedgetpu, libusb, /dev/bus/usb, and /sys/bus/usb
+# so the in-container Python can talk to the TPU via libusb.
 apiVersion: v1
 kind: Pod
 metadata:
@@ -28,6 +28,9 @@ spec:
     - name: test
       image: python:3.12-slim
       command: ["sleep", "86400"]
+      env:
+        - name: LD_LIBRARY_PATH
+          value: /usr/local/lib:$LD_LIBRARY_PATH
       resources:
         requests:
           cpu: 100m
@@ -36,11 +39,11 @@ spec:
           cpu: 1000m
           memory: 512Mi
       volumeMounts:
-        - name: coral-libs
-          mountPath: /usr/local/lib/coral
+        - name: libedgetpu
+          mountPath: /usr/local/lib/libedgetpu.so.1
           readOnly: true
-        - name: usr-lib
-          mountPath: /usr/lib/x86_64-linux-gnu
+        - name: libusb
+          mountPath: /usr/local/lib/libusb-1.0.so.0
           readOnly: true
         - name: usb-dev
           mountPath: /dev/bus/usb
@@ -55,14 +58,14 @@ spec:
           mountPath: /workspace/coral
           readOnly: true
   volumes:
-    - name: coral-libs
+    - name: libedgetpu
       hostPath:
         path: /lib/x86_64-linux-gnu/libedgetpu.so.1
         type: File
-    - name: usr-lib
+    - name: libusb
       hostPath:
-        path: /usr/lib/x86_64-linux-gnu
-        type: Directory
+        path: /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0
+        type: File
     - name: usb-dev
       hostPath:
         path: /dev/bus/usb

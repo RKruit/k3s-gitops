@@ -7,8 +7,12 @@ metadata:
   namespace: coral
 data:
   test.py: |
-    #!/usr/bin/env python3
-    """Quick inference sanity test for the Coral USB Accelerator."""
+    """Quick inference sanity test for the Coral USB Accelerator.
+
+    Invoked by run-test.sh which has already installed ai-edge-litert and numpy.
+    This script does NOT have a shebang because it's mounted read-only from
+    a ConfigMap.
+    """
     import sys
     import time
     import urllib.request
@@ -65,9 +69,8 @@ data:
     print(f"   avg latency: {avg:.2f} ms over {len(timings)} runs")
   run-test.sh: |
     #!/bin/sh
-    # Wrapper that installs the Python deps and runs the test.
+    # Wrapper that runs the inference test.
     # Used by job-test-inference.yaml.
     set -e
-    cd /workspace
-    chmod +x coral/run-test.sh
-    exec /bin/sh /workspace/coral/run-test.sh
+    # The ConfigMap is mounted read-only; exec python directly.
+    exec python3 /workspace/coral/test.py
