@@ -99,11 +99,9 @@ spec:
             # === performance / shm ===
             - name: YOLO_MODELS
               value: ""
-          # --- Frigate main container. The image's ENTRYPOINT is /init.sh;
-          #     it expects a python module. Just run `python3 -u -m frigate`. ---
-          command: ["/init.sh"]
+          # --- Frigate main container. Image no longer ships /init.sh ---
+          command: ["python3"]
           args:
-            - "python3"
             - "-u"
             - "-m"
             - "frigate"
