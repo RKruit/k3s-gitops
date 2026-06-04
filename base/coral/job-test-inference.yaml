@@ -35,11 +35,13 @@ spec:
               echo "Running inference test ..."
               exec python3 /workspace/coral/test.py
           env:
-            # libedgetpu.so.1 and libusb-1.0.so.0 are bind-mounted into
-            # /usr/local/lib (file-as-mount, see volumes below). The dynamic
-            # linker needs to be told where to find them.
             - name: LD_LIBRARY_PATH
               value: /usr/local/lib:$LD_LIBRARY_PATH
+          # Coral needs to open USB character devices, which requires
+          # CAP_SYS_RAWIO — easier to just run as privileged. This is a
+          # single-tenant homelab; the security cost is negligible.
+          securityContext:
+            privileged: true
           resources:
             requests:
               cpu: 100m
@@ -59,8 +61,6 @@ spec:
             - name: usb-sys
               mountPath: /sys/bus/usb
               readOnly: true
-            - name: dev
-              mountPath: /dev
             - name: workspace
               mountPath: /workspace
             - name: scripts
@@ -82,10 +82,6 @@ spec:
         - name: usb-sys
           hostPath:
             path: /sys/bus/usb
-            type: Directory
-        - name: dev
-          hostPath:
-            path: /dev
             type: Directory
         - name: workspace
           emptyDir: {}

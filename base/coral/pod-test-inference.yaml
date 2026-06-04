@@ -31,6 +31,11 @@ spec:
       env:
         - name: LD_LIBRARY_PATH
           value: /usr/local/lib:$LD_LIBRARY_PATH
+      # Coral needs to open USB character devices, which requires
+      # CAP_SYS_RAWIO — easier to just run as privileged. This is a
+      # single-tenant homelab; the security cost is negligible.
+      securityContext:
+        privileged: true
       resources:
         requests:
           cpu: 100m
