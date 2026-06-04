@@ -27,6 +27,11 @@ helmCharts:
               secretKeyRef:
                 name: authentik-secrets
                 key: AUTHENTIK_POSTGRESQL__PASSWORD
+          # Session settings: log out after 24h of inactivity, cookie hard-cap 30d
+          - name: AUTHENTIK_SESSIONS__INACTIVITY_TIMEOUT
+            value: "86400"
+          - name: AUTHENTIK_SESSION_TIMEOUT
+            value: "2592000"
 
       authentik:
         log_level: info
