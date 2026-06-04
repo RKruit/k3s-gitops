@@ -33,13 +33,9 @@ spec:
 
       containers:
         # --- main Frigate container ---
-        # Custom image: ghcr.io/rkruit/frigate-coral:0.16.1 — extends the
-        # official Frigate 0.16.1 with a newer libstdc++ at /opt/libstdcpp
-        # (from Ubuntu 24.04's libstdc++6 deb) so the host's libedgetpu.so.1
-        # (which needs GLIBCXX_3.4.32) can resolve its symbols.
         - name: frigate
-          image: ghcr.io/rkruit/frigate-coral:0.16.1
-          imagePullPolicy: Never
+          image: ghcr.io/blakeblackshear/frigate:0.16.1
+          imagePullPolicy: IfNotPresent
           # The frigate image expects to run as root and bind privileged ports.
           securityContext:
             privileged: true
@@ -95,11 +91,9 @@ spec:
                   name: frigate-secrets
                   key: mqtt-password
             # === Coral USB runtime ===
-            # libedgetpu.so.1 (bind-mounted from the host) is patched with
-            # patchelf to have RPATH=/opt/libstdcpp (the libstdc++ in our
-            # custom image). So it picks up the newer libstdc++ on its
-            # own — no global LD_LIBRARY_PATH needed (which would break
-            # cv2 etc., since the Ubuntu 24.04 libstdc++ needs glibc 2.38).
+            # Standard bind-mount of the host's libedgetpu.so.1 (bookworm
+            # build, glibc 2.36 compatible). The Frigate image is also
+            # bookworm, so the host and container libstdc++ match.
             - name: LD_LIBRARY_PATH
               value: /usr/local/lib
             # === timezone ===
