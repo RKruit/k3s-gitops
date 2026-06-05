@@ -11,21 +11,16 @@ spec:
   selector:
     app: frigate
   ports:
-    # Frigate 0.16 binds the FastAPI web UI to 127.0.0.1:5001 inside
-    # the pod (frigate/app.py: uvicorn.run(..., port=5001)). 8971 is
-    # a community convention used by some docker images but not
-    # by blakeblackshear/frigate:0.16.1.
-    #
-    # Since Frigate binds to loopback only, the tcp-proxy sidecar
-    # listens on 0.0.0.0:15001 and forwards to 127.0.0.1:5001. The
-    # Service targetPort here is 15001 so the proxy is what receives
-    # external traffic.
+    # The image's nginx (started by s6-overlay) serves the web UI and
+    # reverse-proxies /api/* to Frigate's loopback-only FastAPI app.
+    # nginx listens on 0.0.0.0:8971 (external, with built-in auth
+    # disabled — we use Traefik BasicAuth in front). Service port
+    # 8971 forwards to container port 8971.
     - name: web
       port: 8971
-      targetPort: 15001
+      targetPort: web
       protocol: TCP
-    # go2rtc is on 8554 (rtsp) and 1984 (webrtc api) — not yet
-    # exercised but declared for future use.
+    # go2rtc: rtsp, webrtc api. go2rtc is also started by s6.
     - name: rtsp
       port: 8554
       targetPort: 8554
@@ -33,4 +28,8 @@ spec:
     - name: webrtc
       port: 1984
       targetPort: 1984
+      protocol: TCP
+    - name: go2rtc-api
+      port: 11984
+      targetPort: 11984
       protocol: TCP

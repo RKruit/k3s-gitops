@@ -97,15 +97,20 @@ spec:
                 - SETFCAP
                 - NET_BIND_SERVICE
           ports:
-            # Frigate 0.16.1 binds its FastAPI web UI to 127.0.0.1:5001
-            # inside the pod. The named port 'web' matches the Service's
-            # web port which forwards 8971 -> 5001.
+            # Frigate 0.16.1's image is s6-overlay based. s6 runs nginx
+            # (web UI + /api/* reverse-proxy) and go2rtc alongside
+            # frigate. nginx listens on 0.0.0.0:8971 (external) and
+            # 0.0.0.0:5000 (internal, for go2rtc upstream).
             - name: web
-              containerPort: 5001
+              containerPort: 8971
+            - name: nginx-internal
+              containerPort: 5000
             - name: rtsp
               containerPort: 8554
             - name: webrtc
               containerPort: 1984
+            - name: go2rtc-api
+              containerPort: 11984
           env:
             # === MQTT credentials (injected from SealedSecret) ===
             # The MQTT user is the same as the one in the mosquitto config
@@ -138,30 +143,27 @@ spec:
             # --- Coral edgetpu library path (used by the edgetpu detector) ---
             - name: EDGETPU_SHARED_LIB
               value: /usr/local/lib/libedgetpu.so.1
-          # Image is s6-overlay based; default service runs `python3 -u -m frigate`
-          # with cwd=/opt/frigate. We replicate that explicitly so relative
-          # paths in the bundled config resolve the same way.
-          command: ["/usr/bin/python3"]
-          args:
-            - "-u"
-            - "-m"
-            - "frigate"
-          workingDir: /opt/frigate
+          # Run the image's s6-overlay entrypoint. s6 starts nginx
+          # (the web UI + /api/* reverse-proxy), go2rtc (rtsp + webrtc),
+          # and frigate as coordinated services. Listening ports:
+          #   nginx:  0.0.0.0:8971 (external, web UI + /api/* + /go2rtc/*)
+          #           0.0.0.0:5000 (internal, go2rtc upstream)
+          #   go2rtc: 0.0.0.0:8554 (rtsp), 0.0.0.0:1984 (webrtc),
+          #           0.0.0.0:11984 (api)
+          #   frigate: 127.0.0.1:5001 (loopback only — proxied by nginx)
+          command: ["/init"]
 
-          # Probes use exec because Frigate 0.16.1 binds the FastAPI
-          # web server to host="127.0.0.1", port=5001 (loopback only,
-          # see frigate/app.py: uvicorn.run(...)). kubelet's httpGet
-          # probe hits the pod's network namespace IP (10.42.x.y), not
-          # 127.0.0.1, so it gets connection refused. exec probes run
-          # inside the pod, so they can curl 127.0.0.1:5001 directly.
-          # The pod image (python:3.12-slim via frigate) doesn't ship
-          # wget/curl, so we probe with python's urllib via -c.
+          # Probes hit the nginx web root. nginx serves the static UI
+          # at / and reverse-proxies /api/* to the FastAPI app on
+          # 127.0.0.1:5001 inside the pod. We use exec because the
+          # FastAPI bind is loopback-only (httpGet from kubelet hits
+          # the pod's eth0 IP, not 127.0.0.1).
           startupProbe:
             exec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5001/\", timeout=3)"'
+                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8971/\", timeout=3)"'
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -171,7 +173,7 @@ spec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5001/\", timeout=3)"'
+                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8971/\", timeout=3)"'
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 6
@@ -180,7 +182,7 @@ spec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5001/\", timeout=3)"'
+                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8971/\", timeout=3)"'
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 4
@@ -216,19 +218,6 @@ spec:
               mountPath: /sys/bus/usb
               readOnly: true
 
-        # --- TCP proxy sidecar: forwards pod-IP:5001 -> 127.0.0.1:5001
-        #     because Frigate 0.16.1 hardcodes uvicorn to 127.0.0.1. ---
-        - name: tcp-proxy
-          image: docker.io/library/python:3.12-alpine
-          command:
-            - python3
-            - -u
-            - /proxy/proxy.py
-          volumeMounts:
-            - name: tcp-proxy
-              mountPath: /proxy
-              readOnly: true
-
       volumes:
         # --- Frigate persistent volumes ---
         - name: dshm
@@ -243,12 +232,6 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
-        - name: tcp-proxy
-          configMap:
-            name: frigate-tcp-proxy
-            items:
-              - key: proxy.py
-                path: proxy.py
         - name: db
           emptyDir:
             sizeLimit: 5Gi

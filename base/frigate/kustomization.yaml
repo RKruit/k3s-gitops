@@ -8,7 +8,6 @@ resources:
   - sealedsecret.yaml
   - sealedsecret-basicauth.yaml
   - configmap-config.yaml
-  - tcp-proxy.yaml
   - pvc-media.yaml
   - deployment.yaml
   - service.yaml
