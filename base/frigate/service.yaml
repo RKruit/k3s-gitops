@@ -11,11 +11,21 @@ spec:
   selector:
     app: frigate
   ports:
+    # Frigate 0.16 binds the FastAPI web UI to 127.0.0.1:5001 inside
+    # the pod (frigate/app.py: uvicorn.run(..., port=5001)). 8971 is
+    # a community convention used by some docker images but not
+    # by blakeblackshear/frigate:0.16.1.
     - name: web
       port: 8971
-      targetPort: 8971
+      targetPort: 5001
       protocol: TCP
+    # go2rtc is on 8554 (rtsp) and 1984 (webrtc api) — not yet
+    # exercised but declared for future use.
     - name: rtsp
       port: 8554
       targetPort: 8554
+      protocol: TCP
+    - name: webrtc
+      port: 1984
+      targetPort: 1984
       protocol: TCP

@@ -97,12 +97,15 @@ spec:
                 - SETFCAP
                 - NET_BIND_SERVICE
           ports:
+            # Frigate 0.16.1 binds its FastAPI web UI to 127.0.0.1:5001
+            # inside the pod. The named port 'web' matches the Service's
+            # web port which forwards 8971 -> 5001.
             - name: web
-              containerPort: 8971
+              containerPort: 5001
             - name: rtsp
               containerPort: 8554
-            - name: rtmp
-              containerPort: 1935
+            - name: webrtc
+              containerPort: 1984
           env:
             # === MQTT credentials (injected from SealedSecret) ===
             # The MQTT user is the same as the one in the mosquitto config
@@ -145,25 +148,38 @@ spec:
             - "frigate"
           workingDir: /opt/frigate
 
+          # Probes hit the FastAPI web server root. We follow redirects
+          # (probeSuccessThreshold) so the initial 307 to /api/ counts
+          # as success. (Frigate 0.16.1 binds the API to 127.0.0.1:5001
+          # inside the pod; we don't need to know that here.)
           startupProbe:
             httpGet:
-              path: /api/version
+              path: /
               port: web
+              httpHeaders:
+                - name: Host
+                  value: frigate.oostrandpark.com
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 30
           livenessProbe:
             httpGet:
-              path: /api/version
+              path: /
               port: web
+              httpHeaders:
+                - name: Host
+                  value: frigate.oostrandpark.com
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 6
           readinessProbe:
             httpGet:
-              path: /api/version
+              path: /
               port: web
+              httpHeaders:
+                - name: Host
+                  value: frigate.oostrandpark.com
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 4
