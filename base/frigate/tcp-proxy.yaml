@@ -1,0 +1,55 @@
+---
+# Tiny TCP proxy used as a sidecar so the Frigate web server is reachable
+# from outside the pod. Frigate 0.16.1 hardcodes uvicorn.run(host="127.0.0.1",
+# port=5001) in frigate/app.py, so the only thing listening on the pod's
+# eth0 is ... nothing. The Service forwards 8971 -> 5001, but kubelet and
+# Traefik hit the pod's pod IP, not loopback, so they get connection
+# refused. This proxy listens on 0.0.0.0:5001 and forwards to 127.0.0.1:5001.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frigate-tcp-proxy
+  namespace: frigate
+data:
+  proxy.py: |
+    import asyncio
+    import sys
+
+    LISTEN_HOST, LISTEN_PORT = "0.0.0.0", 5001
+    TARGET_HOST, TARGET_PORT = "127.0.0.1", 5001
+
+    async def pipe(reader, writer):
+        try:
+            while True:
+                data = await reader.read(65536)
+                if not data:
+                    break
+                writer.write(data)
+                await writer.drain()
+        except Exception:
+            pass
+        finally:
+            try:
+                writer.close()
+            except Exception:
+                pass
+
+    async def handle(client_reader, client_writer):
+        try:
+            target_reader, target_writer = await asyncio.open_connection(TARGET_HOST, TARGET_PORT)
+        except Exception as e:
+            print(f"upstream connect failed: {e}", file=sys.stderr)
+            client_writer.close()
+            return
+        await asyncio.gather(
+            pipe(client_reader, target_writer),
+            pipe(target_reader, client_writer),
+        )
+
+    async def main():
+        server = await asyncio.start_server(handle, LISTEN_HOST, LISTEN_PORT)
+        print(f"frigate-tcp-proxy listening on {LISTEN_HOST}:{LISTEN_PORT} -> {TARGET_HOST}:{TARGET_PORT}", flush=True)
+        async with server:
+            await server.serve_forever()
+
+    asyncio.run(main())

@@ -216,6 +216,19 @@ spec:
               mountPath: /sys/bus/usb
               readOnly: true
 
+        # --- TCP proxy sidecar: forwards pod-IP:5001 -> 127.0.0.1:5001
+        #     because Frigate 0.16.1 hardcodes uvicorn to 127.0.0.1. ---
+        - name: tcp-proxy
+          image: docker.io/library/python:3.12-alpine
+          command:
+            - python3
+            - -u
+            - /proxy/proxy.py
+          volumeMounts:
+            - name: tcp-proxy
+              mountPath: /proxy
+              readOnly: true
+
       volumes:
         # --- Frigate persistent volumes ---
         - name: dshm
@@ -230,6 +243,12 @@ spec:
             items:
               - key: config.yml
                 path: config.yml
+        - name: tcp-proxy
+          configMap:
+            name: frigate-tcp-proxy
+            items:
+              - key: proxy.py
+                path: proxy.py
         - name: db
           emptyDir:
             sizeLimit: 5Gi
