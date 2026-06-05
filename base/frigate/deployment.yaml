@@ -148,38 +148,39 @@ spec:
             - "frigate"
           workingDir: /opt/frigate
 
-          # Probes hit the FastAPI web server root. We follow redirects
-          # (probeSuccessThreshold) so the initial 307 to /api/ counts
-          # as success. (Frigate 0.16.1 binds the API to 127.0.0.1:5001
-          # inside the pod; we don't need to know that here.)
+          # Probes use exec because Frigate 0.16.1 binds the FastAPI
+          # web server to host="127.0.0.1", port=5001 (loopback only,
+          # see frigate/app.py: uvicorn.run(...)). kubelet's httpGet
+          # probe hits the pod's network namespace IP (10.42.x.y), not
+          # 127.0.0.1, so it gets connection refused. exec probes run
+          # inside the pod, so they can curl 127.0.0.1:5001 directly.
+          # The pod image (python:3.12-slim via frigate) doesn't ship
+          # wget/curl, so we probe with python's urllib via -c.
           startupProbe:
-            httpGet:
-              path: /
-              port: web
-              httpHeaders:
-                - name: Host
-                  value: frigate.oostrandpark.com
+            exec:
+              command:
+                - sh
+                - -c
+                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5001/\", timeout=3)"'
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 30
           livenessProbe:
-            httpGet:
-              path: /
-              port: web
-              httpHeaders:
-                - name: Host
-                  value: frigate.oostrandpark.com
+            exec:
+              command:
+                - sh
+                - -c
+                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5001/\", timeout=3)"'
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 6
           readinessProbe:
-            httpGet:
-              path: /
-              port: web
-              httpHeaders:
-                - name: Host
-                  value: frigate.oostrandpark.com
+            exec:
+              command:
+                - sh
+                - -c
+                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5001/\", timeout=3)"'
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 4
