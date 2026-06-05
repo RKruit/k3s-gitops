@@ -155,15 +155,30 @@ spec:
 
           # Probes hit the nginx web root. nginx serves the static UI
           # at / and reverse-proxies /api/* to the FastAPI app on
-          # 127.0.0.1:5001 inside the pod. We use exec because the
-          # FastAPI bind is loopback-only (httpGet from kubelet hits
-          # the pod's eth0 IP, not 127.0.0.1).
+          # 127.0.0.1:5001 inside the pod. nginx only listens with
+          # TLS on 0.0.0.0:8971 (port 5000 is the internal go2rtc
+          # upstream), and the cert is the image's self-signed one
+          # at /etc/letsencrypt/live/frigate/fullchain.pem. We use
+          # exec to avoid kubelet's httpGet cert validation, and
+          # disable hostname/cert verification since the in-pod cert
+          # is for "FRIGATE DEFAULT CERT" not the real hostname.
+          # We use exec because the FastAPI bind is loopback-only
+          # (httpGet from kubelet hits the pod's eth0 IP, not
+          # 127.0.0.1).
           startupProbe:
             exec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8971/\", timeout=3)"'
+                - >-
+                  python3 -c "
+                  import ssl, urllib.request
+                  ctx = ssl.create_default_context()
+                  ctx.check_hostname = False
+                  ctx.verify_mode = ssl.CERT_NONE
+                  r = urllib.request.urlopen('https://127.0.0.1:8971/', timeout=3, context=ctx)
+                  assert r.status == 200, r.status
+                  "
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -173,7 +188,15 @@ spec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8971/\", timeout=3)"'
+                - >-
+                  python3 -c "
+                  import ssl, urllib.request
+                  ctx = ssl.create_default_context()
+                  ctx.check_hostname = False
+                  ctx.verify_mode = ssl.CERT_NONE
+                  r = urllib.request.urlopen('https://127.0.0.1:8971/', timeout=3, context=ctx)
+                  assert r.status == 200, r.status
+                  "
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 6
@@ -182,7 +205,15 @@ spec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8971/\", timeout=3)"'
+                - >-
+                  python3 -c "
+                  import ssl, urllib.request
+                  ctx = ssl.create_default_context()
+                  ctx.check_hostname = False
+                  ctx.verify_mode = ssl.CERT_NONE
+                  r = urllib.request.urlopen('https://127.0.0.1:8971/', timeout=3, context=ctx)
+                  assert r.status == 200, r.status
+                  "
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 4
