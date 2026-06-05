@@ -20,6 +20,11 @@ spec:
     metadata:
       labels:
         app: frigate
+      annotations:
+        # ArgoCD auto-rollouts this on any change to the configmap
+        # template, so editing configmap-config.yaml forces a pod
+        # restart and Frigate re-reads its config.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-config.yaml") . | sha256sum }}
     spec:
       # --- Coral USB: pin to the labelled node ---
       nodeSelector:
