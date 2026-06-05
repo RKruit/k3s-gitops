@@ -31,6 +31,31 @@ spec:
         runAsUser: 0
         runAsGroup: 0
 
+      initContainers:
+        # --- Copy the rendered config from the ConfigMap into a writable
+        #     emptyDir. Frigate's ensure_dirs() needs to mkdir
+        #     /config/model_cache at startup; the ConfigMap mount is
+        #     read-only, which makes that fail with
+        #     "OSError: [Errno 30] Read-only file system". ---
+        - name: init-config
+          image: docker.io/library/alpine:3.20
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              cp /config-template/config.yml /config/config.yml
+              # Remove the image's default /config/config.yaml so Frigate
+              # can't fall back to "name_of_your_camera" if it ever reloads.
+              rm -f /config/config.yaml
+              echo "init-config: config.yml staged in writable /config"
+          volumeMounts:
+            - name: config-template
+              mountPath: /config-template
+              readOnly: true
+            - name: config
+              mountPath: /config
+
       containers:
         # --- main Frigate container ---
         - name: frigate
@@ -181,6 +206,8 @@ spec:
             medium: Memory
             sizeLimit: 1Gi
         - name: config
+          emptyDir: {}
+        - name: config-template
           configMap:
             name: frigate-config
             items:
