@@ -100,35 +100,12 @@ data:
           days: 14
           mode: active_objects
 
-    # Placeholder camera. Real RTSP URL must be configured by Robert
-    # after the stack is up. With the placeholder unreachable, Frigate
-    # still starts cleanly and exposes its UI / config / event screen.
+    # Real cameras wired up here. Each entry needs:
+    #   ffmpeg.inputs[].path  — full RTSP URL (creds inline OK on trusted LAN)
+    #   ffmpeg.inputs[].roles — at least [detect, record]; add rtmp/webrtc as needed
+    #   detect.{width,height} — match the camera's native stream resolution
+    #   detect.fps            — 5 is fine for motion; 10-15 for fine detection
     cameras:
-      # Placeholder — keep until real front-door cam is wired up.
-      # Deliberately points at a non-existent host so Frigate still
-      # boots and exposes the UI / config / events screens.
-      front_door:
-        enabled: True
-        ffmpeg:
-          inputs:
-            - path: rtsp://admin:changeme@192.168.1.100:554/stream1
-              roles:
-                - detect
-                - record
-        detect:
-          width: 1280
-          height: 720
-          fps: 5
-        motion:
-          # Comma-separated polygon vertices "x1,y1,x2,y2,..."
-          mask:
-            - 0,0,0,100,1280,0,1280,100
-        zones:
-          porch:
-            coordinates: 100,100,500,100,500,720,100,720
-            objects:
-              - person
-
       # IP camera on 192.168.68.114 (added 2026-06-05).
       # RTSP accepts admin with empty password (verified via ffmpeg).
       # Stream: H.264 1280x720 + AAC audio.
