@@ -13,12 +13,22 @@ spec:
   ports:
     # The image's nginx (started by s6-overlay) serves the web UI and
     # reverse-proxies /api/* to Frigate's loopback-only FastAPI app.
-    # nginx listens on 0.0.0.0:8971 (external, with built-in auth
-    # disabled — we use Traefik BasicAuth in front). Service port
-    # 8971 forwards to container port 8971.
+    # nginx listens on TWO ports:
+    #   0.0.0.0:8971  -> TLS, with the self-signed "FRIGATE DEFAULT
+    #                    CERT" (intranet-only, not for k8s Service use)
+    #   0.0.0.0:5000  -> plain HTTP, internal-only (go2rtc upstream,
+    #                    but it also serves the UI for any plain-HTTP
+    #                    client — which is what Traefik wants, since
+    #                    Traefik already terminates TLS at the ingress
+    #                    using the real Let's Encrypt cert from
+    #                    cert-manager)
+    #
+    # We target port 5000 from the Service so Traefik talks plain
+    # HTTP to nginx (which is the standard pattern: ingress does TLS
+    # termination, backend does not).
     - name: web
       port: 8971
-      targetPort: web
+      targetPort: 5000
       protocol: TCP
     # go2rtc: rtsp, webrtc api. go2rtc is also started by s6.
     - name: rtsp

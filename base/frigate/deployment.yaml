@@ -99,12 +99,17 @@ spec:
           ports:
             # Frigate 0.16.1's image is s6-overlay based. s6 runs nginx
             # (web UI + /api/* reverse-proxy) and go2rtc alongside
-            # frigate. nginx listens on 0.0.0.0:8971 (external) and
-            # 0.0.0.0:5000 (internal, for go2rtc upstream).
+            # frigate.
+            #   nginx  0.0.0.0:8971  TLS (self-signed, intranet-only)
+            #   nginx  0.0.0.0:5000  plain HTTP (k8s Service uses this)
+            #   go2rtc 0.0.0.0:8554  rtsp
+            #   go2rtc 0.0.0.0:1984  webrtc
+            #   go2rtc 0.0.0.0:11984 api
+            #   frigate 127.0.0.1:5001 (loopback only — proxied by nginx)
             - name: web
-              containerPort: 8971
-            - name: nginx-internal
               containerPort: 5000
+            - name: nginx-tls
+              containerPort: 8971
             - name: rtsp
               containerPort: 8554
             - name: webrtc
@@ -153,18 +158,13 @@ spec:
           #   frigate: 127.0.0.1:5001 (loopback only — proxied by nginx)
           command: ["/init"]
 
-          # Probes hit the nginx web root. nginx serves the static UI
-          # at / and reverse-proxies /api/* to the FastAPI app on
-          # 127.0.0.1:5001 inside the pod. nginx only listens with
-          # TLS on 0.0.0.0:8971 (port 5000 is the internal go2rtc
-          # upstream), and the cert is the image's self-signed one
-          # at /etc/letsencrypt/live/frigate/fullchain.pem. We use
-          # exec to avoid kubelet's httpGet cert validation, and
-          # disable hostname/cert verification since the in-pod cert
-          # is for "FRIGATE DEFAULT CERT" not the real hostname.
+          # Probes hit the nginx internal plain-HTTP port (5000) since
+          # that's what the k8s Service targets. The k8s readiness
+          # probe is kubelet-internal, so we don't need TLS here.
+          # nginx serves the static UI at / and reverse-proxies /api/*
+          # to Frigate's 127.0.0.1:5001 FastAPI app inside the pod.
           # We use exec because the FastAPI bind is loopback-only
-          # (httpGet from kubelet hits the pod's eth0 IP, not
-          # 127.0.0.1).
+          # (httpGet from kubelet hits the pod's eth0 IP, not 127.0.0.1).
           #
           # The python script is inlined as one -c string; do not
           # pretty-print it with line breaks, or kustomize's `>-`
@@ -175,7 +175,7 @@ spec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import ssl,urllib.request;c=ssl.create_default_context();c.check_hostname=False;c.verify_mode=ssl.CERT_NONE;r=urllib.request.urlopen(\"https://127.0.0.1:8971/\",timeout=3,context=c);assert r.status==200"'
+                - 'python3 -c "import urllib.request;r=urllib.request.urlopen(\"http://127.0.0.1:5000/\",timeout=3);assert r.status==200"'
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -185,7 +185,7 @@ spec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import ssl,urllib.request;c=ssl.create_default_context();c.check_hostname=False;c.verify_mode=ssl.CERT_NONE;r=urllib.request.urlopen(\"https://127.0.0.1:8971/\",timeout=3,context=c);assert r.status==200"'
+                - 'python3 -c "import urllib.request;r=urllib.request.urlopen(\"http://127.0.0.1:5000/\",timeout=3);assert r.status==200"'
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 6
@@ -194,7 +194,7 @@ spec:
               command:
                 - sh
                 - -c
-                - 'python3 -c "import ssl,urllib.request;c=ssl.create_default_context();c.check_hostname=False;c.verify_mode=ssl.CERT_NONE;r=urllib.request.urlopen(\"https://127.0.0.1:8971/\",timeout=3,context=c);assert r.status==200"'
+                - 'python3 -c "import urllib.request;r=urllib.request.urlopen(\"http://127.0.0.1:5000/\",timeout=3);assert r.status==200"'
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 4
