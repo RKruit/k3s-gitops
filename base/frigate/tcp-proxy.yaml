@@ -15,7 +15,11 @@ data:
     import asyncio
     import sys
 
-    LISTEN_HOST, LISTEN_PORT = "0.0.0.0", 5001
+    # The proxy listens on 0.0.0.0:15001 (NOT 5001) so it doesn't
+    # conflict with Frigate's 127.0.0.1:5001. The Service's targetPort
+    # is also 15001, so external traffic hits the proxy and gets
+    # forwarded to 127.0.0.1:5001.
+    LISTEN_HOST, LISTEN_PORT = "0.0.0.0", 15001
     TARGET_HOST, TARGET_PORT = "127.0.0.1", 5001
 
     async def pipe(reader, writer):
