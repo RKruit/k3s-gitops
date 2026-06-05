@@ -78,6 +78,10 @@ data:
         default: 14
 
     # Recordings (saved on each event)
+    # record.retain uses RecordRetainConfig (days + mode).
+    # detections.retain and alerts.retain use ReviewRetainConfig
+    # (also days + mode, NO 'default' key — that was a copy-paste
+    # from snapshots.retain which uses a different config class).
     record:
       enabled: True
       retain:
@@ -87,13 +91,13 @@ data:
         pre_capture: 5
         post_capture: 5
         retain:
-          default: 14
+          days: 14
           mode: active_objects
       alerts:
         pre_capture: 5
         post_capture: 5
         retain:
-          default: 14
+          days: 14
           mode: active_objects
 
     # Placeholder camera. Real RTSP URL must be configured by Robert
