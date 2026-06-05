@@ -104,6 +104,9 @@ data:
     # after the stack is up. With the placeholder unreachable, Frigate
     # still starts cleanly and exposes its UI / config / event screen.
     cameras:
+      # Placeholder — keep until real front-door cam is wired up.
+      # Deliberately points at a non-existent host so Frigate still
+      # boots and exposes the UI / config / events screens.
       front_door:
         enabled: True
         ffmpeg:
@@ -125,3 +128,19 @@ data:
             coordinates: 100,100,500,100,500,720,100,720
             objects:
               - person
+
+      # IP camera on 192.168.68.114 (added 2026-06-05).
+      # RTSP accepts admin with empty password (verified via ffmpeg).
+      # Stream: H.264 1280x720 + AAC audio.
+      cam_192_168_68_114:
+        enabled: True
+        ffmpeg:
+          inputs:
+            - path: rtsp://admin:@192.168.68.114:554/play1.sdp
+              roles:
+                - detect
+                - record
+        detect:
+          width: 1280
+          height: 720
+          fps: 5
