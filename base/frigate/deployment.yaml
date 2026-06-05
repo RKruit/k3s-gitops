@@ -165,20 +165,17 @@ spec:
           # We use exec because the FastAPI bind is loopback-only
           # (httpGet from kubelet hits the pod's eth0 IP, not
           # 127.0.0.1).
+          #
+          # The python script is inlined as one -c string; do not
+          # pretty-print it with line breaks, or kustomize's `>-`
+          # block scalar will strip the leading spaces and the
+          # script will fail with IndentationError.
           startupProbe:
             exec:
               command:
                 - sh
                 - -c
-                - >-
-                  python3 -c "
-                  import ssl, urllib.request
-                  ctx = ssl.create_default_context()
-                  ctx.check_hostname = False
-                  ctx.verify_mode = ssl.CERT_NONE
-                  r = urllib.request.urlopen('https://127.0.0.1:8971/', timeout=3, context=ctx)
-                  assert r.status == 200, r.status
-                  "
+                - 'python3 -c "import ssl,urllib.request;c=ssl.create_default_context();c.check_hostname=False;c.verify_mode=ssl.CERT_NONE;r=urllib.request.urlopen(\"https://127.0.0.1:8971/\",timeout=3,context=c);assert r.status==200"'
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
@@ -188,15 +185,7 @@ spec:
               command:
                 - sh
                 - -c
-                - >-
-                  python3 -c "
-                  import ssl, urllib.request
-                  ctx = ssl.create_default_context()
-                  ctx.check_hostname = False
-                  ctx.verify_mode = ssl.CERT_NONE
-                  r = urllib.request.urlopen('https://127.0.0.1:8971/', timeout=3, context=ctx)
-                  assert r.status == 200, r.status
-                  "
+                - 'python3 -c "import ssl,urllib.request;c=ssl.create_default_context();c.check_hostname=False;c.verify_mode=ssl.CERT_NONE;r=urllib.request.urlopen(\"https://127.0.0.1:8971/\",timeout=3,context=c);assert r.status==200"'
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 6
@@ -205,15 +194,7 @@ spec:
               command:
                 - sh
                 - -c
-                - >-
-                  python3 -c "
-                  import ssl, urllib.request
-                  ctx = ssl.create_default_context()
-                  ctx.check_hostname = False
-                  ctx.verify_mode = ssl.CERT_NONE
-                  r = urllib.request.urlopen('https://127.0.0.1:8971/', timeout=3, context=ctx)
-                  assert r.status == 200, r.status
-                  "
+                - 'python3 -c "import ssl,urllib.request;c=ssl.create_default_context();c.check_hostname=False;c.verify_mode=ssl.CERT_NONE;r=urllib.request.urlopen(\"https://127.0.0.1:8971/\",timeout=3,context=c);assert r.status==200"'
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 4
