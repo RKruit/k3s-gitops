@@ -106,14 +106,14 @@ data:
     #   detect.{width,height} — match the camera's native stream resolution
     #   detect.fps            — 5 is fine for motion; 10-15 for fine detection
     cameras:
-      # IP camera on 192.168.68.114 (added 2026-06-05).
-      # RTSP accepts admin with empty password (verified via ffmpeg).
-      # Stream: H.264 1280x720 + AAC audio.
-      cam_192_168_68_114:
+      # IP camera on 192.168.68.114 — kan (renamed 2026-06-08, was cam_192_168_68_114).
+      # RTSP creds come from SealedSecret frigate-camera-creds (camera-user / camera-password).
+      # Stream: H.264 1280x720 + AAC audio (verified via ffmpeg, no 401).
+      kan:
         enabled: True
         ffmpeg:
           inputs:
-            - path: rtsp://admin:@192.168.68.114:554/play1.sdp
+            - path: rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.114:554/play1.sdp
               roles:
                 - detect
                 - record

@@ -30,7 +30,7 @@ spec:
         #   sha256sum base/frigate/configmap-config.yaml | cut -c1-64
         # and paste the value below. The hash forces a Deployment update,
         # which restarts the pod and Frigate re-reads its config.
-        checksum/config: fdc11bddc7a06efcd70e432d7a148dfc8c3105e921b429f6feef0ff9b900897f
+        checksum/config: 67eebcaa93de2989a3d18c651c8f2842af66f1ac4c809e7171414af38d8700f6
     spec:
       # --- Coral USB: pin to the labelled node ---
       nodeSelector:
@@ -139,6 +139,19 @@ spec:
                 secretKeyRef:
                   name: frigate-secrets
                   key: mqtt-password
+            # === Camera credentials for `kan` (192.168.68.114) ===
+            # Injected into the config's {FRIGATE_CAM_USER}/{FRIGATE_CAM_PASS}
+            # placeholders at parse time. Kept out of Git via SealedSecret.
+            - name: FRIGATE_CAM_USER
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-camera-creds
+                  key: camera-user
+            - name: FRIGATE_CAM_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: frigate-camera-creds
+                  key: camera-password
             # === Coral USB runtime ===
             # Both libedgetpu.so.1 and libusb-1.0.so.0 are bind-mounted from
             # /opt/coral-libs/ on the host, where the bookworm-compatible
