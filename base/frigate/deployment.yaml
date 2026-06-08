@@ -30,7 +30,7 @@ spec:
         #   sha256sum base/frigate/configmap-config.yaml | cut -c1-64
         # and paste the value below. The hash forces a Deployment update,
         # which restarts the pod and Frigate re-reads its config.
-        checksum/config: ea3044b83486b68a96290933da876ab51c6a6f1153526fa3f1c452f24a233653
+        checksum/config: fdc11bddc7a06efcd70e432d7a148dfc8c3105e921b429f6feef0ff9b900897f
     spec:
       # --- Coral USB: pin to the labelled node ---
       nodeSelector:

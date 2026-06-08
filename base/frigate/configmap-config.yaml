@@ -121,3 +121,18 @@ data:
           width: 1280
           height: 720
           fps: 5
+      # IP camera on 192.168.68.147 — voordeur (added 2026-06-08).
+      # RTSP accepts admin:admin (verified via ffmpeg, no 401).
+      # Stream: H.264 1920x1080 @ 15 fps (main_ch).
+      voordeur:
+        enabled: True
+        ffmpeg:
+          inputs:
+            - path: rtsp://admin:admin@192.168.68.147:554/main_ch
+              roles:
+                - detect
+                - record
+        detect:
+          width: 1920
+          height: 1080
+          fps: 5
