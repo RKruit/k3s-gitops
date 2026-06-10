@@ -1,138 +1,23 @@
----
 apiVersion: v1
+data:
+  config.yml: "auth:\n  enabled: false\nbirdseye:\n  enabled: true\n  mode: objects\n\
+    \  quality: 8\ncameras:\n  tapo_c210:\n    detect:\n      fps: 5\n      height:\
+    \ 360\n      width: 640\n    enabled: true\n    ffmpeg:\n      inputs:\n     \
+    \ - input_args: -rtsp_transport tcp\n        path: rtsp://frigateuser:str0ngP@ssw@192.168.68.134:554/stream2\n\
+    \        roles:\n        - detect\n      - input_args: -rtsp_transport tcp\n \
+    \       path: rtsp://frigateuser:str0ngP@ssw@192.168.68.134:554/stream1\n    \
+    \    roles:\n        - record\ndetectors:\n  coral:\n    device: usb\n    type:\
+    \ edgetpu\nlive:\n  quality: 8\nmodel:\n  height: 320\n  labelmap_path: /labelmap.txt\n\
+    \  model_type: ssd\n  path: /edgetpu_model.tflite\n  width: 320\nmotion:\n  contour_area:\
+    \ 100\n  delta_alpha: 0.2\n  frame_alpha: 0.2\n  frame_height: 100\n  mask: []\n\
+    \  threshold: 25\nmqtt:\n  client_id: frigate\n  enabled: true\n  host: mqtt.mqtt.svc.cluster.local\n\
+    \  password: '{FRIGATE_MQTT_PASSWORD}'\n  port: 1883\n  topic_prefix: frigate\n\
+    \  user: '{FRIGATE_MQTT_USER}'\nrecord:\n  alerts:\n    post_capture: 5\n    pre_capture:\
+    \ 5\n    retain:\n      days: 14\n      mode: active_objects\n  detections:\n\
+    \    post_capture: 5\n    pre_capture: 5\n    retain:\n      days: 14\n      mode:\
+    \ active_objects\n  enabled: true\n  retain:\n    days: 14\n    mode: motion\n\
+    snapshots:\n  enabled: true\n  retain:\n    default: 14\nversion: 0.16-0\n"
 kind: ConfigMap
 metadata:
   name: frigate-config
   namespace: frigate
-data:
-  # Frigate 0.16.x config — schema-validated.
-  # Source of truth rendered into /config/config.yml in the Frigate pod.
-  # The {VAR} placeholders in EnvString-typed fields (user, password)
-  # are substituted from os.environ at parse time per
-  # frigate/config/env.py:validate_env_string.
-  # We set FRIGATE_MQTT_USER and FRIGATE_MQTT_PASSWORD in the deployment.
-  # Reference: https://github.com/blakeblackshear/frigate/blob/v0.16.1/frigate/config/config.py
-  config.yml: |
-    # The version field tells Frigate to skip the 0.13->0.16 migration
-    # (CURRENT_CONFIG_VERSION is 0.16-0 in v0.16.1). Without it, the
-    # migration tries to rewrite the config to add default fields, but
-    # the config is mounted from a read-only ConfigMap, so the write
-    # silently fails and the validator then complains about extra
-    # inputs the migration just injected.
-    version: 0.16-0
-
-    mqtt:
-      enabled: True
-      host: mqtt.mqtt.svc.cluster.local
-      port: 1883
-      user: "{FRIGATE_MQTT_USER}"
-      password: "{FRIGATE_MQTT_PASSWORD}"
-      topic_prefix: frigate
-      client_id: frigate
-
-    # Coral USB Accelerator for object detection
-    detectors:
-      coral:
-        type: edgetpu
-        device: usb
-
-    # SSD MobileNet v1 for the Coral EdgeTPU (baked into the image).
-    # /edgetpu_model.tflite is the edgetpu-compiled version; using
-    # /cpu_model.tflite on a Coral detector would fail at load time.
-    model:
-      width: 300
-      height: 300
-      model_type: ssd
-      path: /edgetpu_model.tflite
-      labelmap_path: /labelmap.txt
-
-    # Motion / object detection tuning
-    motion:
-      threshold: 25
-      contour_area: 100
-      delta_alpha: 0.2
-      frame_alpha: 0.2
-      frame_height: 100
-      mask: []
-
-    # Auth: built-in auth is disabled because Frigate 0.16 does not let
-    # you set the admin password from config (always random token_hex).
-    # We protect the UI with Traefik BasicAuth (see ingress.yaml).
-    auth:
-      enabled: False
-
-    # Bird's-eye view of cameras
-    birdseye:
-      enabled: True
-      mode: objects
-      quality: 8
-
-    # Live view quality
-    live:
-      quality: 8
-
-    # Snapshots (saved on each event)
-    snapshots:
-      enabled: True
-      retain:
-        default: 14
-
-    # Recordings (saved on each event)
-    # record.retain uses RecordRetainConfig (days + mode).
-    # detections.retain and alerts.retain use ReviewRetainConfig
-    # (also days + mode, NO 'default' key — that was a copy-paste
-    # from snapshots.retain which uses a different config class).
-    record:
-      enabled: True
-      retain:
-        days: 14
-        mode: motion
-      detections:
-        pre_capture: 5
-        post_capture: 5
-        retain:
-          days: 14
-          mode: active_objects
-      alerts:
-        pre_capture: 5
-        post_capture: 5
-        retain:
-          days: 14
-          mode: active_objects
-
-    # Real cameras wired up here. Each entry needs:
-    #   ffmpeg.inputs[].path  — full RTSP URL (creds inline OK on trusted LAN)
-    #   ffmpeg.inputs[].roles — at least [detect, record]; add rtmp/webrtc as needed
-    #   detect.{width,height} — match the camera's native stream resolution
-    #   detect.fps            — 5 is fine for motion; 10-15 for fine detection
-    cameras:
-      # IP camera on 192.168.68.114 — kan (renamed 2026-06-08, was cam_192_168_68_114).
-      # RTSP creds come from SealedSecret frigate-camera-creds (camera-user / camera-password).
-      # Stream: H.264 1280x720 + AAC audio (verified via ffmpeg, no 401).
-      kan:
-        enabled: True
-        ffmpeg:
-          inputs:
-            - path: rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.114:554/play1.sdp
-              roles:
-                - detect
-                - record
-        detect:
-          width: 1280
-          height: 720
-          fps: 5
-      # IP camera on 192.168.68.147 — voordeur (added 2026-06-08).
-      # RTSP accepts admin:admin (verified via ffmpeg, no 401).
-      # Stream: H.264 1920x1080 @ 15 fps (main_ch).
-      voordeur:
-        enabled: True
-        ffmpeg:
-          inputs:
-            - path: rtsp://admin:admin@192.168.68.147:554/main_ch
-              roles:
-                - detect
-                - record
-        detect:
-          width: 1920
-          height: 1080
-          fps: 5
