@@ -1,0 +1,32 @@
+# Authentik Proxy-Outpost forward-auth middleware for the Frigate web UI.
+#
+# Replaces the previous basic-auth middleware (no longer needed because
+# Frigate now uses its built-in `proxy` mode and trusts the
+# X-authentik-* headers that this middleware sets).
+#
+# The Authentik Proxy Outpost is auto-deployed by the
+# "frigate-proxy-outpost" instance (pk ce93ddb1-...) in Authentik when
+# bound to the local KubernetesServiceConnection. It listens at
+#   http://ak-outpost-frigate-proxy-outpost.authentik.svc.cluster.local:9000
+# and validates the session cookie. If no valid session exists, it 302s
+# to https://auth.oostrandpark.com/application/o/authorize/ for login.
+# On success it sets the X-authentik-username / X-authentik-groups /
+# X-authentik-email / X-authentik-name / X-authentik-uid headers, which
+# Traefik forwards to Frigate's `proxy` block.
+#
+# Created 2026-06-12 during the Authentik SSO migration.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authentik-forward-auth
+  namespace: frigate
+spec:
+  forwardAuth:
+    address: http://ak-outpost-frigate-proxy-outpost.authentik.svc.cluster.local:9000/outpost.goauthentik.io/auth/traefik
+    authResponseHeaders:
+      - X-authentik-username
+      - X-authentik-groups
+      - X-authentik-email
+      - X-authentik-name
+      - X-authentik-uid
+    trustForwardHeader: true

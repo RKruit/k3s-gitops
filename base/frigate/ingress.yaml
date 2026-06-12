@@ -8,7 +8,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: frigate-frigate-basicauth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: frigate-authentik-forward-auth@kubernetescrd
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik

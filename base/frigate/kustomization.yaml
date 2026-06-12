@@ -6,12 +6,15 @@ namespace: frigate
 resources:
   - namespace.yaml
   - sealedsecret.yaml
-  - sealedsecret-basicauth.yaml
   - sealedsecret-camera-creds.yaml
   - configmap-config.yaml
   - pvc-media.yaml
   - deployment.yaml
   - service.yaml
-  - middleware-basicauth.yaml
+  - middleware-forwardauth.yaml
   - ingress.yaml
   - certificate.yaml
+
+# Removed 2026-06-12 during Authentik SSO migration:
+#   - sealedsecret-basicauth.yaml  (admin:<htpasswd> -> replaced by Authentik session)
+#   - middleware-basicauth.yaml    (Traefik basicauth Middleware, no longer referenced)
