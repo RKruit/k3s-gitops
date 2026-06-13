@@ -1,0 +1,676 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anna-html
+  namespace: anna
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="nl">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>di-anna | Kleding Coach &amp; Kleur Stylist — Anna Gigante</title>
+      <meta name="description" content="Anna Gigante — kledingcoach en kleurstylist in Lelystad. Kleurenanalyse, stylingsessie, personal shopping, closet detox en heren styling.">
+      <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+      <header class="site-header" id="top">
+        <div class="container header-inner">
+          <a class="brand" href="#top">di-anna</a>
+          <nav class="primary-nav" aria-label="Hoofdmenu">
+            <a href="#diensten">Diensten</a>
+            <a href="#over">Over Anna</a>
+            <a href="#opdracht">Voor opdrachtgevers</a>
+            <a href="#contact">Contact</a>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="container hero-inner">
+            <p class="kicker">Kleding coach &amp; kleur stylist</p>
+            <h1>Anna Gigante</h1>
+            <p class="lede">
+              Ik help jou jouw kleurpalet en stijl te vinden waardoor jij het beste
+              van jezelf naar voren laat komen. Op zoek naar personal shopping?
+              Ook daar kan ik je bij helpen.
+            </p>
+            <p class="quote">
+              &ldquo;Stijl gaat niet over &lsquo;moeilijk doen&rsquo; met mode,
+              maar over weten wat voor jou werkt.&rdquo;
+            </p>
+            <a class="btn" href="#contact">Plan een kennismaking</a>
+          </div>
+        </section>
+
+        <section class="section" id="diensten">
+          <div class="container">
+            <h2 class="section-title">Diensten</h2>
+            <p class="section-intro">
+              Vijf manieren waarop ik je help om kleur en kleding te vinden die
+              &eacute;&eacute;cht bij je passen.
+            </p>
+            <div class="grid services">
+              <article class="card">
+                <h3>Kleur Advies</h3>
+                <p class="card-intro">
+                  Draag je vaak zwart omdat het &lsquo;veilig&rsquo; voelt?
+                  Of twijfel je in de winkel welke kleuren jou &eacute;cht goed staan?
+                </p>
+                <p>
+                  Tijdens een kleuranalyse ontdek je welke tinten jouw huid laten
+                  spreken, je ogen laten fonkelen en je die natuurlijke glow geven.
+                </p>
+                <h4>Wat kun je verwachten?</h4>
+                <ul>
+                  <li>Meer dan 70 professionele kleurdoeken om jouw unieke kleurtype te bepalen</li>
+                  <li>Analyse van ondertoon, haarkleur en oogpigmentatie — én je innerlijk</li>
+                  <li>Leren combineren van kleuren en afstemmen van je make-up collectie</li>
+                  <li>Koffie, thee en wat lekkers</li>
+                </ul>
+                <h4>Resultaat</h4>
+                <p>Nooit meer misstappen in de winkel + een handige kleurkaart.</p>
+                <table class="prices">
+                  <tr><th>1 persoon</th><td>vanaf &euro; 175</td></tr>
+                  <tr><th>2 personen</th><td>vanaf &euro; 160 p.p.</td></tr>
+                </table>
+                <p class="note">In overleg kom ik ook op locatie.</p>
+              </article>
+
+              <article class="card">
+                <h3>Stylingsessie</h3>
+                <p class="card-intro">
+                  Ben jij benieuwd welke kledingstijl echt matcht met wie jij bent?
+                </p>
+                <p>
+                  Tijdens een uitgebreide stylingsessie gaan we op zoek naar jouw
+                  eigen, herkenbare stijl. Geen standaardregels, maar een
+                  persoonlijk advies dat jou het zelfvertrouwen geeft om elke
+                  dag te stralen.
+                </p>
+                <h4>Wat kun je verwachten?</h4>
+                <ul>
+                  <li>Figuur- en gezichtsanalyse</li>
+                  <li>Prints &amp; stoffen die jouw uitstraling versterken</li>
+                  <li>Accenten leggen die jouw sterke punten benadrukken</li>
+                  <li>Jouw persoonlijke stijlgids</li>
+                  <li>Koffie, thee &amp; wat lekkers</li>
+                </ul>
+                <h4>Resultaat</h4>
+                <p>Een persoonlijke stylinggids per e-mail — een uitgebreid digitaal naslagwerk.</p>
+                <table class="prices">
+                  <tr><th>1 persoon</th><td>vanaf &euro; 275</td></tr>
+                  <tr><th>2 personen</th><td>&euro; 495</td></tr>
+                </table>
+                <p class="note">In overleg kom ik ook op locatie.</p>
+              </article>
+
+              <article class="card">
+                <h3>Personal Shopping</h3>
+                <p class="card-intro">
+                  Overvolle garderobe, maar &lsquo;niets om aan te trekken&rsquo;?
+                </p>
+                <p>
+                  Geen impulsaankopen meer, maar doelgericht shoppen voor items
+                  die jouw stijl versterken en perfect onderling te combineren zijn.
+                </p>
+                <h4>Wat kun je verwachten?</h4>
+                <ul>
+                  <li>Voorbereiding: wensen, budget en items vooraf klaargelegd</li>
+                  <li>Eerlijk en deskundig advies over pasvorm, kleur en kwaliteit</li>
+                  <li>Nieuwe combinaties met wat je al hebt</li>
+                  <li>Rust &amp; effici&euml;ntie — geen stress, een inspirerende middag</li>
+                </ul>
+                <h4>Resultaat</h4>
+                <p>Een zorgvuldig gekozen selectie, geen dure miskopen, tijd bespaard in de ochtend.</p>
+                <table class="prices">
+                  <tr><th>Sessie (3 uur)</th><td>&euro; 345</td></tr>
+                  <tr><th>Verlenging per uur</th><td>&euro; 95</td></tr>
+                </table>
+                <p class="note">Exclusief kledingbudget.</p>
+              </article>
+
+              <article class="card">
+                <h3>Closet Detox / Garderobe Check</h3>
+                <p class="card-intro">
+                  Overvolle kast, elke ochtend niets om aan te trekken?
+                </p>
+                <p>
+                  Samen cre&euml;ren wij overzicht, rust en heel veel nieuwe
+                  mogelijkheden met de kleding die jij al hebt.
+                </p>
+                <h4>Wat kun je verwachten?</h4>
+                <ul>
+                  <li>De grote opruiming: wat blijft, wat gaat weg, wat mist er</li>
+                  <li>Nieuwe combinaties met bestaande items</li>
+                  <li>Stylingadvies: wat flatteert je figuur</li>
+                  <li>Shoppinglist met ontbrekende basisstukken</li>
+                </ul>
+                <h4>Resultaat</h4>
+                <p>Een overzichtelijke kast + weer overzicht over je eigen stijl.</p>
+                <table class="prices">
+                  <tr><th>Detox (&asymp; 3 uur)</th><td>&euro; 375</td></tr>
+                  <tr><th>Verlenging per uur</th><td>&euro; 95</td></tr>
+                </table>
+                <p class="note">De meest duurzame manier van restyling.</p>
+              </article>
+
+              <article class="card">
+                <h3>Heren Styling — De Kunst van Sprezzatura</h3>
+                <p class="card-intro">
+                  In Itali&euml; beheersen mannen de kunst van de
+                  <em>Sprezzatura</em> — er op-en-top stijlvol uitzien, op een
+                  manier die volledig natuurlijk en moeiteloos aanvoelt.
+                </p>
+                <p>
+                  Die flair en dat vakmanschap breng ik vanuit mijn Italiaanse
+                  achtergrond graag over in Nederland.
+                </p>
+                <h4>Ik kijk naar</h4>
+                <ul>
+                  <li>Pasvorm &amp; proporties: snit voor een krachtig silhouet</li>
+                  <li>Kleurgebruik: een frisse, overtuigende uitstraling</li>
+                  <li>De details: combineren met flair, zonder ongemakkelijk te voelen</li>
+                </ul>
+                <h4>Resultaat</h4>
+                <p>Een helder overzicht, een kleurenkaart en een gepersonaliseerd kledingadvies per e-mail.</p>
+                <table class="prices">
+                  <tr><th>Kleur- en kledingadvies voor heren</th><td>&euro; 345</td></tr>
+                </table>
+                <p class="note">Tip: combineer met Personal Shopping om je nieuwe stijl direct in de praktijk te brengen.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="section section-alt" id="over">
+          <div class="container">
+            <h2 class="section-title">Over Anna</h2>
+            <div class="two-col">
+              <div>
+                <p>
+                  Mijn passie voor stijl is met de paplepel ingegoten. Als klein
+                  meisje van Italiaanse afkomst was ik al gefascineerd door de
+                  kleurrijke en stijlvolle garderobes van mijn familie. Mijn hart
+                  maakte een sprongetje tijdens &lsquo;la passeggiata&rsquo;:
+                  de traditionele avondwandeling waarbij iedereen er op hun
+                  mooist uitziet. Die typisch Italiaanse kunst om er moeiteloos
+                  stijlvol uit te zien, ook wel <em>Sprezzatura</em> genoemd,
+                  is voor mij altijd een grote inspiratiebron gebleven.
+                </p>
+                <p>
+                  Met een modeopleiding als basis heb ik ervaring opgedaan in de
+                  mode en mijn creativiteit geuit in het ontwerpen van kleding
+                  en sieraden. Voor mij was de stap naar kleur- en
+                  kledingstylist een heel logische.
+                </p>
+                <h3>Stijl met een maatschappelijke kant</h3>
+                <p>
+                  Naast mijn oog voor mode heb ik een sterke betrokkenheid met
+                  de samenleving. Ik kijk niet alleen naar de buitenkant, maar
+                  vooral naar de mens achter de kleding. Ik geloof dat
+                  aandacht voor presentatie een krachtig middel is voor
+                  zelfvertrouwen en verbinding.
+                </p>
+                <h3>Drijfveer</h3>
+                <p>
+                  Het matchen van iemands unieke persoonlijkheid met de juiste
+                  stijl. Niets geeft mij meer voldoening dan mijn klanten met
+                  hernieuwd zelfvertrouwen en een glimlach voor de spiegel te
+                  zien staan.
+                </p>
+              </div>
+              <aside class="contact-card">
+                <h3>Contact</h3>
+                <p>
+                  <strong>Anna Gigante</strong><br>
+                  Oostrandpark 83<br>
+                  8212 AS Lelystad
+                </p>
+                <p>
+                  <a href="mailto:info@di-anna.nl">info@di-anna.nl</a><br>
+                  <a href="tel:+316****3114">06-48093114</a>
+                </p>
+                <p class="kvk">KvK 857218</p>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="opdracht">
+          <div class="container">
+            <h2 class="section-title">Werken in opdracht</h2>
+            <p>
+              Naast mijn werk voor particulieren werk ik ook met bedrijven,
+              overheidsinstanties en voor (inter)nationale evenementen. Ik
+              vertaal mijn Italiaanse passie voor stijl naar de professionele
+              wereld — van acties op de winkelvloer tot projecten met een
+              maatschappelijke betekenis.
+            </p>
+            <h3>Expertise &amp; samenwerkingen</h3>
+            <ul>
+              <li><strong>Exclusieve events</strong> — styling-ondersteuning bij internationale bijeenkomsten op toplocaties zoals Marienheuvel</li>
+              <li><strong>Retail &amp; brand-activaties</strong> — voor o.a. Batavia Stad Fashion Outlet, C&amp;A, en influencer-events voor cosmeticamerk Erborian (in samenwerking met Douglas)</li>
+              <li><strong>Quickscan kleuranalyses</strong> — elke eerste en laatste dinsdag van de maand, namens de HiStyle Academy, op toplocaties zoals Hoog Catharijne in Utrecht</li>
+              <li><strong>Vitaliteitsweken &amp; overheid</strong> — voor o.a. de Gemeente Lelystad en bezoekers van de banenbeurs en UWV</li>
+              <li><strong>Lokale samenwerkingen</strong> — exclusieve quickscans bij Roos Lingerie in Lelystad</li>
+            </ul>
+            <h3>Maatschappelijke betrokkenheid</h3>
+            <p>
+              In 2025 heb ik met trots samengewerkt met de Coalitie tegen
+              Eenzaamheid — een prachtig initiatief van de gemeente Lelystad
+              waarbij wij door middel van een interactief evenement inwoners
+              in het zonnetje hebben gezet.
+            </p>
+            <div class="cta-box">
+              <h3>Een event op maat?</h3>
+              <p>
+                Ik denk graag met u mee over een uniek programma dat aansluit
+                bij uw doelgroep en doelstellingen.
+              </p>
+              <a class="btn" href="#contact">Neem contact op</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="section section-alt" id="contact">
+          <div class="container">
+            <h2 class="section-title">Contact</h2>
+            <div class="two-col">
+              <div>
+                <p>
+                  Wil je een afspraak maken of heb je een vraag? Stuur een
+                  e-mail, bel, of vul het intakeformulier in.
+                </p>
+                <p>
+                  <strong>E-mail:</strong> <a href="mailto:info@di-anna.nl">info@di-anna.nl</a><br>
+                  <strong>Telefoon:</strong> <a href="tel:+316****3114">06-48093114</a><br>
+                  <strong>Adres:</strong> Oostrandpark 83, 8212 AS Lelystad
+                </p>
+              </div>
+              <form class="contact-form" action="mailto:info@di-anna.nl" method="post" enctype="text/plain">
+                <label>Naam<input type="text" name="naam" required></label>
+                <label>E-mail<input type="email" name="email" required></label>
+                <label>Telefoonnummer<input type="tel" name="telefoon"></label>
+                <label>Onderwerp<input type="text" name="onderwerp"></label>
+                <label>Bericht<textarea name="bericht" rows="5" required></textarea></label>
+                <button type="submit" class="btn">Verstuur</button>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <p>&copy; 2024 Anna Gigante &middot; di-anna styling &middot; KvK 857218</p>
+        </div>
+      </footer>
+    </body>
+    </html>
+  style.css: |
+    /* di-anna — Anna Gigante personal styling
+       Palette: warm muted neutrals + a single accent
+       Type: system stack, no webfonts (privacy + speed) */
+
+    :root {
+      --bg: #fbf9f6;          /* warm off-white */
+      --bg-alt: #f3eee7;      /* sand */
+      --fg: #2a2622;          /* near-black, warm */
+      --fg-muted: #6b6258;    /* warm gray */
+      --accent: #8b5a3c;      /* terracotta/sienna, Italian-feel */
+      --accent-soft: #c8a084;
+      --line: #d9d1c5;
+      --shadow: 0 6px 24px rgba(60, 40, 30, 0.06);
+      --max-width: 1080px;
+      --radius: 4px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--fg);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ====== Header ====== */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(251, 249, 246, 0.92);
+      backdrop-filter: saturate(180%) blur(8px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+    }
+
+    .brand {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      color: var(--fg);
+      text-decoration: none;
+    }
+
+    .primary-nav {
+      display: flex;
+      gap: 28px;
+    }
+
+    .primary-nav a {
+      color: var(--fg-muted);
+      text-decoration: none;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+      transition: color 0.15s ease;
+    }
+
+    .primary-nav a:hover,
+    .primary-nav a:focus { color: var(--accent); }
+
+    /* ====== Hero ====== */
+    .hero {
+      padding: 96px 0 80px;
+      background:
+        radial-gradient(ellipse at top right, rgba(200, 160, 132, 0.15), transparent 60%),
+        var(--bg);
+    }
+
+    .hero-inner {
+      max-width: 760px;
+    }
+
+    .kicker {
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 13px;
+      color: var(--accent);
+      margin: 0 0 12px;
+      font-weight: 500;
+    }
+
+    h1 {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 52px;
+      font-weight: 400;
+      line-height: 1.1;
+      margin: 0 0 24px;
+      letter-spacing: -0.5px;
+    }
+
+    .lede {
+      font-size: 20px;
+      line-height: 1.55;
+      color: var(--fg-muted);
+      margin: 0 0 32px;
+      max-width: 640px;
+    }
+
+    .quote {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-style: italic;
+      font-size: 19px;
+      line-height: 1.5;
+      color: var(--fg);
+      border-left: 3px solid var(--accent-soft);
+      padding: 4px 0 4px 20px;
+      margin: 32px 0;
+      max-width: 600px;
+    }
+
+    /* ====== Buttons ====== */
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      letter-spacing: 0.3px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease;
+    }
+
+    .btn:hover,
+    .btn:focus { background: #6f4530; }
+
+    .btn:active { transform: translateY(1px); }
+
+    /* ====== Sections ====== */
+    .section { padding: 80px 0; }
+
+    .section-alt { background: var(--bg-alt); }
+
+    .section-title {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 36px;
+      font-weight: 400;
+      margin: 0 0 16px;
+      letter-spacing: -0.3px;
+    }
+
+    .section-intro {
+      font-size: 18px;
+      color: var(--fg-muted);
+      max-width: 720px;
+      margin: 0 0 48px;
+    }
+
+    h3 {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 24px;
+      font-weight: 400;
+      margin: 32px 0 12px;
+      color: var(--fg);
+    }
+
+    h4 {
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin: 24px 0 10px;
+      font-weight: 600;
+    }
+
+    /* ====== Service cards ====== */
+    .grid { display: grid; gap: 24px; }
+
+    .services { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(60, 40, 30, 0.08);
+    }
+
+    .card h3 { margin: 0 0 12px; font-size: 22px; }
+
+    .card-intro {
+      color: var(--fg-muted);
+      font-size: 16px;
+      margin: 0 0 16px;
+    }
+
+    .card p, .card li { font-size: 16px; }
+
+    ul { padding-left: 20px; margin: 12px 0; }
+    li { margin-bottom: 6px; }
+
+    .prices {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 12px;
+      font-size: 15px;
+    }
+
+    .prices th, .prices td {
+      text-align: left;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .prices th { font-weight: 500; color: var(--fg-muted); }
+
+    .prices td {
+      font-weight: 500;
+      text-align: right;
+      color: var(--accent);
+    }
+
+    .note {
+      font-size: 14px;
+      color: var(--fg-muted);
+      font-style: italic;
+      margin: 12px 0 0;
+    }
+
+    /* ====== Two-column layout ====== */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    .contact-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .contact-card h3 { margin: 0 0 16px; }
+
+    .kvk {
+      font-size: 13px;
+      color: var(--fg-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 16px;
+    }
+
+    /* ====== CTA box ====== */
+    .cta-box {
+      background: #fff;
+      border-left: 4px solid var(--accent);
+      padding: 28px 32px;
+      margin: 32px 0;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      box-shadow: var(--shadow);
+    }
+
+    .cta-box h3 { margin: 0 0 8px; }
+
+    /* ====== Form ====== */
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .contact-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--fg-muted);
+      font-weight: 500;
+    }
+
+    .contact-form input, .contact-form textarea {
+      font: inherit;
+      color: var(--fg);
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fafafa;
+      font-size: 15px;
+      font-weight: 400;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .contact-form input:focus, .contact-form textarea:focus {
+      outline: none;
+      border-color: var(--accent-soft);
+      background: #fff;
+    }
+
+    .contact-form button { align-self: flex-start; margin-top: 4px; }
+
+    /* ====== Footer ====== */
+    .site-footer {
+      padding: 32px 0;
+      text-align: center;
+      font-size: 14px;
+      color: var(--fg-muted);
+      border-top: 1px solid var(--line);
+      background: var(--bg);
+    }
+
+    .site-footer p { margin: 0; }
+
+    /* ====== Links inline ====== */
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+    }
+
+    a:hover { text-decoration-thickness: 2px; }
+
+    .contact-card a, .site-footer a { color: var(--accent); }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 760px) {
+      .header-inner { flex-direction: column; gap: 12px; padding: 12px 16px; }
+      .primary-nav { gap: 18px; flex-wrap: wrap; justify-content: center; }
+      h1 { font-size: 36px; }
+      .lede { font-size: 17px; }
+      .section { padding: 56px 0; }
+      .section-title { font-size: 28px; }
+      .hero { padding: 56px 0 48px; }
+      .two-col { grid-template-columns: 1fr; gap: 32px; }
+      .services { grid-template-columns: 1fr; }
+    }
