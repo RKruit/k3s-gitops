@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: anna
+  namespace: anna
+spec:
+  selector:
+    app: anna
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
