@@ -6,6 +6,7 @@ metadata:
   namespace: frigate
   labels:
     app: frigate
+    app.kubernetes.io/instance: frigate
 spec:
   secretName: frigate-tls
   issuerRef:
