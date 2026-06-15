@@ -1,0 +1,12 @@
+# Mosquitto data bind-mount: /srv/sv02/mosquitto/data → /mosquitto/data
+[Unit]
+Description=Mosquitto data volume
+
+[Volume]
+Type=bind
+Source=/srv/sv02/mosquitto/data
+Destination=/mosquitto/data
+Options=rw,relabel=shared
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,14 @@
+# Caddy data + config named volume
+# Stores ACME account keys + obtained certs at /data, and the Caddyfile
+# itself at /etc/caddy/Caddyfile (which we symlink from the host).
+[Unit]
+Description=Caddy data volume
+
+[Volume]
+Type=bind
+Source=/srv/sv02/caddy/data
+Destination=/data
+Options=rw,relabel=shared
+
+[Install]
+WantedBy=default.target

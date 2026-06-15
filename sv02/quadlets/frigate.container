@@ -1,0 +1,106 @@
+# Frigate NVR
+#
+# The Coral USB is on this host (the entire reason we're moving off
+# Talos/k3s — Frigate + Coral + nodeSelector was always a fight).
+#
+# Translation from the k3s deployment (base/frigate/deployment.yaml):
+#   - securityContext.privileged + caps → SecurityOpt=label=disable
+#   - hostPath /opt/coral-libs/*.so → Volume bind-mounts (files at exact path)
+#   - hostPath /dev/bus/usb, /sys/bus/usb → Volume bind-mounts
+#   - emptyDir dshm/db/cache → none needed; Frigate creates these itself
+#   - secretKeyRef → EnvironmentFile (host-side /srv/sv02/secrets/frigate-cam.env)
+#   - Pod-level nodeSelector → no equivalent (we are the host!)
+#
+# Pitfall: the Coral's /dev/bus/usb must be bind-mounted into the
+# container for the edgetpu runtime. Without it, libedgetpu returns
+# NULL and Frigate falls back to XNNPACK CPU delegate silently.
+[Unit]
+Description=Frigate NVR with Coral EdgeTPU
+After=network-online.target sv02-network.service mosquitto.service
+Wants=sv02-network.service
+Requires=frigate-config.volume frigate-media.volume frigate-db.volume
+After=mosquitto.service
+
+[Container]
+Image=ghcr.io/blakeblackshear/frigate:0.16.1
+ContainerName=frigate
+Hostname=frigate.sv02.internal
+Network=sv02.network
+AutoUpdate=registry
+
+# === Volume mounts ===
+# Config (frigate.yml from Git, plus a writable /tmp)
+Volume=frigate-config.volume:/config:z
+# Media (recordings — on the SATA disk)
+Volume=frigate-media.volume:/media:z
+# DB (frigate.db, persistent)
+Volume=frigate-db.volume:/db:z
+# Coral USB runtime — bookworm-compatible .so files staged on the host
+Volume=/opt/coral-libs/libedgetpu.so.1:/usr/local/lib/libedgetpu.so.1:ro,z
+Volume=/opt/coral-libs/libusb-1.0.so.0:/usr/local/lib/libusb-1.0.so.0:ro,z
+# USB device nodes (libusb opens these to talk to the Coral)
+Volume=/dev/bus/usb:/dev/bus/usb:rslave,z
+# USB sysfs (for enumeration)
+Volume=/sys/bus/usb:/sys/bus/usb:ro,z
+
+# === Environment ===
+# Camera + MQTT credentials — host-side env files, NOT in Git
+EnvironmentFile=/srv/sv02/secrets/frigate-cam.env
+# Camera creds end up in $FRIGATE_CAM_USER / $FRIGATE_CAM_PASS
+# frigate.yml uses these as env-var references in the RTSP URLs
+# (the {FRIGATE_CAM_USER}/{FRIGATE_CAM_PASS} placeholders).
+EnvironmentFile=/srv/sv02/secrets/frigate-mqtt.env
+# MQTT creds end up in $FRIGATE_MQTT_USER / $FRIGATE_MQTT_PASSWORD
+# frigate.yml uses these for the broker connection.
+# The values here MUST match MQTT_USER/MQTT_PASSWORD in mosquitto.env
+# (which is what the mosquitto container's passwd file is rendered from).
+#
+# === Static env (not secrets) ===
+Environment=TZ=Europe/Amsterdam
+Environment=CONFIG_FILE=/config/frigate.yml
+Environment=LD_LIBRARY_PATH=/usr/local/lib
+Environment=EDGETPU_SHARED_LIB=/usr/local/lib/libedgetpu.so.1
+# The image's default entrypoint is /init (s6-overlay); keep that.
+# Frigate reads CONFIG_FILE to find its config.
+
+# === Coral USB — must be privileged ===
+# Frigate needs CAP_SYS_ADMIN + SYS_RAWIO for the Coral, and needs
+# to bind privileged ports (8971 for TLS) and read all of /dev/bus/usb.
+# Easier to just run privileged than to fight the capability set.
+SecurityOpt=label=disable
+# Equivalent to k8s securityContext.privileged: true
+
+# === Ports ===
+# 5000 — internal plain HTTP (Caddy talks to this)
+# 8971 — internal nginx TLS (we don't use this; Caddy handles TLS)
+# 8554 — go2rtc RTSP (LAN-only access, useful for embedding)
+# 1984 — go2rtc WebRTC
+# 11984 — go2rtc API
+#
+# We do NOT publish 8971 publicly — Caddy proxies plain HTTP and
+# terminates TLS itself.
+PublishPort=5000:5000
+PublishPort=8554:8554
+PublishPort=1984:1984
+# 8971 is internal-only — bind to loopback so the LAN can't bypass Caddy
+PublishPort=127.0.0.1:8971:8971
+
+# === Restart policy ===
+Restart=always
+RestartSec=5s
+
+# === Lifecycle ===
+ExecStartPre=-/usr/bin/podman exec frigate sh -c 'echo "starting frigate"'
+ExecStop=/usr/bin/podman exec frigate sh -c 'kill -TERM 1'
+
+# === Hardening (limited by privileged) ===
+NoNewPrivileges=false
+ProtectHome=false
+
+[Service]
+RestartSec=5s
+TimeoutStartSec=600
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target

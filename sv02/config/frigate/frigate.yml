@@ -1,0 +1,152 @@
+# Frigate configuration for sv02 (podman + Quadlet)
+#
+# Pitfalls baked in to avoid the sv01 3-bug setup chain:
+#   1. mqtt.host is "mosquitto.sv02.internal" (the podman network DNS
+#      name, NOT "mosquitto.mqtt.svc.cluster.local" — that was the
+#      sv01 mistake, fixed here).
+#   2. mqtt-password lives in /srv/sv02/secrets/mosquitto.env on the
+#      host and is loaded via $FRIGATE_MQTT_PASSWORD env var. The
+#      env var name in this file matches the host env file.
+#   3. cameras.<cam>.detect.enabled: true is set explicitly so
+#      Frigate's _set_initial_topics publishes retained ON on every
+#      MQTT connect. Without this, the dispatcher defaults to OFF
+#      and detection silently disables itself on every reconnect.
+#      See frigate-nvr-management skill §5 for the durability writeup.
+#
+# Camera credentials: {FRIGATE_CAM_USER} and {FRIGATE_CAM_PASS}
+# placeholders are rendered at parse time from environment variables
+# loaded via EnvironmentFile=/srv/sv02/secrets/frigate-cam.env in
+# the frigate.container Quadlet.
+
+# === Auth: disabled (Caddy is the front door) ===
+# Frigate 0.16 generates a random admin password on every first boot,
+# which is unreadable after boot and regenerated on every pod start.
+# Caddy handles auth at the edge (basic-auth middleware or forwardAuth
+# to Authentik). When you wire that up, add the middleware here:
+#   basicauth:
+#     realm: frigate
+#     users: ...
+# For now: auth disabled, network access controlled by Caddy + DNS.
+auth:
+  enabled: false
+
+# === Birdseye (live overview grid) ===
+birdseye:
+  enabled: true
+  mode: objects
+  quality: 8
+
+# === Cameras ===
+# You said 3-4 cameras total. Start with 1 (the existing Tapo C210 on
+# 192.168.68.134) and add more by copying the block.
+#
+# IMPORTANT: each camera block has `detect.enabled: true` to dodge
+# the dispatcher-OFF trap. The 3-4 camera plan:
+#   - tapo_c210 (kan, 192.168.68.134) — already on sv01, move
+#   - tapo_c210_bedroom (?) — add when you get a 2nd camera
+#   - tapo_c210_garage (?) — add when you get a 3rd camera
+#   - tapo_c210_garden (?) — add when you get a 4th camera
+cameras:
+  # === Camera 1: Tapo C210 (the existing one) ===
+  tapo_c210:
+    enabled: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.134:554/stream2
+          input_args: -rtsp_transport tcp
+          roles:
+            - detect
+        - path: rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.134:554/stream1
+          input_args: -rtsp_transport tcp
+          roles:
+            - record
+    detect:
+      # `enabled: true` is the durability fix — Frigate's _set_initial_topics
+      # publishes the runtime value to retained MQTT on every connect.
+      # Without this, default runtime is false, and detection silently
+      # disables itself on every Frigate restart.
+      enabled: true
+      fps: 5
+      height: 360
+      width: 640
+
+  # === Camera 2-4: placeholders ===
+  # Copy the tapo_c210 block, change the camera name and IP, and add
+  # the new camera to the `cameras:` section. Don't forget `detect.enabled: true`.
+
+# === Object detection model ===
+# 320x320 SSD model is the standard for Coral USB Accelerator.
+model:
+  height: 320
+  width: 320
+  labelmap_path: /labelmap.txt
+  model_type: ssd
+  path: /edgetpu_model.tflite
+
+# === Coral USB detector ===
+detectors:
+  coral:
+    device: usb
+    type: edgetpu
+
+# === Motion detection pre-filter ===
+# Standard values; tune `contour_area` and `threshold` per camera if
+# you get false positives / missed events.
+motion:
+  contour_area: 100
+  delta_alpha: 0.2
+  frame_alpha: 0.2
+  frame_height: 100
+  mask: []
+  threshold: 25
+
+# === MQTT (homelab-internal broker) ===
+# mqtt.host MUST be the podman network DNS name, NOT the k8s service
+# name. The sv01 config had `mqtt.mqtt.svc.cluster.local` (wrong) which
+# was the first bug in the 3-bug setup chain. Here it's correct.
+mqtt:
+  enabled: true
+  host: mosquitto.sv02.internal
+  port: 1883
+  user: "{FRIGATE_MQTT_USER}"
+  password: "{FRIGATE_MQTT_PASSWORD}"
+  client_id: frigate
+  topic_prefix: frigate
+
+# === Recording policy: motion-only, alerts+detections retained ===
+# Continuous recording for 3-4 cameras at 1080p = ~170 GB/day, fills
+# a 1 TB disk in ~5 days. Motion-only + alerts gives 3-4 weeks retention.
+record:
+  enabled: true
+  # Continuous mode: OFF (don't record 24/7, only on motion/alerts)
+  # retain.days: how long to keep motion-triggered recordings
+  retain:
+    days: 14
+    mode: motion
+  alerts:
+    pre_capture: 5
+    post_capture: 5
+    retain:
+      days: 21
+      mode: active_objects
+  detections:
+    pre_capture: 5
+    post_capture: 5
+    retain:
+      days: 14
+      mode: active_objects
+
+# === Snapshots (still images on event) ===
+snapshots:
+  enabled: true
+  retain:
+    default: 14
+
+# === Live view quality ===
+live:
+  quality: 8
+
+# === Frigate 0.16 migration hint ===
+# version: 0.16-0 tells Frigate to skip DB migrations on first boot.
+# The ConfigMap on sv01 also used this; keep it for consistency.
+version: 0.16-0

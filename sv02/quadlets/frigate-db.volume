@@ -1,0 +1,12 @@
+# Frigate DB bind-mount: /srv/sv02/frigate/db → /db
+[Unit]
+Description=Frigate DB volume
+
+[Volume]
+Type=bind
+Source=/srv/sv02/frigate/db
+Destination=/db
+Options=rw,relabel=shared
+
+[Install]
+WantedBy=default.target
