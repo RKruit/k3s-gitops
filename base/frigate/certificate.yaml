@@ -13,3 +13,6 @@ spec:
     kind: ClusterIssuer
   dnsNames:
     - frigate.oostrandpark.com
+  usages:
+    - digital signature
+    - key encipherment
