@@ -77,12 +77,13 @@ RESTART_UNITS=()
 
 for name in "${CHANGED[@]}"; do
     case "$name" in
-        *.container|*.network)
+        *.container|*.service|*.network)
             # Symlink the file into the Quadlet search path
             # (it's actually a symlink, see bootstrap.sh, but
             # the path under the search path is what counts)
             NEED_DAEMON_RELOAD=true
             unit="${name%.container}"
+            unit="${unit%.service}"
             unit="${unit%.network}"
             RESTART_UNITS+=("$unit")
             ;;

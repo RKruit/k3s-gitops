@@ -1,0 +1,28 @@
+# One-shot service: render the mosquitto passwd file.
+#
+# Run before starting mosquitto.service, OR on demand when the
+# MQTT password is rotated:
+#   systemctl --user start render-mosquitto-passwd.service
+#
+# This is a separate service (not an ExecStartPre in the mosquitto
+# Quadlet) because the mosquitto Quadlet's generated unit has
+# Delegate=yes, which constrains the cgroup namespace of the
+# ExecStartPre's children in a way that breaks the inner
+# `podman run` for the mosquitto_passwd helper.
+#
+# A standalone one-shot service has no such constraints.
+[Unit]
+Description=Render /srv/sv02/mosquitto/data/{mosquitto.conf,passwd}
+After=network-online.target
+# This service should run before mosquitto.service starts.
+Before=mosquitto.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/sv02-config/sv02/scripts/render-mqtt-passwd.sh
+# 2 minutes is plenty (the script is fast; image pull is the slow part)
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target

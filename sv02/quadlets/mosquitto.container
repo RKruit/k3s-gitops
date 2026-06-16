@@ -3,14 +3,22 @@
 # Single instance, anonymous=false, no persistence (we don't need
 # durable subscriptions — Frigate is the only consumer).
 #
-# Password is rendered into /srv/sv02/mosquitto/data/passwd by the
-# render-mqtt-passwd.sh script (called via ExecStartPre below).
-# This keeps the Quadlet simple (no heredoc inside it) and the
-# passwd logic in a version-controlled script.
+# Password file is at /srv/sv02/mosquitto/data/passwd. It is rendered
+# by the separate render-mosquitto-passwd.service (a one-shot unit,
+# not part of this Quadlet — the Quadlet's ExecStartPre caused
+# Delegate-related cgroup issues that broke the inner podman run).
+#
+# To regenerate the passwd (e.g. after rotating MQTT_PASSWORD):
+#   systemctl --user start render-mosquitto-passwd.service
+#
+# The sync.sh timer also runs render-mqtt-passwd.sh, so the file
+# stays in sync with the env file across reboots.
 [Unit]
 Description=Mosquitto MQTT broker
 After=network-online.target sv02-network.service
 Wants=sv02-network.service
+After=render-mosquitto-passwd.service
+Wants=render-mosquitto-passwd.service
 
 [Container]
 Image=docker.io/library/eclipse-mosquitto:2.0
@@ -40,17 +48,12 @@ PublishPort=1883:1883
 NoNewPrivileges=true
 
 [Service]
-# Render /mosquitto/data/{mosquitto.conf,passwd} before starting the
-# container. This runs as the systemd user (rkruit via SUDO_USER
-# from the install script), NOT inside the container.
-ExecStartPre=/opt/sv02-config/sv02/scripts/render-mqtt-passwd.sh
 Restart=always
 RestartSec=5s
 TimeoutStartSec=120
 TimeoutStopSec=30
 # Note: ProtectSystem=strict and ProtectHome=true would hide
-# /home/rkruit and /srv/sv02/ from the ExecStartPre script's
-# `podman run` call, which needs to access both. We rely on
+# /home/rkruit and /srv/sv02/ from the container. We rely on
 # NoNewPrivileges=true and the rootless-podman isolation instead.
 PrivateTmp=true
 
