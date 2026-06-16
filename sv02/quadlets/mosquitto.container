@@ -35,12 +35,9 @@ Exec=mosquitto -c /mosquitto/data/mosquitto.conf
 # Port
 PublishPort=1883:1883
 
-# Hardening
-SecurityLabelDisable=true
+# Hardening (NOSUID/NODEV/NOEXEC are podman options; ProtectSystem
+# and friends are systemd directives, see [Service] below)
 NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-PrivateTmp=true
 
 [Service]
 # Render /mosquitto/data/{mosquitto.conf,passwd} before starting the
@@ -51,6 +48,9 @@ Restart=always
 RestartSec=5s
 TimeoutStartSec=120
 TimeoutStopSec=30
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
 
 [Install]
 WantedBy=default.target

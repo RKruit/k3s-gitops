@@ -39,16 +39,16 @@ Environment=XDG_DATA_HOME=/data
 # === Lifecycle ===
 Exec=/sbin/tini -- /usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
 
-# === Hardening ===
+# === Hardening (podman-side) ===
 NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-PrivateTmp=true
 
 [Service]
 Restart=always
 RestartSec=5s
 TimeoutStartSec=300
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
 
 [Install]
 WantedBy=default.target
