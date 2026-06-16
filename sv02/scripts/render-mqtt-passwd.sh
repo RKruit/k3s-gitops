@@ -1,21 +1,16 @@
 #!/bin/bash
 # Render the Mosquitto config + password file on disk.
 #
-# Reads MQTT_USER and MQTT_PASSWORD from the env file at $2,
-# writes $1/mosquitto.conf and $1/passwd.
+# Two calling conventions:
 #
-# Called by:
-#   - sv02/quadlets/render-mosquitto-passwd.service (podman, deprecated)
-#   - sv02/docker-compose.yml's mosquitto-init service (docker)
+# 1. Docker (mosquitto-init service in compose):
+#    - MQTT_USER and MQTT_PASSWORD are env vars in the container
+#      (set by compose's env_file directive)
+#    - Pass the data dir as $1: bash /render-mqtt-passwd.sh /mosquitto/data
 #
-# The passwd is hashed with `mosquitto_passwd` (which is in the
-# eclipse-mosquitto image but NOT on the host). We have two
-# strategies depending on context:
-#   - If /mosquitto/passwd-helper exists, use it (docker)
-#   - Otherwise, use a one-shot podman run with the image (host)
-#
-# In docker, the entrypoint mounts this script and calls:
-#   render-mqtt-passwd.sh /mosquitto/data /run/secrets/mosquitto.env
+# 2. Host (legacy podman render-mosquitto-passwd.service):
+#    - MQTT_USER and MQTT_PASSWORD are in $ENV_FILE
+#    - bash /render-mqtt-passwd.sh /srv/sv02/mosquitto/data /srv/sv02/secrets/mosquitto.env
 #
 # Run as root — the data dir may be owned by a different uid
 # (e.g. uid 1883 from the eclipse-mosquitto user), and we need
@@ -25,10 +20,23 @@ set -euo pipefail
 chmod +x "$0" 2>/dev/null || true
 
 CONFDIR="${1:-/srv/sv02/mosquitto/data}"
-ENV_FILE="${2:-/srv/sv02/secrets/mosquitto.env}"
+ENV_FILE="${2:-}"
 
-# Sanity check
-[[ -r "$ENV_FILE" ]] || { echo "[render-mqtt-passwd] FATAL: cannot read $ENV_FILE" >&2; exit 1; }
+# Sanity check: either we have env vars (docker) or a file (host)
+if [[ -z "$ENV_FILE" ]]; then
+    # Docker mode: rely on env vars
+    : "${MQTT_USER:?MQTT_USER not set in container env}"
+    : "${MQTT_PASSWORD:?MQTT_PASSWORD not set in container env}"
+else
+    # Host mode: source from file
+    [[ -r "$ENV_FILE" ]] || { echo "[render-mqtt-passwd] FATAL: cannot read $ENV_FILE" >&2; exit 1; }
+    set -a
+    # shellcheck disable=SC1090
+    source <(grep -v '^[[:space:]]*#' "$ENV_FILE" | grep -v '^[[:space:]]*$')
+    set +a
+    : "${MQTT_USER:?MQTT_USER not set in $ENV_FILE}"
+    : "${MQTT_PASSWORD:?MQTT_PASSWORD not set in $ENV_FILE}"
+fi
 
 # Ensure the dir exists. If it's owned by a different user
 # (e.g., uid 1883 from a previous mosquitto container run),

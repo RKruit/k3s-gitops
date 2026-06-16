@@ -63,12 +63,13 @@ services:
 
   # === mosquitto-init ===
   # One-shot: renders /srv/sv02/mosquitto/data/mosquitto.conf and
-  # passwd from the env file, then exits. The main mosquitto
-  # service depends_on this completing successfully.
+  # passwd from the env vars (MQTT_USER, MQTT_PASSWORD, set via
+  # env_file below), then exits. The main mosquitto service
+  # depends_on this completing successfully.
   #
   # We use the mosquitto image itself (which has mosquitto_passwd)
-  # and run a small entrypoint script. The script is bind-mounted
-  # from the repo.
+  # and run the render-mqtt-passwd.sh script as a bind-mount. The
+  # script handles both docker and host contexts.
   mosquitto-init:
     image: docker.io/library/eclipse-mosquitto:2.0
     container_name: mosquitto-init
@@ -79,12 +80,14 @@ services:
       - /srv/sv02/mosquitto/data:/mosquitto/data:rw
       - ./scripts/render-mqtt-passwd.sh:/render-mqtt-passwd.sh:ro
     entrypoint: ["/bin/sh", "-c"]
-    command: |
-      "apk add --no-cache bash sudo >/dev/null 2>&1 || true;
+    # The image is Alpine-based and doesn't have bash by default.
+    # We install bash + the script, then run the script with $1 =
+    # the data dir inside the container (/mosquitto/data).
+    # MQTT_USER / MQTT_PASSWORD are set via env_file below.
+    command: >
+      "apk add --no-cache bash >/dev/null 2>&1;
        install -d -m 755 /mosquitto/data;
-       bash /render-mqtt-passwd.sh /mosquitto/data /run/secrets/mosquitto.env"
-    # We pass the env file via env_file instead of a bind mount so
-    # the script can read it like a regular file.
+       bash /render-mqtt-passwd.sh /mosquitto/data"
     env_file:
       - /srv/sv02/secrets/mosquitto.env
     restart: "no"
