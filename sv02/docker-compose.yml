@@ -1,0 +1,186 @@
+# Docker Compose for sv02 (homelab NVR + reverse proxy)
+#
+# Replaces the podman+Quadlet setup that had a newuidmap bug on
+# Trixie. Docker daemon runs as root, no user namespace, no
+# newuidmap. We pin uid:gid per service to keep the security
+# posture reasonable.
+#
+# Bring it all up:
+#   docker compose up -d
+#
+# Tail logs:
+#   docker compose logs -f
+#
+# Stop:
+#   docker compose down
+#
+# The systemd unit sv02-docker.service (installed by
+# setup-host.sh) runs `docker compose up -d` on boot.
+
+name: sv02
+
+services:
+  # === Mosquitto MQTT broker ===
+  # Single instance, anonymous=false, no persistence (we don't need
+  # durable subscriptions — Frigate is the only consumer, and it
+  # resubscribes on restart).
+  mosquitto:
+    image: docker.io/library/eclipse-mosquitto:2.0
+    container_name: mosquitto
+    hostname: mosquitto.sv02.internal
+    restart: unless-stopped
+    user: "1883:1883"  # the eclipse-mosquitto image's default user
+    networks:
+      - sv02
+    ports:
+      - "1883:1883"
+    volumes:
+      # The password file is rendered by the mosquitto-init service
+      # (see below) and bind-mounted in.
+      - /srv/sv02/mosquitto/data:/mosquitto/data:rw
+    # Override the image's default CMD. The image's CMD points at
+    # /mosquitto/config/mosquitto.conf, but we mount our config at
+    # /mosquitto/data/mosquitto.conf (rendered by the init service).
+    command: ["mosquitto", "-c", "/mosquitto/data/mosquitto.conf"]
+    depends_on:
+      mosquitto-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -p 1883 -u usermqtt -P $$MQTT_PASSWORD -t '$$SYS/#' -W 1 || exit 1"]
+      # The env var $$MQTT_PASSWORD is expanded at healthcheck time
+      # (double-$$ to escape compose interpolation). It comes from
+      # the mosquitto.env file below.
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    env_file:
+      - /srv/sv02/secrets/mosquitto.env
+    logging:
+      driver: journald
+      options:
+        tag: mosquitto
+
+  # === mosquitto-init ===
+  # One-shot: renders /srv/sv02/mosquitto/data/mosquitto.conf and
+  # passwd from the env file, then exits. The main mosquitto
+  # service depends_on this completing successfully.
+  #
+  # We use the mosquitto image itself (which has mosquitto_passwd)
+  # and run a small entrypoint script. The script is bind-mounted
+  # from the repo.
+  mosquitto-init:
+    image: docker.io/library/eclipse-mosquitto:2.0
+    container_name: mosquitto-init
+    user: "0:0"  # needs to chown the data dir (see script)
+    networks:
+      - sv02
+    volumes:
+      - /srv/sv02/mosquitto/data:/mosquitto/data:rw
+      - ./scripts/render-mqtt-passwd.sh:/render-mqtt-passwd.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "apk add --no-cache bash sudo >/dev/null 2>&1 || true;
+       install -d -m 755 /mosquitto/data;
+       bash /render-mqtt-passwd.sh /mosquitto/data /run/secrets/mosquitto.env"
+    # We pass the env file via env_file instead of a bind mount so
+    # the script can read it like a regular file.
+    env_file:
+      - /srv/sv02/secrets/mosquitto.env
+    restart: "no"
+    logging:
+      driver: journald
+      options:
+        tag: mosquitto-init
+
+  # === Frigate NVR ===
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:0.16.1
+    container_name: frigate
+    hostname: frigate.sv02.internal
+    restart: unless-stopped
+    privileged: true  # Coral + privileged ports
+    networks:
+      - sv02
+    ports:
+      - "5000:5000"   # internal plain HTTP (Caddy talks to this)
+      - "8554:8554"   # RTSP
+      - "1984:1984"   # go2rtc WebRTC
+      - "127.0.0.1:8971:8971"  # frigate API (loopback only)
+    volumes:
+      - /srv/sv02/frigate/config:/config:rw
+      - /srv/sv02/frigate/media:/media:rw
+      - /srv/sv02/frigate/db:/db:rw
+      - /opt/coral-libs/libedgetpu.so.1:/usr/local/lib/libedgetpu.so.1:ro
+      - /opt/coral-libs/libusb-1.0.so.0:/usr/local/lib/libusb-1.0.so.0:ro
+      - /dev/bus/usb:/dev/bus/usb
+      - /sys/bus/usb:/sys/bus/usb:ro
+    environment:
+      CONFIG_FILE: /config/frigate.yml
+      EDGETPU_SHARED_LIB: /usr/local/lib/libedgetpu.so.1
+      LD_LIBRARY_PATH: /usr/local/lib
+      TZ: Europe/Amsterdam
+    env_file:
+      - /srv/sv02/secrets/frigate-cam.env
+      - /srv/sv02/secrets/frigate-mqtt.env
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/version >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: journald
+      options:
+        tag: frigate
+
+  # === Caddy reverse proxy ===
+  # Terminates TLS for the hostnames in /etc/caddy/Caddyfile
+  # (which is bind-mounted from the repo). Issues Let's Encrypt
+  # certs via HTTP-01 (port 80 reachable from internet).
+  caddy:
+    image: docker.io/library/caddy:2.8-alpine
+    container_name: caddy
+    hostname: caddy.sv02.internal
+    restart: unless-stopped
+    networks:
+      - sv02
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      CADDY_CONFIG_DIR: /etc/caddy
+      CADDY_DATA_DIR: /data
+    depends_on:
+      frigate:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:2019/config/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: journald
+      options:
+        tag: caddy
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  sv02:
+    driver: bridge
+    name: sv02
+    ipam:
+      config:
+        - subnet: 10.89.0.0/24
+          gateway: 10.89.0.1

@@ -1,20 +1,21 @@
 # Caddyfile for sv02 homelab
-# Deployed to /etc/caddy/Caddyfile (symlink → /opt/sv02-config/sv02/caddy/Caddyfile)
+# Deployed to /etc/caddy/Caddyfile (bind-mounted from this file
+# in the docker compose project).
 #
-# Hostnames: edit these. You handle DNS manually, so before `systemctl start caddy`
-# make sure the A records point at this host's public IP. Caddy will issue Let's
-# Encrypt certs via HTTP-01 challenge on first start, then auto-renew.
-#
-# Placeholder hostnames below — pick a real one and create the A record.
+# Hostnames: edit these. You handle DNS manually, so before
+# `docker compose up -d caddy` make sure the A records point at
+# this host's public IP. Caddy will issue Let's Encrypt certs
+# via HTTP-01 challenge on first start, then auto-renew.
 
 # === Frigate ===
 # Frigate 0.16's nginx serves on port 5000 (plain HTTP, internal) and
 # handles /api/*, /go2rtc/*, /web/*, /ws, /videos, /events, etc.
-# We terminate TLS in Caddy and forward plain HTTP to the podman network IP.
-frigate.sv02.oostrandpark.net {
-    # We connect to Frigate by its container DNS name on the rootless
-    # podman network. Caddy runs on the host network OR the same rootless
-    # network — see caddy.container.
+# We terminate TLS in Caddy and forward plain HTTP to the docker
+# network DNS name.
+frigate.sv02.oostrandpark.com {
+    # We connect to Frigate by its container DNS name on the docker
+    # bridge network (`sv02`). Caddy and Frigate are on the same
+    # network in docker-compose.yml.
     reverse_proxy frigate.sv02.internal:5000
 
     # Bump timeouts: Frigate's /api/events can be slow, and the WebSocket
@@ -42,14 +43,14 @@ frigate.sv02.oostrandpark.net {
 # (webrtc + api) or 8554 (rtsp) via the same Frigate container's network
 # namespace. Most users don't need this — Frigate's UI already exposes
 # everything. Uncomment if you want raw WebRTC access.
-# go2rtc.sv02.oostrandpark.net:1984 {
+# go2rtc.sv02.oostrandpark.com:1984 {
 #     reverse_proxy frigate.sv02.internal:1984
 # }
 
 # === Optional: Mosquitto WebSockets (for browser-based MQTT clients) ===
 # Not needed for Frigate (it uses native MQTT on 1883 internally).
 # Uncomment only if you have a specific browser-based MQTT dashboard.
-# mqtt.sv02.oostrandpark.net {
+# mqtt.sv02.oostrandpark.com {
 #     reverse_proxy /ws mosquitto.sv02.internal:9001
 # }
 

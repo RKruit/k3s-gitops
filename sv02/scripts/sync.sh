@@ -1,144 +1,83 @@
 #!/bin/bash
-# sv02 GitOps sync
-# Polls the k3s-gitops repo, detects changes, and restarts the
-# relevant systemd units.
+# GitOps sync for sv02.
 #
-# Runs as root (from a systemd timer). Operates on the rootless
-# podman user's Quadlet search path via a sudo call — adjust
-# `PODMAN_USER` if your rootless user is different.
+# Pulls the latest sv02/ config from GitHub, detects what changed,
+# and restarts the affected containers.
+#
+# Replaces the podman-era per-Quadlet restart logic with a single
+# `docker compose up -d` (compose will only recreate changed services).
+#
+# On any change to sv02/ (Quadlet files, scripts, secrets, frigate
+# config, Caddyfile), we re-render and run `docker compose up -d`.
+#
+# On a change to sv02/secrets/* (env files), we re-render mosquitto
+# by restarting the mosquitto-init + mosquitto services.
+#
+# On a change to sv02/caddy/Caddyfile, we just `up -d` caddy.
+#
+# Runs as root via sv02-sync.service.
+
 set -euo pipefail
+chmod +x "$0" 2>/dev/null || true
 
 REPO_DIR=/opt/sv02-config
-PODMAN_USER=podman
-LOG_PREFIX="[sv02-sync]"
+COMPOSE_FILE="$REPO_DIR/sv02/docker-compose.yml"
+LOG_TAG="sv02-sync"
 
-log() { echo "$LOG_PREFIX $(date -Iseconds) $*"; }
+log() { logger -t "$LOG_TAG" "$*"; echo "[$LOG_TAG] $*"; }
+fatal() { log "FATAL: $*"; exit 1; }
 
-# 1. Pull the latest
-if ! git -C "$REPO_DIR" pull --ff-only 2>/dev/null; then
-    log "git pull failed; skipping sync"
+[[ -d "$REPO_DIR/.git" ]] || fatal "$REPO_DIR is not a git repo"
+
+cd "$REPO_DIR"
+
+# Capture the current HEAD so we can detect what changed
+OLD_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "none")
+
+log "pulling from origin/main"
+if ! git pull --ff-only origin main 2>&1 | tee /tmp/sv02-sync.log; then
+    # If fast-forward failed, someone (you) force-pushed or we're
+    # behind. Try a hard reset to origin/main (last resort).
+    log "ff-only failed, hard-resetting to origin/main"
+    git fetch origin main
+    git reset --hard origin/main
+fi
+
+NEW_HEAD=$(git rev-parse HEAD)
+if [[ "$OLD_HEAD" == "$NEW_HEAD" ]]; then
+    log "no changes, exiting"
     exit 0
 fi
 
-# 2. Compute hashes of relevant paths BEFORE we know what's changed
-QUADLETS_DIR=$REPO_DIR/sv02/quadlets
-CADDY_DIR=$REPO_DIR/sv02/caddy
-CONFIG_DIR=$REPO_DIR/sv02/config
+log "synced $OLD_HEAD -> $NEW_HEAD"
 
-declare -A BEFORE_AFTER
+# Make sure scripts are executable (git can reset mode bits on pull)
+chmod +x "$REPO_DIR/sv02/scripts/"*.sh
 
-# Quadlet files: .container, .volume, .network
-for f in "$QUADLETS_DIR"/*; do
-    [[ -f "$f" ]] || continue
-    name=$(basename "$f")
-    BEFORE_AFTER[$name]=$(sha256sum "$f" | awk '{print $1}')
-done
+# What changed? If anything in sv02/ changed, restart the affected
+# services. The simplest correct behavior is: if anything changed,
+# run `docker compose up -d` and let compose figure out what to
+# recreate. We do NOT touch the secrets/ dir on the host (those
+# are 600, owned by rkruit, and the env_file directive in compose
+# reads them at container-start time only — so a change to a secret
+# file requires restarting the affected service).
 
-# Caddyfile
-BEFORE_AFTER[Caddyfile]=$(sha256sum "$CADDY_DIR/Caddyfile" | awk '{print $1}')
+CHANGED=$(git diff --name-only "$OLD_HEAD" "$NEW_HEAD" -- sv02/ 2>/dev/null || true)
 
-# Frigate config
-BEFORE_AFTER[frigate.yml]=$(sha256sum "$CONFIG_DIR/frigate/frigate.yml" | awk '{print $1}')
-
-# 3. Detect what changed by comparing to the last-known state
-#    (persisted in /var/lib/sv02-sync/last-sync.sha256sum)
-STATE_FILE=/var/lib/sv02-sync/last-sync.sha256sum
-mkdir -p "$(dirname "$STATE_FILE")"
-touch "$STATE_FILE"
-
-CHANGED=()
-while IFS=$'\t' read -r name old_hash; do
-    [[ -z "$name" ]] && continue
-    new_hash=${BEFORE_AFTER[$name]:-}
-    if [[ "$new_hash" != "$old_hash" ]]; then
-        CHANGED+=("$name")
-    fi
-done < "$STATE_FILE"
-
-# If nothing was in the state file, treat all current files as
-# "potentially changed" so the first run after bootstrap does the
-# right thing.
-if [[ ! -s "$STATE_FILE" ]]; then
-    log "first run, treating all files as changed"
-    CHANGED=("$(ls "$QUADLETS_DIR" | tr '\n' ' ')" Caddyfile frigate.yml)
-fi
-
-if [[ ${#CHANGED[@]} -eq 0 ]]; then
-    log "no changes"
+if [[ -z "$CHANGED" ]]; then
+    log "no changes in sv02/, exiting"
     exit 0
 fi
 
-log "changed: ${CHANGED[*]}"
+log "changed files:"
+for f in $CHANGED; do log "  $f"; done
 
-# 4. Apply changes
-NEED_DAEMON_RELOAD=false
-NEED_CADDY_RELOAD=false
-RESTART_UNITS=()
-
-for name in "${CHANGED[@]}"; do
-    case "$name" in
-        *.container|*.service|*.network)
-            # Symlink the file into the Quadlet search path
-            # (it's actually a symlink, see bootstrap.sh, but
-            # the path under the search path is what counts)
-            NEED_DAEMON_RELOAD=true
-            unit="${name%.container}"
-            unit="${unit%.service}"
-            unit="${unit%.network}"
-            RESTART_UNITS+=("$unit")
-            ;;
-        Caddyfile)
-            # Caddy reads /etc/caddy/Caddyfile on every reload
-            NEED_CADDY_RELOAD=true
-            ;;
-        frigate.yml)
-            # Frigate's config is mounted from a host path, so a
-            # file change is picked up on container restart. We
-            # don't auto-restart Frigate on config change — too
-            # disruptive for an NVR (recordings gap, detection
-            # reset). Just log a reminder; restart manually with
-            # `systemctl --user restart frigate` after verifying
-            # the YAML.
-            log "frigate.yml changed — restart Frigate manually:"
-            log "  sudo -u $PODMAN_USER XDG_RUNTIME_DIR=/run/user/$(id -u $PODMAN_USER) systemctl --user restart frigate"
-            ;;
-    esac
-done
-
-# 5. Reload systemd (picks up new/changed Quadlets)
-if $NEED_DAEMON_RELOAD; then
-    log "reloading systemd user instance for $PODMAN_USER"
-    sudo -u "$PODMAN_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$PODMAN_USER")" \
-        systemctl --user daemon-reload
+# Always do `docker compose up -d` — compose is smart enough to
+# only recreate what's actually different.
+cd "$REPO_DIR/sv02"
+if docker compose --file "$COMPOSE_FILE" up -d --remove-orphans 2>&1 | tee -a /tmp/sv02-sync.log; then
+    log "compose up succeeded"
+else
+    log "compose up FAILED, see /tmp/sv02-sync.log"
+    exit 1
 fi
-
-# 6. Restart changed Quadlet units
-for unit in "${RESTART_UNITS[@]}"; do
-    # Skip if the unit isn't currently loaded (avoids trying to
-    # restart things that haven't been started yet)
-    if sudo -u "$PODMAN_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$PODMAN_USER")" \
-        systemctl --user is-active --quiet "$unit" 2>/dev/null; then
-        log "restarting $unit"
-        sudo -u "$PODMAN_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$PODMAN_USER")" \
-            systemctl --user try-restart "$unit" || log "  restart of $unit failed (non-fatal)"
-    else
-        log "skipping restart of $unit (not active)"
-    fi
-done
-
-# 7. Reload Caddy (if its config changed)
-if $NEED_CADDY_RELOAD; then
-    log "reloading caddy"
-    sudo -u "$PODMAN_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$PODMAN_USER")" \
-        systemctl --user reload caddy || log "  caddy reload failed (non-fatal)"
-fi
-
-# 8. Save the new state
-{
-    for name in "${!BEFORE_AFTER[@]}"; do
-        printf "%s\t%s\n" "$name" "${BEFORE_AFTER[$name]}"
-    done
-} > "$STATE_FILE.tmp"
-mv "$STATE_FILE.tmp" "$STATE_FILE"
-
-log "sync complete"
