@@ -45,7 +45,7 @@ PublishPort=1883:1883
 
 # Hardening (NOSUID/NODEV/NOEXEC are podman options; ProtectSystem
 # and friends are systemd directives, see [Service] below)
-NoNewPrivileges=true
+SecurityLabelDisable=true
 
 [Service]
 Restart=always
