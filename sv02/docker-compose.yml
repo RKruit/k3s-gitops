@@ -113,14 +113,18 @@ services:
       - /srv/sv02/frigate/config:/config:rw
       - /srv/sv02/frigate/media:/media:rw
       - /srv/sv02/frigate/db:/db:rw
-      - /opt/coral-libs/libedgetpu.so.1:/usr/local/lib/libedgetpu.so.1:ro
-      - /opt/coral-libs/libusb-1.0.so.0:/usr/local/lib/libusb-1.0.so.0:ro
+      # The Frigate 0.16.1 image ships with its own libedgetpu and
+      # libusb built in (Debian Bookworm versions). We do NOT
+      # bind-mount them from /opt/coral-libs/ — those are the Trixie
+      # builds and are not glibc-compatible with the Bookworm
+      # container (GLIBC_2.38 not found error).
+      #
+      # If you need to override (e.g., to use a newer libedgetpu
+      # that feranick builds), re-add the bind-mounts here.
       - /dev/bus/usb:/dev/bus/usb
       - /sys/bus/usb:/sys/bus/usb:ro
     environment:
       CONFIG_FILE: /config/frigate.yml
-      EDGETPU_SHARED_LIB: /usr/local/lib/libedgetpu.so.1
-      LD_LIBRARY_PATH: /usr/local/lib
       TZ: Europe/Amsterdam
     env_file:
       - /srv/sv02/secrets/frigate-cam.env
