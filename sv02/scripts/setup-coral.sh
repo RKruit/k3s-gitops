@@ -52,12 +52,13 @@ fi
 log "extracting libedgetpu"
 dpkg-deb -x "$DEB" extracted/
 
-# The deb installs to:
-#   ./lib/x86_64-linux-gnu/libedgetpu.so.1
-#   ./lib/x86_64-linux-gnu/libedgetpu.so.1.0.0
+# The Bookworm deb installs to:
+#   ./usr/lib/x86_64-linux-gnu/libedgetpu.so.1
+#   ./usr/lib/x86_64-linux-gnu/libedgetpu.so.1.0
 #   ./lib/udev/rules.d/60-libedgetpu1-std.rules
-#   ./usr/lib/x86_64-linux-gnu/libedgetpu.so (symlink)
-cp -v extracted/lib/x86_64-linux-gnu/libedgetpu.so.1.0.0 "$STAGE_DIR/libedgetpu.so.1"
+# (Note: Bookworm has /lib as a symlink to /usr/lib, so the .so
+# is only in /usr/lib/. Older distros split them.)
+cp -v extracted/usr/lib/x86_64-linux-gnu/libedgetpu.so.1.0 "$STAGE_DIR/libedgetpu.so.1"
 
 # === libusb (extract from the system, since the Frigate image's
 #    libusb-1.0.so.0 is already glibc 2.34 compatible) ===
