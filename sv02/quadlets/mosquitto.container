@@ -35,9 +35,10 @@ Volume=/srv/sv02/mosquitto/data:/mosquitto:z
 # Environment (consumed by render-mqtt-passwd.sh)
 EnvironmentFile=/srv/sv02/secrets/mosquitto.env
 
-# Override the image's default entrypoint. The image's CMD points
-# at /mosquitto/config/mosquitto.conf, but we mount our config at
-# /mosquitto/data/mosquitto.conf (rendered by the pre-start script).
+# Override the image's default entrypoint. The image's default
+# CMD points at /mosquitto/config/mosquitto.conf, but we mount
+# our config at /mosquitto/data/mosquitto.conf (rendered by the
+# pre-start service).
 Exec=mosquitto -c /mosquitto/data/mosquitto.conf
 
 # Port
