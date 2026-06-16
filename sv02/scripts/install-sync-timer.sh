@@ -6,6 +6,7 @@ set -euo pipefail
 REPO_DIR=/opt/sv02-config
 SYNC_SCRIPT=$REPO_DIR/sv02/scripts/sync.sh
 SERVICE_NAME=sv02-sync.service
+PODMAN_USER=${PODMAN_USER:-${SUDO_USER:-podman}}
 
 log() { echo "[install-sync-timer] $(date -Iseconds) $*"; }
 

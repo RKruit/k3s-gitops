@@ -4,7 +4,12 @@
 set -euo pipefail
 
 REPO_DIR=/opt/sv02-config
-PODMAN_USER=podman
+# Use the user who invoked sudo (via $SUDO_USER) as the rootless
+# podman user. Falls back to $PODMAN_USER / 'podman' for non-sudo
+# invocations. The default $PODMAN_USER=podman with uid 1000 conflicts
+# with the first non-root user on most Debian installs (uid 1000 is
+# always the install-time user), so we default to SUDO_USER in practice.
+PODMAN_USER=${PODMAN_USER:-${SUDO_USER:-podman}}
 
 log() { echo "[bootstrap] $(date -Iseconds) $*"; }
 
