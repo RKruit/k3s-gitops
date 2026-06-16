@@ -48,8 +48,10 @@ Restart=always
 RestartSec=5s
 TimeoutStartSec=120
 TimeoutStopSec=30
-ProtectSystem=strict
-ProtectHome=true
+# Note: ProtectSystem=strict and ProtectHome=true would hide
+# /home/rkruit and /srv/sv02/ from the ExecStartPre script's
+# `podman run` call, which needs to access both. We rely on
+# NoNewPrivileges=true and the rootless-podman isolation instead.
 PrivateTmp=true
 
 [Install]

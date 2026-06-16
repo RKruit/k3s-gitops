@@ -46,8 +46,10 @@ NoNewPrivileges=true
 Restart=always
 RestartSec=5s
 TimeoutStartSec=300
-ProtectSystem=strict
-ProtectHome=true
+# Note: ProtectSystem=strict and ProtectHome=true would hide
+# /home/rkruit (where Caddy's ACME account lives) from the container.
+# We rely on NoNewPrivileges=true and the rootless-podman isolation
+# for the homelab threat model.
 PrivateTmp=true
 
 [Install]

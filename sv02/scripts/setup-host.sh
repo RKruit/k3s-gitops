@@ -62,17 +62,20 @@ else
 fi
 
 # === 2. Storage directories ===
+# All directories under /srv/sv02/ are owned by the podman user
+# (rkruit for sudo-mode installs) so the rootless podman container
+# can write into the bind-mounts without permission errors.
 log "creating storage directories"
 install -d -m 755 /srv/sv02
-install -d -m 755 /srv/sv02/frigate
-install -d -m 755 /srv/sv02/frigate/config
-install -d -m 755 /srv/sv02/frigate/db
+install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/frigate
+install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/frigate/config
+install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/frigate/db
 # frigate-media is created/mounted below
-install -d -m 755 /srv/sv02/mosquitto
-install -d -m 755 /srv/sv02/mosquitto/data
-install -d -m 755 /srv/sv02/caddy
-install -d -m 755 /srv/sv02/caddy/data
-install -d -m 700 /srv/sv02/secrets
+install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/mosquitto
+install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/mosquitto/data
+install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/caddy
+install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/caddy/data
+install -d -m 700 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/secrets
 
 # === 3. SATA disk setup ===
 # Set NO_DISK=1 in the environment to skip this section entirely
