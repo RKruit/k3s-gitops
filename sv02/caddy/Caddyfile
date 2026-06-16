@@ -7,6 +7,18 @@
 # this host's public IP. Caddy will issue Let's Encrypt certs
 # via HTTP-01 challenge on first start, then auto-renew.
 
+# === Global options (must come first in Caddy v2) ===
+{
+    # Admin API on localhost only (default in container is
+    # localhost:2019, but we set it explicitly for clarity).
+    admin localhost:2019
+    # Log to stdout so docker logs can see it
+    log default {
+        output stdout
+        format console
+    }
+}
+
 # === Frigate ===
 # Frigate 0.16's nginx serves on port 5000 (plain HTTP, internal) and
 # handles /api/*, /go2rtc/*, /web/*, /ws, /videos, /events, etc.
@@ -19,8 +31,7 @@ frigate.sv02.oostrandpark.com {
     reverse_proxy frigate.sv02.internal:5000 {
         # Bump timeouts: Frigate's /api/events can be slow, and the
         # WebSocket needs to stay open. In Caddy 2.8+, the dial/read/send
-        # directives are sub-options of `transport` (or use the
-        # simpler `timeouts` shorthand which sets all three).
+        # directives are sub-options of `transport`.
         transport http {
             dial_timeout 5s
             read_timeout 60s
@@ -32,7 +43,6 @@ frigate.sv02.oostrandpark.com {
     header {
         # Hide the Caddy fingerprint
         -Server
-        # Allow WebSocket upgrades (frigate uses /ws for live updates)
     }
 
     # HLS streams (live view) — pass through the long-lived stream
@@ -55,16 +65,3 @@ frigate.sv02.oostrandpark.com {
 # mqtt.sv02.oostrandpark.com {
 #     reverse_proxy /ws mosquitto.sv02.internal:9001
 # }
-
-# === Internal-only / LAN services ===
-# Optional: expose Caddy admin API on localhost only (for the sync.sh reload)
-# Already default — Caddy admin is bound to 127.0.0.1:2019 by default.
-
-# === Log everything to stdout (Caddy is running in a container) ===
-{
-    admin localhost:2019
-    log default {
-        output stdout
-        format console
-    }
-}
