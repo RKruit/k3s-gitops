@@ -23,7 +23,7 @@ RemainAfterExit=yes
 # The script needs to chown /srv/sv02/mosquitto/data (which can be
 # owned by a namespaced uid from a previous podman run) and chmod
 # files inside it. Both require root. We invoke via sudo.
-ExecStart=sudo -n /opt/sv02-config/sv02/scripts/render-mqtt-passwd.sh
+ExecStart=/usr/bin/sudo -n /opt/sv02-config/sv02/scripts/render-mqtt-passwd.sh
 # 2 minutes is plenty (the script is fast; image pull is the slow part)
 TimeoutStartSec=120
 
