@@ -77,7 +77,28 @@ install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/caddy
 install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/caddy/data
 install -d -m 700 -o "$PODMAN_USER" -g "$PODMAN_USER" /srv/sv02/secrets
 
-# === 3. SATA disk setup ===
+# === 8d. Install the mosquitto @reboot cron job ===
+# Mosquitto is started via cron @reboot instead of a Quadlet
+# systemd service, because the systemd user context on Trixie
+# has a newuidmap bug that makes podman run from a systemd user
+# service fail (write to uid_map: EPERM). The cron job runs in
+# a normal user session where podman works fine.
+#
+# The script also handles ad-hoc starts (e.g., after rotating
+# the MQTT password or after the user manually stops the
+# container).
+if ! crontab -l 2>/dev/null | grep -qF 'start-mosquitto.sh start'; then
+    log "installing @reboot cron for mosquitto"
+    # Append to the existing crontab
+    ( crontab -l 2>/dev/null || true
+      echo ""
+      echo "# Start mosquitto via cron @reboot (workaround for the"
+      echo "# systemd user context newuidmap bug on Trixie)"
+      echo "@reboot /home/rkruit/.local/bin/start-mosquitto.sh start > /tmp/mosquitto-start.log 2>&1"
+    ) | crontab -
+    install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" /home/"$PODMAN_USER"/.local/bin
+    install -m 755 "$REPO_DIR/sv02/scripts/start-mosquitto.sh" /home/"$PODMAN_USER"/.local/bin/start-mosquitto.sh
+fi
 # Set NO_DISK=1 in the environment to skip this section entirely
 # (use the root filesystem for Frigate media - fine for homelab, less
 # safe than a separate disk, but avoids a hard exit on hosts with no
