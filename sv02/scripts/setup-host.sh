@@ -66,6 +66,14 @@ install -d -m 755 /srv/sv02/caddy/data
 install -d -m 700 /srv/sv02/secrets
 
 # === 3. SATA disk setup ===
+# Set NO_DISK=1 in the environment to skip this section entirely
+# (use the root filesystem for Frigate media - fine for homelab, less
+# safe than a separate disk, but avoids a hard exit on hosts with no
+# dedicated recording drive).
+if [[ -n "${NO_DISK:-}" ]]; then
+    log "NO_DISK=1 set; using root filesystem for Frigate media"
+    install -d -m 755 /srv/sv02/frigate/media
+else
 # The 1 TB SATA disk. We expect it to be /dev/sda (or whatever the
 # user has). We DON'T blindly format — we look for an existing
 # partition labeled 'frigate-media' first; if absent, we look for
@@ -111,6 +119,8 @@ else
     fi
     # Mount now
     mount "$MOUNT" || log "mount failed; will retry on next boot"
+fi
+
 fi
 
 # === 4. Coral USB autosuspend fix (host-level) ===
