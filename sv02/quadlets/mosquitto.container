@@ -3,19 +3,10 @@
 # Single instance, anonymous=false, no persistence (we don't need
 # durable subscriptions — Frigate is the only consumer).
 #
-# Password is in /srv/sv02/secrets/mosquitto.env on the host. We
-# don't bake it into the image or commit it to Git. The pattern:
-#
-#  1. systemd's `ExecStartPre` (separate [Service] section below)
-#     renders /srv/sv02/mosquitto/data/{mosquitto.conf,passwd}
-#     from the env file.
-#  2. The container starts with -v mqtt-data.volume:/mosquitto
-#     so it sees the rendered files.
-#
-# The official eclipse-mosquitto image expects the data dir layout
-# (/mosquitto/data and /mosquitto/log), with config in
-# /mosquitto/config/mosquitto.conf. We override the config path
-# with a CLI flag.
+# Password is rendered into /srv/sv02/mosquitto/data/passwd by the
+# render-mqtt-passwd.sh script (called via ExecStartPre below).
+# This keeps the Quadlet simple (no heredoc inside it) and the
+# passwd logic in a version-controlled script.
 [Unit]
 Description=Mosquitto MQTT broker
 After=network-online.target sv02-network.service mqtt-data-volume.service
@@ -29,31 +20,25 @@ Hostname=mosquitto.sv02.internal
 Network=sv02.network
 AutoUpdate=registry
 
-# === Volume mounts ===
-# mqtt-data.volume is the bind-mount to /srv/sv02/mosquitto/data
-# We mount it at /mosquitto (parent of data/ and config/) so the
-# official image's directory layout is preserved.
+# Mounts
 Volume=mqtt-data.volume:/mosquitto:z
 
-# === Environment ===
-# mosquitto.env on the host has MQTT_USER and MQTT_PASSWORD.
-# These are consumed by the ExecStartPre wrapper in [Service] below.
+# Environment (consumed by render-mqtt-passwd.sh)
 EnvironmentFile=/srv/sv02/secrets/mosquitto.env
 
-# === Port ===
-PublishPort=1883:1883
-
-# === Override the entrypoint to point at the rendered config ===
-# The image's default entrypoint is /bin/sh -c, which respects
-# CMD ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"].
-# We override CMD to point at the config we rendered in /mosquitto/data.
+# Override the image's default entrypoint. The image's CMD points
+# at /mosquitto/config/mosquitto.conf, but we mount our config at
+# /mosquitto/data/mosquitto.conf (rendered by the pre-start script).
 Exec=mosquitto -c /mosquitto/data/mosquitto.conf
 
-# === Restart policy ===
+# Port
+PublishPort=1883:1883
+
+# Restart
 Restart=always
 RestartSec=5s
 
-# === Hardening ===
+# Hardening
 SecurityOpt=label=disable
 NoNewPrivileges=true
 ProtectSystem=strict
@@ -61,43 +46,12 @@ ProtectHome=true
 PrivateTmp=true
 
 [Service]
-# === Render config + passwd BEFORE the container starts ===
-# This is the [Service] ExecStartPre, which runs as the user
-# (not inside the container) before podman creates the container.
-#
-# Logic:
-#   1. Read MQTT_USER and MQTT_PASSWORD from /srv/sv02/secrets/mosquitto.env
-#   2. Write /srv/sv02/mosquitto/data/mosquitto.conf with the right paths
-#   3. Hash the password with a one-shot mosquitto container and
-#      write /srv/sv02/mosquitto/data/passwd
-#   4. Set permissions
-#   5. Start the actual container
-ExecStartPre=/bin/bash -c '\
-  set -euo pipefail; \
-  confdir=/srv/sv02/mosquitto/data; \
-  mkdir -p $$confdir; \
-  # Load MQTT_USER and MQTT_PASSWORD from the env file; export them \
-  set -a; . /srv/sv02/secrets/mosquitto.env; set +a; \
-  # Render the config \
-  cat > $$confdir/mosquitto.conf <<EOF
-listener 1883
-allow_anonymous false
-password_file $$confdir/passwd
-persistence false
-log_dest stdout
-log_type all
-connection_messages true
-EOF
-  # Hash the password into passwd using a throwaway mosquitto container \
-  rm -f $$confdir/passwd; \
-  /usr/bin/podman run --rm --replace \
-    -v $$confdir:/work \
-    --entrypoint /bin/sh \
-    docker.io/library/eclipse-mosquitto:2.0 \
-    -c "/usr/bin/mosquitto_passwd -b -c /work/passwd $$MQTT_USER $$MQTT_PASSWORD"; \
-  chmod 600 $$confdir/passwd; \
-  echo "mosquitto config + passwd rendered in $$confdir"'
-
+# Render /mosquitto/data/{mosquitto.conf,passwd} before starting the
+# container. This runs as the systemd user (rkruit via SUDO_USER
+# from the install script), NOT inside the container.
+ExecStartPre=/usr/bin/bash -c '/usr/bin/podman run --rm --network=none docker.io/library/eclipse-mosquitto:2.0 true' || true
+# ^ Pre-pull the image so the actual ExecStartPre doesn't have to.
+ExecStartPre=/opt/sv02-config/sv02/scripts/render-mqtt-passwd.sh
 RestartSec=5s
 TimeoutStartSec=120
 TimeoutStopSec=30
