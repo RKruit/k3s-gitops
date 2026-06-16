@@ -35,12 +35,8 @@ Exec=mosquitto -c /mosquitto/data/mosquitto.conf
 # Port
 PublishPort=1883:1883
 
-# Restart
-Restart=always
-RestartSec=5s
-
 # Hardening
-SecurityOpt=label=disable
+SecurityLabelDisable=true
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
@@ -51,6 +47,7 @@ PrivateTmp=true
 # container. This runs as the systemd user (rkruit via SUDO_USER
 # from the install script), NOT inside the container.
 ExecStartPre=/opt/sv02-config/sv02/scripts/render-mqtt-passwd.sh
+Restart=always
 RestartSec=5s
 TimeoutStartSec=120
 TimeoutStopSec=30

@@ -39,10 +39,6 @@ Environment=XDG_DATA_HOME=/data
 # === Lifecycle ===
 Exec=/sbin/tini -- /usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
 
-# === Restart policy ===
-Restart=always
-RestartSec=5s
-
 # === Hardening ===
 NoNewPrivileges=true
 ProtectSystem=strict
@@ -50,6 +46,7 @@ ProtectHome=true
 PrivateTmp=true
 
 [Service]
+Restart=always
 RestartSec=5s
 TimeoutStartSec=300
 

@@ -69,7 +69,7 @@ Exec=/init
 # Frigate needs CAP_SYS_ADMIN + SYS_RAWIO for the Coral, and needs
 # to bind privileged ports (8971 for TLS) and read all of /dev/bus/usb.
 # Easier to just run privileged than to fight the capability set.
-SecurityOpt=label=disable
+SecurityLabelDisable=true
 
 # === Ports ===
 # 5000 — internal plain HTTP (Caddy talks to this)
@@ -84,11 +84,8 @@ PublishPort=8554:8554
 PublishPort=1984:1984
 PublishPort=127.0.0.1:8971:8971
 
-# === Restart policy ===
-Restart=always
-RestartSec=5s
-
 [Service]
+Restart=always
 RestartSec=5s
 TimeoutStartSec=600
 TimeoutStopSec=60
