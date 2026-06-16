@@ -22,8 +22,13 @@
 set -euo pipefail
 
 REPO_DIR=/opt/sv02-config
-PODMAN_USER=podman
-PODMAN_UID=1000
+# Use the user who invoked sudo (via $SUDO_USER) as the rootless
+# podman user. Falls back to $PODMAN_USER / 'podman' for non-sudo
+# invocations. The default $PODMAN_USER=podman with uid 1000 conflicts
+# with the first non-root user on most Debian installs (uid 1000 is
+# always the install-time user), so we default to SUDO_USER in practice.
+PODMAN_USER=${PODMAN_USER:-${SUDO_USER:-podman}}
+PODMAN_UID=${PODMAN_UID:-$(id -u "$PODMAN_USER" 2>/dev/null || echo 1000)}
 
 if [[ $EUID -ne 0 ]]; then
     echo "must run as root" >&2
@@ -39,18 +44,22 @@ log() { echo "[setup-host] $(date -Iseconds) $*"; }
 
 # === 1. Install podman + dependencies ===
 log "installing podman + dependencies"
-apt-get update
-apt-get install -y \
-    podman \
-    uidmap \
-    fuse-overlayfs \
-    slirp4netns \
-    build-essential \
-    libusb-1.0-0 \
-    udev \
-    systemd \
-    git \
-    curl
+if ! command -v podman &>/dev/null; then
+    apt-get update
+    apt-get install -y \
+        podman \
+        uidmap \
+        fuse-overlayfs \
+        slirp4netns \
+        build-essential \
+        libusb-1.0-0 \
+        udev \
+        systemd \
+        git \
+        curl
+else
+    log "podman already installed, skipping apt"
+fi
 
 # === 2. Storage directories ===
 log "creating storage directories"
@@ -142,9 +151,15 @@ udevadm trigger --action=add --subsystem-match=usb || true
 install -d -m 755 /opt/coral-libs
 
 # === 6. Create the podman user for rootless container execution ===
+# In sudo mode, $SUDO_USER is the real user (rkruit). We re-use that
+# account for rootless podman — no separate user is needed for a
+# single-tenant homelab. If the user doesn't exist (non-sudo mode),
+# create it.
 if ! id "$PODMAN_USER" &>/dev/null; then
     log "creating user $PODMAN_USER"
     useradd -m -u "$PODMAN_UID" -s /bin/bash "$PODMAN_USER"
+else
+    log "reusing existing user $PODMAN_USER (uid $PODMAN_UID) for rootless podman"
 fi
 
 # === 7. subuid/subgid for the podman user ===
@@ -162,7 +177,7 @@ fi
 # Without `loginctl enable-linger`, the user manager (and thus
 # `systemctl --user`) only runs while the user is logged in. With
 # it, systemd manages the user instance at boot.
-loginctl enable-linger "$PODMAN_USER"
+loginctl enable-linger "$PODMAN_USER" || log "loginctl enable-linger failed (non-fatal)"
 
 # === 8b. Allow unprivileged binding to ports 80/443 ===
 # Rootless podman refuses to bind to ports below 1024 by default
@@ -176,6 +191,15 @@ loginctl enable-linger "$PODMAN_USER"
 echo "net.ipv4.ip_unprivileged_port_start=80" \
     > /etc/sysctl.d/99-podman-unprivileged-ports.conf
 sysctl --system
+
+# === 8c. Make sure the sysctl actually applied ===
+# `sysctl --system` is silent on no-op, but we want to confirm
+# the unprivileged port start is at 80 (not the default 1024) so
+# Caddy's PublishPort=80:80 works.
+if [[ "$(sysctl -n net.ipv4.ip_unprivileged_port_start)" -gt 80 ]]; then
+    log "ERROR: net.ipv4.ip_unprivileged_port_start is still $(sysctl -n net.ipv4.ip_unprivileged_port_start), not 80"
+    log "Caddy will not be able to bind to port 80. Reboot and re-run."
+fi
 
 # === 9. Ensure the real user can sudo ===
 if ! command -v sudo >/dev/null; then
