@@ -16,6 +16,17 @@ STAGE_DIR=/opt/coral-libs
 LIBEDGETPU_VERSION=16.0TF2.19.1-1
 LIBEDGETPU_BASE="https://github.com/feranick/libedgetpu/releases/download/${LIBEDGETPU_VERSION}"
 
+# Detect host distro. The .deb we want has to match the host's glibc
+# (we're going to bind-mount the .so into a Bookworm-based Frigate
+# container). The available feranick builds are:
+#   - ubuntu24.04 (needs glibc 2.38) — too new for Bookworm
+#   - debian12   (needs glibc 2.34) — matches Bookworm
+#   - debian13   (if available, same glibc 2.41 as Trixie, but
+#     the container's Bookworm is the constraint, not the host)
+# For the Frigate container (which is Bookworm-based), we want the
+# debian12 build regardless of host. So we hardcode it.
+DEB_SUFFIX=debian12_amd64
+
 log() { echo "[setup-coral] $(date -Iseconds) $*"; }
 
 if [[ $EUID -ne 0 ]]; then
@@ -28,7 +39,12 @@ cd /tmp
 
 # === libedgetpu (Bookworm build) ===
 # Filename: libedgetpu1-std_16.0tf2.19.1-1.debian12_amd64.deb
-DEB=libedgetpu1-std_${LIBEDGETPU_VERSION}.debian12_amd64.deb
+# We use the debian12 build because that's what matches the
+# Frigate container's Debian Bookworm base (glibc 2.34). The
+# host being Trixie doesn't matter — what matters is the
+# container's glibc, because the .so we stage will be loaded
+# inside the container.
+DEB=libedgetpu1-std_${LIBEDGETPU_VERSION}.${DEB_SUFFIX}.deb
 if [[ ! -f "$DEB" ]]; then
     log "downloading $DEB"
     curl -fLO "$LIBEDGETPU_BASE/$DEB"

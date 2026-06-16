@@ -133,18 +133,45 @@ fi
 fi
 
 # === 4. Coral USB autosuspend fix (host-level) ===
-# Same udev rule as sv01 — prevents the stick from dropping to
-# bootloader mode due to USB power saving.
+# The Coral USB drops to bootloader mode (1a6e:089a -> 18d1:9302)
+# when the kernel suspends its USB port. The fix is host-level:
+# disable USB autosuspend globally.
+#
+# We set BOTH:
+#   - /sys/module/usbcore/parameters/autosuspend = -1 (kernel module param,
+#     disables autosuspend for all USB devices)
+#   - power/control = "on" on every USB device (each device's own
+#     suspend state, separate from the module param)
+#   - power/autosuspend = -1 on the Coral's port (per-device, belt +
+#     suspenders in case the global module param is reset)
+#
+# The /etc/modules-load.d/ file only takes effect at next boot, so we
+# also apply the kernel module param live below (idempotent: re-applying
+# the same value is a no-op).
 log "installing USB autosuspend fix"
 cat > /etc/udev/rules.d/50-usb-power.rules <<'EOF'
 # Disable USB autosuspend for all devices
-# Required for Google Coral USB Accelerator — known issue with autosuspend
-# causing the stick to drop to bootloader mode (1a6e:089a -> 18d1:9302)
+# Required for Google Coral USB Accelerator (1a6e:089a) — autosuspend
+# causes the stick to drop to bootloader mode (18d1:9302).
+# Also catches the powered-hub power-cycling issue by keeping hubs awake.
 ACTION=="add", SUBSYSTEM=="usb", ATTR{power/control}="on"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{power/autosuspend}="-1"
 EOF
 echo "options usbcore autosuspend=-1" > /etc/modules-load.d/usbcore-autosuspend.conf
+
+# Apply live so the fix takes effect immediately, not just at next boot
+echo -1 > /sys/module/usbcore/parameters/autosuspend 2>/dev/null || true
+# Note: this writes to a kernel parameter that's already loaded.
+# If this fails (e.g., readonly after kexec), a reboot will pick it up.
+
 udevadm control --reload
 udevadm trigger --action=add --subsystem-match=usb || true
+
+# Verify
+log "USB autosuspend: $(cat /sys/module/usbcore/parameters/autosuspend)"
+for hub in /sys/bus/usb/devices/usb*/power/control; do
+    log "  $hub: $(cat $hub)"
+done
 
 # === 5. libedgetpu library staging (just create the dir; the actual
 #        install is in setup-coral.sh) ===
