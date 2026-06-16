@@ -1,6 +1,6 @@
 #!/bin/bash
 # Render the Mosquitto config + password file on disk.
-# Called by mosquitto.container's ExecStartPre.
+# Called by render-mosquitto-passwd.service (a one-shot unit).
 #
 # Reads MQTT_USER and MQTT_PASSWORD from /srv/sv02/secrets/mosquitto.env,
 # writes /srv/sv02/mosquitto/data/mosquitto.conf and passwd.
@@ -8,7 +8,13 @@
 # The passwd is hashed with a one-shot `podman run` because the host
 # doesn't have mosquitto_passwd installed (and we don't want to install
 # it just for this).
+#
+# Run as root (the service invokes via sudo) — the data dir may be
+# owned by a namespaced uid from a previous podman run, and we need
+# to chown it.
 set -euo pipefail
+# Self-execute in case git reset the mode bit. (Idempotent.)
+chmod +x "$0" 2>/dev/null || true
 
 ENV_FILE=/srv/sv02/secrets/mosquitto.env
 CONFDIR=/srv/sv02/mosquitto/data
