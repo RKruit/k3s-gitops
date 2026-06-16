@@ -79,13 +79,25 @@ chmod 755 "$STAGE_DIR"/*.so*
 chown root:root "$STAGE_DIR"/*.so*
 
 # === udev rule (for the Coral) ===
-# The Bookworm deb installs the rule to ./lib/udev/rules.d/60-libedgetpu1-std.rules
+# The Bookworm deb installs the rule to /usr/lib/udev/rules.d/...
 # but extracting with dpkg-deb -x doesn't run postinst. Copy it by hand.
-if [[ -f extracted/lib/udev/rules.d/60-libedgetpu1-std.rules ]]; then
-    install -m 644 extracted/lib/udev/rules.d/60-libedgetpu1-std.rules \
-        /lib/udev/rules.d/60-libedgetpu1-std.rules
+# (Trixie and Bookworm have /lib as a symlink to /usr/lib, so the
+# rule lives in either location from the deb's perspective.)
+RULE_SRC=""
+for candidate in \
+    extracted/lib/udev/rules.d/60-libedgetpu1-std.rules \
+    extracted/usr/lib/udev/rules.d/60-libedgetpu1-std.rules; do
+    if [[ -f "$candidate" ]]; then
+        RULE_SRC="$candidate"
+        break
+    fi
+done
+if [[ -n "$RULE_SRC" ]]; then
+    install -m 644 "$RULE_SRC" /lib/udev/rules.d/60-libedgetpu1-std.rules
     udevadm control --reload
-    log "installed udev rule for Coral"
+    log "installed udev rule for Coral (from $RULE_SRC)"
+else
+    log "WARN: udev rule not found in extracted deb; coral may be inaccessible to non-root users"
 fi
 
 # === Verify ===
