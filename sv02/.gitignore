@@ -1,3 +1,5 @@
 secrets/
 *.env
 !secrets.example/
+!secrets.example/*
+!secrets.example/*.env
