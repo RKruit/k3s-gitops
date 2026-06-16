@@ -28,9 +28,12 @@ install -d -m 755 "$QUADLET_DIR"
 USER_QUADLET_DIR=/home/$PODMAN_USER/.config/containers/systemd
 install -d -m 755 -o "$PODMAN_USER" -g "$PODMAN_USER" "$USER_QUADLET_DIR"
 
-# Symlink each Quadlet file (preserves in-place editing of the repo)
+# Symlink each Quadlet file (preserves in-place editing of the repo).
+# We symlink .container and .network files. .volume files are NOT
+# used in this setup — bind-mounts are inlined as `Volume=host:path:opts`
+# in the .container files (Quadlet's [Volume] section only supports
+# podman-managed named volumes, not host bind-mounts).
 for f in "$REPO_DIR/sv02/quadlets/"*.container \
-         "$REPO_DIR/sv02/quadlets/"*.volume \
          "$REPO_DIR/sv02/quadlets/"*.network; do
     [[ -f "$f" ]] || continue
     name=$(basename "$f")

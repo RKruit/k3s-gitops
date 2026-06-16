@@ -9,19 +9,20 @@
 # passwd logic in a version-controlled script.
 [Unit]
 Description=Mosquitto MQTT broker
-After=network-online.target sv02-network.service mqtt-data-volume.service
+After=network-online.target sv02-network.service
 Wants=sv02-network.service
-Requires=mqtt-data-volume.service
 
 [Container]
 Image=docker.io/library/eclipse-mosquitto:2.0
 ContainerName=mosquitto
-Hostname=mosquitto.sv02.internal
+HostName=mosquitto.sv02.internal
 Network=sv02.network
 AutoUpdate=registry
 
-# Mounts
-Volume=mqtt-data.volume:/mosquitto:z
+# Bind-mount the entire /mosquitto dir from the host (we render
+# mosquitto.conf + passwd into /srv/sv02/mosquitto/data, and the
+# image expects its config dir layout under /mosquitto).
+Volume=/srv/sv02/mosquitto/data:/mosquitto:z
 
 # Environment (consumed by render-mqtt-passwd.sh)
 EnvironmentFile=/srv/sv02/secrets/mosquitto.env
@@ -49,8 +50,6 @@ PrivateTmp=true
 # Render /mosquitto/data/{mosquitto.conf,passwd} before starting the
 # container. This runs as the systemd user (rkruit via SUDO_USER
 # from the install script), NOT inside the container.
-ExecStartPre=/usr/bin/bash -c '/usr/bin/podman run --rm --network=none docker.io/library/eclipse-mosquitto:2.0 true' || true
-# ^ Pre-pull the image so the actual ExecStartPre doesn't have to.
 ExecStartPre=/opt/sv02-config/sv02/scripts/render-mqtt-passwd.sh
 RestartSec=5s
 TimeoutStartSec=120

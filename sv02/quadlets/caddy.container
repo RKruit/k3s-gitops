@@ -1,6 +1,6 @@
 # Caddy reverse proxy
 # - Terminates TLS for the hostnames in /etc/caddy/Caddyfile (which is a
-#   symlink → /opt/sv02-config/sv02/caddy/Caddyfile in the repo)
+#   symlink on the host → /opt/sv02-config/sv02/caddy/Caddyfile in the repo)
 # - Issues Let's Encrypt certs via HTTP-01 (port 80)
 # - Proxies to frigate.sv02.internal:5000 (the Frigate container)
 # - Persists ACME account + certs to /srv/sv02/caddy/data
@@ -8,43 +8,36 @@
 Description=Caddy reverse proxy
 After=network-online.target sv02-network.service
 Wants=sv02-network.service
-Requires=caddy-data.volume
 
 [Container]
 Image=docker.io/library/caddy:2.8-alpine
 ContainerName=caddy
-Hostname=caddy.sv02.internal
+HostName=caddy.sv02.internal
 Network=sv02.network
 AutoUpdate=registry
 
 # === Host port mappings ===
 # Caddy needs 80 (HTTP-01 challenge + redirect) and 443 (TLS) on the host.
-# On rootless podman, port publishing requires the slirp4netns --portdriver
-# OR the host network. We use slirp4netns with the rootless port range
-# (default 0.0.0.0:8000-65535, but we'll bind to 80 and 443 directly).
+# Rootless podman binding to <1024 needs net.ipv4.ip_unprivileged_port_start=80
+# (set by setup-host.sh).
 PublishPort=80:80
 PublishPort=443:443
 # Caddy admin API on host loopback (sync.sh reloads via this)
 PublishPort=127.0.0.1:2019:2019
 
-# === Volume mounts ===
+# === Volume mounts (bind-mounts from the host) ===
 # /etc/caddy/Caddyfile — symlink on the host pointing at the GitOps repo
 Volume=/etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro,z
 # ACME account + certs (persisted across container restarts)
-Volume=caddy-data.volume:/data:z
+Volume=/srv/sv02/caddy/data:/data:z
 
 # === Caddy-specific env ===
-# Tell Caddy to use the data dir for ACME (default, but explicit)
 Environment=CADDY_DATA_DIR=/data
 Environment=CADDY_CONFIG_DIR=/etc/caddy
 Environment=XDG_DATA_HOME=/data
 
 # === Lifecycle ===
-# Caddy expects to run as root inside the container (needs to bind :80/:443).
-# In rootless podman, the container still runs as root inside its userns,
-# so binding low ports works via the slirp4netns port driver.
-ExecStart=/sbin/tini -- /usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
-ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile
+Exec=/sbin/tini -- /usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
 
 # === Restart policy ===
 Restart=always
@@ -52,7 +45,6 @@ RestartSec=5s
 
 # === Hardening ===
 NoNewPrivileges=true
-ReadOnlyPaths=/etc/caddy /data
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
