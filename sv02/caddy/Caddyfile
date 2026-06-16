@@ -16,11 +16,9 @@ frigate.sv02.oostrandpark.com {
     # We connect to Frigate by its container DNS name on the docker
     # bridge network (`sv02`). Caddy and Frigate are on the same
     # network in docker-compose.yml.
-    reverse_proxy frigate.sv02.internal:5000
-
-    # Bump timeouts: Frigate's /api/events can be slow, and the WebSocket
-    # needs to stay open.
-    timeouts {
+    reverse_proxy frigate.sv02.internal:5000 {
+        # Bump timeouts: Frigate's /api/events can be slow, and the
+        # WebSocket needs to stay open.
         dial 5s
         read 60s
         send 60s
