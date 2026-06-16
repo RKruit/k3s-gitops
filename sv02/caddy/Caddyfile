@@ -18,10 +18,14 @@ frigate.sv02.oostrandpark.com {
     # network in docker-compose.yml.
     reverse_proxy frigate.sv02.internal:5000 {
         # Bump timeouts: Frigate's /api/events can be slow, and the
-        # WebSocket needs to stay open.
-        dial 5s
-        read 60s
-        send 60s
+        # WebSocket needs to stay open. In Caddy 2.8+, the dial/read/send
+        # directives are sub-options of `transport` (or use the
+        # simpler `timeouts` shorthand which sets all three).
+        transport http {
+            dial_timeout 5s
+            read_timeout 60s
+            write_timeout 60s
+        }
     }
 
     # Frigate UI does some funky things; pass through everything.
