@@ -15,11 +15,25 @@ CONFDIR=/srv/sv02/mosquitto/data
 
 # Sanity check
 [[ -r "$ENV_FILE" ]] || { echo "[render-mqtt-passwd] FATAL: cannot read $ENV_FILE" >&2; exit 1; }
-# Ensure the dir exists and is world-readable so the mosquitto
-# container (running as uid 1883) can read the conf and passwd
-# files inside.
-install -d -m 755 "$CONFDIR"
-chmod 755 "$CONFDIR"
+
+# Ensure the dir exists. If it's owned by a different user
+# (e.g., a previous podman run created it with a namespaced uid),
+# chown it to us so subsequent chmods work.
+if [[ -d "$CONFDIR" ]]; then
+    if [[ -O "$CONFDIR" ]]; then
+        # We own it
+        :
+    else
+        # Owned by someone else (often a namespaced uid from a
+        # previous podman run). Try to take ownership.
+        chown "$(id -u):$(id -g)" "$CONFDIR" 2>/dev/null || {
+            echo "[render-mqtt-passwd] WARNING: cannot chown $CONFDIR (will retry on next render)"
+        }
+    fi
+    chmod 755 "$CONFDIR" 2>/dev/null || true
+else
+    install -d -m 755 "$CONFDIR"
+fi
 
 # Load env vars (KEY=value lines, # comments)
 set -a
@@ -42,10 +56,10 @@ log_dest stdout
 log_type all
 connection_messages true
 EOF
-chmod 644 "$CONFDIR/mosquitto.conf"
+chmod 644 "$CONFDIR/mosquitto.conf" 2>/dev/null || true
 # passwd file is 644 so the mosquitto container user (uid 1883) can read it
 # (it doesn't need to write). The hash itself doesn't grant auth.
-chmod 644 "$CONFDIR/passwd"
+chmod 644 "$CONFDIR/passwd" 2>/dev/null || true
 
 # Render the passwd file by running mosquitto_passwd in a throwaway
 # container. The passwd format is "user:password_hash" where the hash
