@@ -27,10 +27,11 @@ HostName=mosquitto.sv02.internal
 Network=sv02.network
 AutoUpdate=registry
 
-# Bind-mount the entire /mosquitto dir from the host (we render
-# mosquitto.conf + passwd into /srv/sv02/mosquitto/data, and the
-# image expects its config dir layout under /mosquitto).
-Volume=/srv/sv02/mosquitto/data:/mosquitto:z
+# Bind-mount the conf+passwd into the standard mosquitto data dir
+# (the eclipse-mosquitto image has /mosquitto/config and /mosquitto/data
+# baked in; we render into /srv/sv02/mosquitto/data and mount the whole
+# thing at /mosquitto/data inside the container).
+Volume=/srv/sv02/mosquitto/data:/mosquitto/data:z
 
 # Environment (consumed by render-mqtt-passwd.sh)
 EnvironmentFile=/srv/sv02/secrets/mosquitto.env
