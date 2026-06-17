@@ -102,6 +102,7 @@ services:
     hostname: frigate.sv02.internal
     restart: unless-stopped
     privileged: true  # Coral + privileged ports
+    shm_size: 128mb  # Frigate 0.17 warns if < 126MB for camera SHM
     networks:
       - sv02
     ports:
