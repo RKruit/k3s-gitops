@@ -92,16 +92,12 @@ mqtt:
   client_id: frigate
   topic_prefix: frigate
 
-# === Recording policy: motion-only ===
-# Frigate 0.17 format:
-#   - record.retain.days: how many days of *all* recordings to keep
-#   - record.alerts.retain and record.detections.retain control event clips
-# For motion-only, set top-level retain.days low (or 0) and keep
-# alerts/detections retention longer.
+# === Recording policy: motion-only + alerts ===
+# Frigate 0.17 format: no top-level record.retain key.
+# Continuous recording is disabled implicitly by not configuring
+# continuous/motion retain. Only alerts and detections are kept.
 record:
   enabled: true
-  retain:
-    days: 0
   alerts:
     pre_capture: 5
     post_capture: 5
