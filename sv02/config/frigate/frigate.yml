@@ -1,32 +1,21 @@
-# Frigate configuration for sv02 (podman + Quadlet)
+# Frigate configuration for sv02 (docker compose)
 #
 # Pitfalls baked in to avoid the sv01 3-bug setup chain:
-#   1. mqtt.host is "mosquitto.sv02.internal" (the podman network DNS
+#   1. mqtt.host is "mosquitto.sv02.internal" (the docker network DNS
 #      name, NOT "mosquitto.mqtt.svc.cluster.local" — that was the
 #      sv01 mistake, fixed here).
 #   2. mqtt-password lives in /srv/sv02/secrets/mosquitto.env on the
-#      host and is loaded via $FRIGATE_MQTT_PASSWORD env var. The
-#      env var name in this file matches the host env file.
+#      host and is loaded via $FRIGATE_MQTT_PASSWORD env var.
 #   3. cameras.<cam>.detect.enabled: true is set explicitly so
 #      Frigate's _set_initial_topics publishes retained ON on every
 #      MQTT connect. Without this, the dispatcher defaults to OFF
 #      and detection silently disables itself on every reconnect.
-#      See frigate-nvr-management skill §5 for the durability writeup.
 #
 # Camera credentials: {FRIGATE_CAM_USER} and {FRIGATE_CAM_PASS}
 # placeholders are rendered at parse time from environment variables
-# loaded via EnvironmentFile=/srv/sv02/secrets/frigate-cam.env in
-# the frigate.container Quadlet.
+# loaded via env_file /srv/sv02/secrets/frigate-cam.env.
 
 # === Auth: disabled (Caddy is the front door) ===
-# Frigate 0.16 generates a random admin password on every first boot,
-# which is unreadable after boot and regenerated on every pod start.
-# Caddy handles auth at the edge (basic-auth middleware or forwardAuth
-# to Authentik). When you wire that up, add the middleware here:
-#   basicauth:
-#     realm: frigate
-#     users: ...
-# For now: auth disabled, network access controlled by Caddy + DNS.
 auth:
   enabled: false
 
@@ -37,34 +26,30 @@ birdseye:
   quality: 8
 
 # === Cameras ===
-# You said 3-4 cameras total. Start with 1 (the existing Tapo C210 on
-# 192.168.68.134) and add more by copying the block.
-#
-# IMPORTANT: each camera block has `detect.enabled: true` to dodge
-# the dispatcher-OFF trap. The 3-4 camera plan:
-#   - tapo_c210 (kan, 192.168.68.134) — already on sv01, move
-#   - tapo_c210_bedroom (?) — add when you get a 2nd camera
-#   - tapo_c210_garage (?) — add when you get a 3rd camera
-#   - tapo_c210_garden (?) — add when you get a 4th camera
 cameras:
-  # === Camera 1: Tapo C210 (the existing one) ===
+  # === Camera 1: Tapo C210 ===
   tapo_c210:
     enabled: true
     ffmpeg:
       inputs:
-        - path: rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.134:554/stream2
+        - path: 
+            rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.134:554/stream2
           input_args: -rtsp_transport tcp
           roles:
             - detect
-        - path: rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.134:554/stream1
+        - path: 
+            rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.134:554/stream1
           input_args: -rtsp_transport tcp
           roles:
             - record
+      # Re-encode the recording stream with libx264 + yuv420p so Safari /
+      # macOS VideoToolbox can play it back. The default `-c:v copy` produces
+      # an MP4 that Apple's decoder rejects (VTDecompressionOutputCallback
+      # -12909). libx264 ultrafast has modest CPU cost; for 3-4 cameras we
+      # can switch to h264_vaapi once verified.
+      output_args:
+        record: -f segment -segment_time 10 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c:v libx264 -preset ultrafast -b:v 4M -pix_fmt yuv420p -c:a aac
     detect:
-      # `enabled: true` is the durability fix — Frigate's _set_initial_topics
-      # publishes the runtime value to retained MQTT on every connect.
-      # Without this, default runtime is false, and detection silently
-      # disables itself on every Frigate restart.
       enabled: true
       fps: 5
       height: 360
@@ -75,7 +60,6 @@ cameras:
   # the new camera to the `cameras:` section. Don't forget `detect.enabled: true`.
 
 # === Object detection model ===
-# 320x320 SSD model is the standard for Coral USB Accelerator.
 model:
   height: 320
   width: 320
@@ -90,8 +74,6 @@ detectors:
     type: edgetpu
 
 # === Motion detection pre-filter ===
-# Standard values; tune `contour_area` and `threshold` per camera if
-# you get false positives / missed events.
 motion:
   contour_area: 100
   delta_alpha: 0.2
@@ -100,43 +82,33 @@ motion:
   mask: []
   threshold: 25
 
-# === MQTT (homelab-internal broker) ===
-# mqtt.host MUST be the podman network DNS name, NOT the k8s service
-# name. The sv01 config had `mqtt.mqtt.svc.cluster.local` (wrong) which
-# was the first bug in the 3-bug setup chain. Here it's correct.
+# === MQTT ===
 mqtt:
   enabled: true
   host: mosquitto.sv02.internal
   port: 1883
-  user: "{FRIGATE_MQTT_USER}"
-  password: "{FRIGATE_MQTT_PASSWORD}"
+  user: '{FRIGATE_MQTT_USER}'
+  password: '{FRIGATE_MQTT_PASSWORD}'
   client_id: frigate
   topic_prefix: frigate
 
-# === Recording policy: motion-only, alerts+detections retained ===
-# Continuous recording for 3-4 cameras at 1080p = ~170 GB/day, fills
-# a 1 TB disk in ~5 days. Motion-only + alerts gives 3-4 weeks retention.
+# === Recording policy: motion-only ===
+# Frigate 0.17 format: top-level record.retain has modes
+# (motion, active_objects, all) and days. No separate
+# `record.alerts` / `record.detections` blocks.
 record:
   enabled: true
-  # Continuous mode: OFF (don't record 24/7, only on motion/alerts)
-  # retain.days: how long to keep motion-triggered recordings
   retain:
     days: 14
     mode: motion
   alerts:
     pre_capture: 5
     post_capture: 5
-    retain:
-      days: 21
-      mode: active_objects
   detections:
     pre_capture: 5
     post_capture: 5
-    retain:
-      days: 14
-      mode: active_objects
 
-# === Snapshots (still images on event) ===
+# === Snapshots ===
 snapshots:
   enabled: true
   retain:
@@ -146,7 +118,5 @@ snapshots:
 live:
   quality: 8
 
-# === Frigate 0.16 migration hint ===
-# version: 0.16-0 tells Frigate to skip DB migrations on first boot.
-# The ConfigMap on sv01 also used this; keep it for consistency.
-version: 0.16-0
+# === Frigate version hint ===
+version: 0.17-0
