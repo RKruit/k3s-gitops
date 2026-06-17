@@ -39,16 +39,14 @@ cameras:
             - detect
         - path: 
             rtsp://{FRIGATE_CAM_USER}:{FRIGATE_CAM_PASS}@192.168.68.134:554/stream1
-          input_args: -rtsp_transport tcp
+          input_args: -rtsp_transport tcp -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi
           roles:
             - record
-      # Re-encode the recording stream with libx264 + yuv420p so Safari /
-      # macOS VideoToolbox can play it back. The default `-c:v copy` produces
-      # an MP4 that Apple's decoder rejects (VTDecompressionOutputCallback
-      # -12909). libx264 ultrafast has modest CPU cost; for 3-4 cameras we
-      # can switch to h264_vaapi once verified.
+      # Re-encode the recording stream with h264_vaapi so Safari /
+      # macOS VideoToolbox can play it back, using the Intel HD 530
+      # GPU on sv02 instead of burning CPU.
       output_args:
-        record: -f segment -segment_time 10 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c:v libx264 -preset ultrafast -b:v 4M -pix_fmt yuv420p -c:a aac
+        record: -f segment -segment_time 10 -segment_format mp4 -reset_timestamps 1 -strftime 1 -c:v h264_vaapi -vaapi_device /dev/dri/renderD128 -c:a aac
     detect:
       enabled: true
       fps: 5
