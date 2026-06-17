@@ -25,6 +25,12 @@
 # We terminate TLS in Caddy and forward plain HTTP to the docker
 # network DNS name.
 frigate.sv02.oostrandpark.com {
+    # Internal CA because the host has no public IP / no DNS-01 provider.
+    # Caddy will generate a self-signed cert on first start. Add the
+    # generated root to your trust store, or click through the browser
+    # warning.
+    tls internal
+
     # We connect to Frigate by its container DNS name on the docker
     # bridge network (`sv02`). Caddy and Frigate are on the same
     # network in docker-compose.yml.
