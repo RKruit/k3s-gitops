@@ -93,20 +93,27 @@ mqtt:
   topic_prefix: frigate
 
 # === Recording policy: motion-only ===
-# Frigate 0.17 format: top-level record.retain has modes
-# (motion, active_objects, all) and days. No separate
-# `record.alerts` / `record.detections` blocks.
+# Frigate 0.17 format:
+#   - record.retain.days: how many days of *all* recordings to keep
+#   - record.alerts.retain and record.detections.retain control event clips
+# For motion-only, set top-level retain.days low (or 0) and keep
+# alerts/detections retention longer.
 record:
   enabled: true
   retain:
-    days: 14
-    mode: motion
+    days: 0
   alerts:
     pre_capture: 5
     post_capture: 5
+    retain:
+      days: 21
+      mode: active_objects
   detections:
     pre_capture: 5
     post_capture: 5
+    retain:
+      days: 14
+      mode: active_objects
 
 # === Snapshots ===
 snapshots:
