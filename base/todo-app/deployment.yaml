@@ -8,6 +8,8 @@ spec:
   selector:
     matchLabels:
       app: todo-app
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -15,8 +17,8 @@ spec:
     spec:
       containers:
         - name: todo-app
-          image: todo-app:latest
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/rkruit/todo-app:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
               name: http
