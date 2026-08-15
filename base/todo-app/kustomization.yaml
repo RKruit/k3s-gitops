@@ -5,6 +5,7 @@ namespace: todo-app
 
 resources:
   - namespace.yaml
+  - pvc.yaml
   - deployment.yaml
   - service.yaml
   - pvc.yaml

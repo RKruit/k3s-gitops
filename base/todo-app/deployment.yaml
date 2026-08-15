@@ -4,7 +4,7 @@ metadata:
   name: todo-app
   namespace: todo-app
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: todo-app
@@ -23,10 +23,13 @@ spec:
           resources:
             limits:
               cpu: 250m
-              memory: 64Mi
+              memory: 128Mi
             requests:
               cpu: 50m
-              memory: 32Mi
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
           livenessProbe:
             httpGet:
               path: /healthz
@@ -39,9 +42,6 @@ spec:
               port: 80
             initialDelaySeconds: 2
             periodSeconds: 5
-          volumeMounts:
-            - name: data
-              mountPath: /data
       volumes:
         - name: data
           persistentVolumeClaim:
