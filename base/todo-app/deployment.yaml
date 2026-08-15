@@ -39,3 +39,10 @@ spec:
               port: 80
             initialDelaySeconds: 2
             periodSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: todo-app-data
