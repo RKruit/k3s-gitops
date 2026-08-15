@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: todo-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RKruit/k3s-gitops
+    targetRevision: main
+    path: base/todo-app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: todo-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  ignoreDifferences:
+    - group: networking.k8s.io
+      jsonPointers:
+        - /status/loadBalancer
+      kind: Ingress

@@ -17,3 +17,4 @@ resources:
   - argocd-app-authentik.yaml
   - argocd-app-coral.yaml
   - argocd-app-frigate.yaml
+  - argocd-app-todo-app.yaml
