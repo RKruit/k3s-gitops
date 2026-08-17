@@ -5,8 +5,8 @@ metadata:
   namespace: todo-app
 spec:
   accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
+    - ReadWriteMany
+  storageClassName: nfs
   resources:
     requests:
       storage: 512Mi
