@@ -56,4 +56,4 @@ spec:
       value:
         - https://awx.oostrandpark.com
     - setting: LANGUAGE_CODE
-      value: "en-us"
+      value: "'en-us'"
