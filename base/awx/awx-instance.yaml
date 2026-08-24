@@ -36,8 +36,8 @@ spec:
       cpu: "1"
       memory: 2Gi
 
-  # PostgreSQL on local-path (ReadWriteOnce)
-  postgres_storage_class: local-path
+  # PostgreSQL on NFS
+  postgres_storage_class: nfs
   postgres_storage_requirements:
     requests:
       storage: 20Gi
