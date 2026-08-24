@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: awx-tls
+  namespace: awx
+spec:
+  dnsNames:
+    - awx.oostrandpark.com
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: awx-tls

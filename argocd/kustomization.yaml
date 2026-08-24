@@ -18,3 +18,4 @@ resources:
   - argocd-app-coral.yaml
   - argocd-app-frigate.yaml
   - argocd-app-todo-app.yaml
+  - argocd-app-awx.yaml

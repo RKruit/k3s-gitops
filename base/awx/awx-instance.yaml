@@ -1,0 +1,57 @@
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx
+  namespace: awx
+spec:
+  service_type: clusterip
+
+  # Resource requirements — tuned for sv01 (4 CPU / 32 GB, ~10 GB used)
+  web_resource_requirements:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 2Gi
+  task_resource_requirements:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2
+      memory: 4Gi
+  ee_resource_requirements:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+  postgres_resource_requirements:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 2Gi
+
+  # PostgreSQL on local-path (ReadWriteOnce)
+  postgres_storage_class: local-path
+  postgres_storage_requirements:
+    requests:
+      storage: 20Gi
+
+  # Projects on NFS (ReadWriteMany, shared)
+  projects_persistence: true
+  projects_storage_size: 10Gi
+  projects_storage_class: nfs
+
+  # Trust the Traefik reverse proxy
+  extra_settings:
+    - setting: REMOTE_HOST_HEADERS
+      value:
+        - HTTP_X_FORWARDED_FOR
+    - setting: CSRF_TRUSTED_ORIGINS
+      value:
+        - https://awx.oostrandpark.com
