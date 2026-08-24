@@ -55,3 +55,5 @@ spec:
     - setting: CSRF_TRUSTED_ORIGINS
       value:
         - https://awx.oostrandpark.com
+    - setting: LANGUAGE_CODE
+      value: "en-us"

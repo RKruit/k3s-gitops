@@ -7,7 +7,6 @@ resources:
   # AWX Operator 2.19.1 (latest stable)
   - github.com/ansible/awx-operator/config/default?ref=2.19.1
   - awx-instance.yaml
-  - middleware.yaml
   - certificate.yaml
   - ingress.yaml
 
