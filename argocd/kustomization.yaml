@@ -15,7 +15,7 @@ resources:
   - argocd-app-jellyfin.yaml
   - argocd-app-it-tools.yaml
   - argocd-app-authentik.yaml
-  - argocd-app-coral.yaml
-  - argocd-app-frigate.yaml
+
+
   - argocd-app-todo-app.yaml
   - argocd-app-awx.yaml
