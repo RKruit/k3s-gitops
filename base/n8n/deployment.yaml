@@ -7,6 +7,8 @@ metadata:
     app: n8n
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: n8n
@@ -32,8 +34,7 @@ spec:
               value: production
             - name: GENERIC_TIMEZONE
               value: Europe/Amsterdam
-            - name: N8N_BASIC_AUTH_ACTIVE
-              value: "false"
+
           volumeMounts:
             - name: n8n-data
               mountPath: /home/node/.n8n

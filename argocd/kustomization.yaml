@@ -19,3 +19,4 @@ resources:
 
   - argocd-app-todo-app.yaml
   - argocd-app-awx.yaml
+  - argocd-app-n8n.yaml
