@@ -34,6 +34,8 @@ spec:
               value: production
             - name: GENERIC_TIMEZONE
               value: Europe/Amsterdam
+            - name: N8N_LOG_LEVEL
+              value: debug
 
           volumeMounts:
             - name: n8n-data
