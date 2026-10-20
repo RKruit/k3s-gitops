@@ -4,3 +4,10 @@ todo.oostrandpark.com {
 	}
 	reverse_proxy todo-app:80
 }
+
+komodo.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy core:9120
+}
