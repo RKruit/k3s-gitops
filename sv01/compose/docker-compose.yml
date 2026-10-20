@@ -71,6 +71,7 @@ services:
       PERIPHERY_CORE_PUBLIC_KEYS: file:/config/keys/core.pub
       PERIPHERY_PRIVATE_KEY: file:/config/keys/periphery.key
       PERIPHERY_CONNECT_AS: Local
+      PERIPHERY_INCLUDE_DISK_MOUNTS: /etc/hostname
     volumes:
       - komodo-keys:/config/keys
       - /var/run/docker.sock:/var/run/docker.sock
