@@ -7,6 +7,7 @@ deploy = true
 
 [stack.config]
 server = "Local"
+project_name = "sv01"
 git_provider = "github.com"
 git_account = "RKruit"
 repo = "RKruit/k3s-gitops"

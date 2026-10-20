@@ -20,6 +20,8 @@ services:
     image: ghcr.io/rkruit/todo-app:latest
     container_name: sv01-todo-app
     restart: unless-stopped
+    environment:
+      TZ: Europe/Amsterdam
     volumes:
       - todo-data:/data
 
