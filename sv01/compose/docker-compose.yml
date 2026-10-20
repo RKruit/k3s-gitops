@@ -10,7 +10,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # hele map mounten (niet het losse bestand): inode-swaps door atomair
+      # wegschrijven blijven dan zichtbaar in de container
+      - .:/etc/caddy:ro
       - caddy-data:/data
       - caddy-config:/config
 
