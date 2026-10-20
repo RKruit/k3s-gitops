@@ -76,6 +76,10 @@ services:
 volumes:
   caddy-data:
   caddy-config:
+  komodo-keys:
+  komodo-repo-cache:
+  komodo-mongo-data:
+  komodo-mongo-config:
   todo-data:
     driver: local
     driver_opts:
