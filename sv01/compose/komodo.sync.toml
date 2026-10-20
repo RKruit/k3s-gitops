@@ -1,14 +1,17 @@
-# Komodo ResourceSync-definitie — wordt door sync "k3s-gitops" ingelezen
-# (vaste stack: heel de sv01-compose, git is de enige bron)
+# Komodo ResourceSync-definitie — gelezen door sync "k3s-gitops"
+# Git blijft de enige bron: dit declareert de stack zoals git hem wil
 [[stack]]
 name = "sv01"
 description = "sv01 compose-stack (caddy, todo-app, komodo)"
+deploy = true
 
 [stack.config]
-server_id = "6ad7d7d6108fb0a9f2de9243"
-files_on_host = false
-run_directory = "/etc/komodo/repos/sv01/compose"
-file_paths = ["docker-compose.yml"]
+server = "Local"
+git_provider = "github.com"
+git_account = "RKruit"
+repo = "RKruit/k3s-gitops"
+branch = "main"
+file_paths = ["sv01/compose/docker-compose.yml"]
 env_file_path = "/etc/komodo/sv01-secrets/sv01.env"
 auto_pull = true
 poll_for_updates = true
@@ -17,5 +20,4 @@ auto_update_all_services = true
 webhook_enabled = true
 
 [stack.config.post_deploy]
-path = "/etc/komodo/repos/sv01/compose"
 command = "docker exec sv01-caddy caddy reload --config /etc/caddy/Caddyfile || true"
