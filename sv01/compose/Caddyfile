@@ -1,4 +1,6 @@
 todo.oostrandpark.com {
-	tls internal
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
 	reverse_proxy todo-app:80
 }
