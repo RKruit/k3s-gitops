@@ -49,7 +49,7 @@ services:
       - mongo
     labels:
       komodo.skip:
-    env_file: /srv/sv01-secrets/sv01.env
+    env_file: /etc/komodo/sv01-secrets/sv01.env
     environment:
       KOMODO_DATABASE_ADDRESS: mongo:27017
       KOMODO_PERIPHERY_PUBLIC_KEY: file:/config/keys/periphery.pub
@@ -67,7 +67,7 @@ services:
       - core
     labels:
       komodo.skip:
-    env_file: /srv/sv01-secrets/sv01.env
+    env_file: /etc/komodo/sv01-secrets/sv01.env
     environment:
       PERIPHERY_CORE_ADDRESS: ws://core:9120
       PERIPHERY_CORE_PUBLIC_KEYS: file:/config/keys/core.pub
