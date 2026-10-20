@@ -25,7 +25,7 @@ services:
 
   # --- Komodo (ArgoCD-vervanger) — mongo local i.v.m. wiredTiger-on-NFS-risico ---
   mongo:
-    image: mongo
+    image: mongo:9.0
     container_name: sv01-komodo-mongo
     labels:
       komodo.skip:
@@ -80,6 +80,8 @@ services:
       - /opt/sv01-config:/etc/komodo/sv01-config:ro
       # env-file voor Komodo-stack deploys (zelfde file als --env-file van de timer)
       - /srv/sv01-secrets:/etc/komodo/sv01-secrets:ro
+      # ghcr.io-credentials voor auto-update checks op de privé todo-image
+      - /etc/komodo/periphery.config.toml:/config/config.toml:ro
 
 volumes:
   caddy-data:
