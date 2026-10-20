@@ -85,6 +85,8 @@ services:
       - /srv/sv01-secrets:/etc/komodo/sv01-secrets:ro
       # ghcr.io-credentials voor auto-update checks op de privé todo-image
       - /etc/komodo/periphery.config.toml:/config/config.toml:ro
+      # docker login van rkruit → compose pull authenticeert tegen ghcr (privé todo-image)
+      - /home/rkruit/.docker:/root/.docker:ro
 
 volumes:
   caddy-data:
