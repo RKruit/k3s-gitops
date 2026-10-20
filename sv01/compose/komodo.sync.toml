@@ -3,7 +3,7 @@
 [[stack]]
 name = "sv01"
 description = "sv01 compose-stack (caddy, todo-app, komodo)"
-deploy = true
+deploy = false
 
 [stack.config]
 server = "Local"
@@ -13,12 +13,13 @@ git_account = "RKruit"
 repo = "RKruit/k3s-gitops"
 branch = "main"
 file_paths = ["sv01/compose/docker-compose.yml"]
+files_on_host = false
 env_file_path = "/etc/komodo/sv01-secrets/sv01.env"
 auto_pull = false
-poll_for_updates = true
-auto_update = true
-auto_update_all_services = true
-webhook_enabled = true
+poll_for_updates = false
+auto_update = false
+auto_update_all_services = false
+webhook_enabled = false
 
 [stack.config.post_deploy]
 command = "docker exec sv01-caddy caddy reload --config /etc/caddy/Caddyfile || true"
