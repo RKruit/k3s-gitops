@@ -1,0 +1,10 @@
+[Unit]
+Description=GitOps sync timer sv01 (pull + compose apply)
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

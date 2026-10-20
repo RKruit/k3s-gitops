@@ -1,0 +1,30 @@
+services:
+  caddy:
+    image: caddy:2.8
+    container_name: sv01-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  todo-app:
+    image: ghcr.io/rkruit/todo-app:latest
+    container_name: sv01-todo-app
+    restart: unless-stopped
+    volumes:
+      - todo-data:/data
+
+volumes:
+  caddy-data:
+  caddy-config:
+  todo-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      # zelfde NFS-map als de oude k3s PVC — data gaat naadloos mee
+      device: ":/volume1/k8sv2/todo-app-todo-app-data-pvc-f673b41b-3742-45ab-81b1-aa8cf6c73588"

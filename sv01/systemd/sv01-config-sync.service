@@ -1,0 +1,11 @@
+[Unit]
+Description=GitOps sync sv01: git pull + compose apply
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+User=rkruit
+WorkingDirectory=/opt/sv01-config
+ExecStart=/usr/bin/git pull --ff-only
+ExecStart=/usr/bin/docker compose --project-name sv01 -f /opt/sv01-config/sv01/compose/docker-compose.yml up -d --remove-orphans

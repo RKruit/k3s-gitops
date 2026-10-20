@@ -1,0 +1,4 @@
+todo.oostrandpark.com {
+	tls internal
+	reverse_proxy todo-app:80
+}
