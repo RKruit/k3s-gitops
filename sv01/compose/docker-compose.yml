@@ -78,6 +78,8 @@ services:
       - /etc/komodo:/etc/komodo
       # sync-timer stack zichtbaar voor Komodo-stacks (read-only)
       - /opt/sv01-config:/etc/komodo/sv01-config:ro
+      # env-file voor Komodo-stack deploys (zelfde file als --env-file van de timer)
+      - /srv/sv01-secrets:/etc/komodo/sv01-secrets:ro
 
 volumes:
   caddy-data:
