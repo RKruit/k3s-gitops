@@ -1,5 +1,5 @@
 [Unit]
-Description=GitOps sync sv01: git pull + compose apply
+Description=GitOps trigger sv01 → Komodo RunSync (k3s-gitops)
 Wants=network-online.target docker.service
 After=network-online.target docker.service
 
@@ -7,5 +7,4 @@ After=network-online.target docker.service
 Type=oneshot
 User=rkruit
 WorkingDirectory=/opt/sv01-config
-ExecStart=/usr/bin/git pull --ff-only
-ExecStart=/usr/bin/docker compose --env-file /srv/sv01-secrets/sv01.env --project-name sv01 -f /opt/sv01-config/sv01/compose/docker-compose.yml up -d --remove-orphans
+ExecStart=/usr/bin/bash /opt/sv01-config/sv01/systemd/komodo-sync.sh
