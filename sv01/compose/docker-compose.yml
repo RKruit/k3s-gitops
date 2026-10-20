@@ -48,6 +48,7 @@ services:
     env_file: /srv/sv01-secrets/sv01.env
     environment:
       KOMODO_DATABASE_ADDRESS: mongo:27017
+      KOMODO_PERIPHERY_PUBLIC_KEY: file:/config/keys/periphery.pub
     volumes:
       - komodo-keys:/config/keys
       - /srv/komodo-backups:/backups
@@ -65,6 +66,9 @@ services:
     env_file: /srv/sv01-secrets/sv01.env
     environment:
       PERIPHERY_CORE_ADDRESS: ws://core:9120
+      PERIPHERY_CORE_PUBLIC_KEYS: file:/config/keys/core.pub
+      PERIPHERY_PRIVATE_KEY: file:/config/keys/periphery.key
+      PERIPHERY_CONNECT_AS: Local
     volumes:
       - komodo-keys:/config/keys
       - /var/run/docker.sock:/var/run/docker.sock
