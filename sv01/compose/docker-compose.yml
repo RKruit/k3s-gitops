@@ -88,6 +88,57 @@ services:
       # docker login van rkruit → compose pull authenticeert tegen ghcr (privé todo-image)
       - /home/rkruit/.docker:/root/.docker:ro
 
+  # --- Hermes-agent (Telegram-bots voor externe gebruikers) ---
+  # Volledig geïsoleerd: geen host-mounts behalve de NFS-datadir, geen docker-socket,
+  # geen gepubliceerde poorten. Hermes draait op het interne netwerk (geen default
+  # route); al het egress verloopt via de squid-allowlist (api.telegram.org).
+  # LLM-verkeer gaat rechtstreeks naar host-Ollama via de bridge-gateway (172.28.0.1).
+  hermes:
+    image: nousresearch/hermes-agent:stable
+    container_name: sv01-hermes
+    restart: unless-stopped
+    depends_on:
+      - egress-proxy
+    command: ["gateway", "run"]
+    environment:
+      HERMES_UID: "1000"
+      HERMES_GID: "1000"
+      HTTP_PROXY: http://egress-proxy:3128
+      HTTPS_PROXY: http://egress-proxy:3128
+      http_proxy: http://egress-proxy:3128
+      https_proxy: http://egress-proxy:3128
+      NO_PROXY: localhost,127.0.0.1,172.28.0.1
+      no_proxy: localhost,127.0.0.1,172.28.0.1
+    volumes:
+      - hermes-data:/opt/data
+    networks:
+      - hermes-internal
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  egress-proxy:
+    image: ubuntu/squid:6.10-24.04_edge
+    container_name: sv01-hermes-egress
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./squid.conf:/etc/squid/squid.conf:ro
+    networks:
+      - hermes-internal
+      - hermes-egress
+
 volumes:
   caddy-data:
   caddy-config:
@@ -102,3 +153,23 @@ volumes:
       o: addr=192.168.1.2,rw,hard,timeo=600
       # zelfde NFS-map als de oude k3s PVC — data gaat naadloos mee
       device: ":/volume1/k8sv2/todo-app-todo-app-data-pvc-f673b41b-3742-45ab-81b1-aa8cf6c73588"
+
+  hermes-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/hermes-data"
+
+networks:
+  # interne netwerk: geen default route, geen internet, geen LAN
+  hermes-internal:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+  # alleen de squid-proxy hangt hier aan (heeft internet nodig)
+  hermes-egress:
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24
