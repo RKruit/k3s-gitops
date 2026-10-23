@@ -125,7 +125,7 @@ services:
         max-file: "3"
 
   egress-proxy:
-    image: ubuntu/squid:6.10-24.04_edge
+    image: ubuntu/squid:6.6-24.04_edge
     container_name: sv01-hermes-egress
     restart: unless-stopped
     logging:
