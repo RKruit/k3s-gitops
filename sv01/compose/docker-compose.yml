@@ -143,7 +143,7 @@ services:
   # host-net: kan ook loopback-only diensten (hindsight :9177, postgres :5432)
   # rechtstreeks monitoren. UI: :3001 en via Caddy (kuma.oostrandpark.com).
   uptime-kuma:
-    image: louislam/uptime-kuma:1
+    image: louislam/uptime-kuma:2
     container_name: sv01-uptime-kuma
     restart: unless-stopped
     network_mode: host
