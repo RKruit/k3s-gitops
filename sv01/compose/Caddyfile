@@ -11,3 +11,19 @@ komodo.oostrandpark.com {
 	}
 	reverse_proxy core:9120
 }
+
+# Monitoring (2026-10-24). kuma draait host-net; vanuit de caddy-container
+# is hij via het host-IP bereikbaar. beszel gewoon via docker-netwerk.
+kuma.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy 192.168.1.10:3001
+}
+
+beszel.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy beszel:8090
+}

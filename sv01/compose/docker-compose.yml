@@ -139,6 +139,62 @@ services:
       - hermes-internal
       - hermes-egress
 
+  # --- Monitoring (2026-10-24): Uptime Kuma (health-checks + Telegram alerts) ---
+  # host-net: kan ook loopback-only diensten (hindsight :9177, postgres :5432)
+  # rechtstreeks monitoren. UI: :3001 en via Caddy (kuma.oostrandpark.com).
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: sv01-uptime-kuma
+    restart: unless-stopped
+    network_mode: host
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - kuma-data:/app/data
+
+  # --- Monitoring: Beszel hub (host/container-metrics) ---
+  # UI via Caddy (beszel.oostrandpark.com); admin-API alleen op host-loopback.
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: sv01-beszel
+    restart: unless-stopped
+    environment:
+      APP_URL: https://beszel.oostrandpark.com
+    ports:
+      - "127.0.0.1:8090:8090"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - beszel-data:/beszel_data
+      - beszel-socket:/beszel_socket
+
+  # agent voor sv01 zelf (unix-socket mode volgens beszel-docs)
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: sv01-beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - beszel-socket:/beszel_socket
+      - beszel-agent-data:/var/lib/beszel-agent
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      LISTEN: /beszel_socket/beszel.sock
+      HUB_URL: http://localhost:8090
+      TOKEN: ${BESZEL_TOKEN:-}
+      PORT: 45876
+
 volumes:
   caddy-data:
   caddy-config:
@@ -160,6 +216,30 @@ volumes:
       type: nfs4
       o: addr=192.168.1.2,rw,hard,timeo=600
       device: ":/volume1/k8sv2/hermes-data"
+
+  beszel-agent-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/beszel-agent-data"
+
+  kuma-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/kuma-data"
+
+  beszel-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/beszel-data"
+
+  # socket tussen beszel-hub en agent — NIET op NFS (unix socket)
+  beszel-socket:
 
 networks:
   # interne netwerk: geen default route, geen internet, geen LAN
