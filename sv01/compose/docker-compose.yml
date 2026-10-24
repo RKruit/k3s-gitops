@@ -193,6 +193,7 @@ services:
       LISTEN: /beszel_socket/beszel.sock
       HUB_URL: http://localhost:8090
       TOKEN: ${BESZEL_TOKEN:-}
+      KEY: ${BESZEL_KEY:-}
       PORT: 45876
 
 volumes:
