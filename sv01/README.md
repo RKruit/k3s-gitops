@@ -3,8 +3,7 @@
 Vervanger van het oude k3s-cluster (dec 2026-achtige architectuur: zie git-historie van deze repo voor de k8s-manifesten).
 
 ## Stack
-- **Caddy 2.8** — reverse proxy, `tls internal`, poort 80/443
-- **todo-app** — `ghcr.io/rkruit/todo-app:latest`, data op NFS
+Volledige dienstenlijst: zie `docs/` (MkDocs) in de repo-root — [docs/index.md](../docs/index.md).
 
 ## Config-as-code / GitOps
 - Desired state: **deze map in de repo** (`sv01/compose/`)
@@ -21,5 +20,5 @@ Vervanger van het oude k3s-cluster (dec 2026-achtige architectuur: zie git-histo
 
 ## Ops
 - App-update: nieuwe image pushen naar GHCR → `docker compose pull` gebeurt niet automatisch — forceer met timer-restart of `docker compose pull && up -d` in de compose-map (image tag = `latest`, pull elke sync *niet* actief: bewust, wijzig tag of voeg `pull` toe aan de unit)
-- DNS: Robert beheert handmatig; `todo.oostrandpark.com` → 192.168.1.10
-- TLS: intern CA van Caddy; browser vertrouwt root-cert (zelfde als sv02)
+- DNS: Robert beheert handmatig (unbound-entry per hostname); `todo.oostrandpark.com` → 192.168.1.10
+- TLS: Let's Encrypt via Cloudflare DNS-01 (custom caddy-image met dns/cloudflare-plugin; geen publiek A-record nodig)

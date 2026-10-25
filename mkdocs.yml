@@ -1,0 +1,64 @@
+site_name: Oostrandpark Homelab
+site_description: sv01/sv02 - Docker Compose, Caddy, monitoring, docs-as-code
+site_url: https://docs.oostrandpark.com/
+repo_url: https://github.com/RKruit/k3s-gitops
+repo_name: RKruit/k3s-gitops
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: dark
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: light
+  features:
+    - navigation.tracking
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Home: index.md
+  - Hosts:
+      - sv01: hosts/sv01.md
+      - sv02: hosts/sv02.md
+  - Services:
+      - Caddy: services/caddy.md
+      - Uptime Kuma: services/uptime-kuma.md
+      - Beszel: services/beszel.md
+      - Komodo: services/komodo.md
+      - todo-app: services/todo-app.md
+      - Hermes + egress: services/hermes.md
+  - Runbooks:
+      - Deploy a change: runbooks/deploy.md
+      - New hostname via Caddy: runbooks/caddy-new-site.md
+      - Add Kuma monitor (API): runbooks/kuma-monitor.md
+      - Rebuild a host: runbooks/new-host.md
+      - Backups & restore: runbooks/backups-restore.md
+  - Infra:
+      - Network & DNS: infra/network-dns.md
+      - NFS storage: infra/nfs-storage.md
+      - Secrets: infra/secrets.md

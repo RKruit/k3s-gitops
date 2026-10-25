@@ -1,76 +1,31 @@
-# k3s GitOps
+# RKruit/k3s-gitops — homelab config-as-code
 
-Git-managed Kubernetes manifests for the home lab.
+Two hosts, all configuration in this repo. Human-readable docs live in [`docs/`](docs/index.md) and are served as an MkDocs Material site at https://docs.oostrandpark.com (container on sv01).
 
-## Structure
+## Layout
 
-```
-bootstrap/           # ArgoCD bootstrap (run once)
-  kustomization.yaml # Kustomize to deploy ArgoCD + apps
-argocd-install/      # ArgoCD install manifests (v2.14.3)
-argocd/              # ArgoCD AppProject + Application
-base/                # Cluster apps
-  netdata/           # Monitoring & metrics
-  n8n/               # Workflow automation
-  uptime-kuma/       # Uptime monitoring
-```
+| Path | What |
+|---|---|
+| `sv01/compose/` | sv01 stack: docker-compose.yml, Caddyfile, Dockerfile (caddy + cloudflare DNS), squid.conf |
+| `sv01/systemd/` | `sv01-config-sync.{service,timer}` — the apply units |
+| `sv01/bootstrap.sh` | idempotent host bootstrap (docker, user group, units, timer) |
+| `sv01/scripts/` | maintenance scripts (Kuma monitor automation, …) |
+| `sv02/` | sv02 config; applied on sv02 itself via `sv02-docker.service` |
+| `docs/` | MkDocs Material documentation source (`../mkdocs.yml` at repo root) |
+| `base/`, `argocd/`, `bootstrap/`, `config_k8s/` | legacy k3s/ArgoCD era — deprecated 2026-10-20, kept only for reference/git history |
 
-## Apps
+## Deploy flow (sv01)
 
-| App | URL | Port | Notes |
-|-----|-----|------|-------|
-| ArgoCD | https://argocd.oostrandpark.com | 30880 | GitOps engine |
-| n8n | https://n8n.oostrandpark.com | 5678 | Workflow automation |
-| Uptime Kuma | https://kuma.oostrandpark.com | 3002 | Uptime monitoring |
-| Netdata | https://netdata.oostrandpark.com | 19999 | System monitoring |
+1. Edit the working copy, commit, push.
+2. Within 5 min the timer pulls and runs `docker compose up -d --remove-orphans`. Force immediately: `sudo systemctl restart sv01-config-sync.service`.
+3. Update the relevant `docs/` page in the same commit so docs never drift.
 
-Traefik (ingress) + cert-manager (TLS) handle routing and certificates.
+## Docs
 
-## Quick Start
+- Config: `mkdocs.yml` (repo root), sources under `docs/`.
+- Local preview: `python3 -m venv .venv-docs && .venv-docs/bin/pip install mkdocs-material && .venv-docs/bin/mkdocs serve`
+- Live site: `ghcr.io/squidfunk/mkdocs-material` container on sv01 with `/opt/sv01-config` bind-mounted read-only; `mkdocs serve` auto-rebuilds when the sync timer pulls changes.
 
-### 1. Clone this repo
-```bash
-git clone https://github.com/RKruit/k3s-gitops
-cd k3s-gitops
-```
+## Secrets
 
-### 2. Bootstrap ArgoCD (run once)
-```bash
-chmod +x BOOTSTRAP.sh && ./BOOTSTRAP.sh
-```
-
-Or manually:
-```bash
-kubectl create namespace argocd
-kubectl apply -n argocd -f argocd-install/install.yaml
-kubectl patch svc argocd-server -n argocd -p '{"spec":{"type":"NodePort","ports":[{"port":443,"targetPort":8080,"nodePort":30880}]}}'
-```
-
-### 3. Get ArgoCD credentials
-```bash
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
-# Username: admin
-# UI: http://<node-ip>:30880
-```
-
-### 4. ArgoCD watches this repo automatically
-The `argocd/` Application tells ArgoCD to sync `base/` → cluster.
-
-## GitOps Flow
-
-1. Edit or add manifests in `base/<app>/`
-2. Commit and push:
-   ```bash
-   git add . && git commit -m "Update netdata config" && git push
-   ```
-3. ArgoCD detects changes → syncs to cluster automatically ✓
-
-## Adding New Apps
-
-1. Add manifests under `base/<app-name>/`
-2. Add to ArgoCD Application (`argocd/application.yaml`)
-3. Commit → push → ArgoCD syncs automatically
-
-## Repository
-
-https://github.com/RKruit/k3s-gitops
+Never in git or docs — only file paths. `/srv/sv01-secrets/` (sv01), `/srv/sv02/secrets/` (sv02). Inventory: [docs/infra/secrets.md](docs/infra/secrets.md).

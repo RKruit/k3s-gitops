@@ -1,0 +1,4 @@
+site/
+.cache/
+.venv-docs/
+__pycache__/
