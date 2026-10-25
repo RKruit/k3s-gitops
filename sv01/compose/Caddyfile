@@ -27,3 +27,11 @@ beszel.oostrandpark.com {
 	}
 	reverse_proxy beszel:8090
 }
+
+# Docs-site (2026-10-25): MkDocs in dezelfde compose-stack.
+docs.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy docs:8000
+}

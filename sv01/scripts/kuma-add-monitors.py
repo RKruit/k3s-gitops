@@ -20,12 +20,13 @@ MONITORS = [
     dict(COMMON, type="http", name="Komodo UI", url="https://komodo.oostrandpark.com/"),
     dict(COMMON, type="http", name="Todo-app", url="https://todo.oostrandpark.com/healthz"),
     dict(COMMON, type="http", name="Beszel hub", url="https://beszel.oostrandpark.com/"),
+    dict(COMMON, type="http", name="Docs site", url="https://docs.oostrandpark.com/"),
     dict(COMMON, type="http", name="Uptime Kuma", url="http://127.0.0.1:3001/",
          accepted_statuscodes=["200-299", "302-302"]),
     dict(COMMON, type="http", name="Hindsight API", url="http://127.0.0.1:9177/health",
          keyword="healthy"),
     dict(COMMON, type="http", name="Ollama", url="http://127.0.0.1:11434/"),
-    dict(COMMON, type="tcp", name="PostgreSQL (pg0)", hostname="127.0.0.1", port=5432),
+    dict(COMMON, type="port", name="PostgreSQL (pg0)", hostname="127.0.0.1", port=5432),
 ]
 
 
