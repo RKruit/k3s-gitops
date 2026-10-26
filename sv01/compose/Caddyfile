@@ -43,3 +43,11 @@ homepage.oostrandpark.com {
 	}
 	reverse_proxy homepage:3000
 }
+
+# IT-Tools (2026-10-26 teruggezet uit de k3s-tijd): dev/web tools.
+tools.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy it-tools:80
+}

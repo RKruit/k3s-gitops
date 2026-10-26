@@ -28,3 +28,8 @@
         href: https://docs.oostrandpark.com
         server: local
         container: sv01-docs
+    - IT-Tools:
+        icon: it-tools.svg
+        href: https://tools.oostrandpark.com
+        server: local
+        container: sv01-it-tools

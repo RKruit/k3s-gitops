@@ -223,6 +223,13 @@ services:
       - ./homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
+  # --- IT-Tools (2026-10-26, bestond al in de k3s-tijd; na compose-migratie opnieuw op-
+  # gezet): dev/web tools. Stateless — geen volume. Caddy: tools.oostrandpark.com.
+  it-tools:
+    image: corentinth/it-tools:latest
+    container_name: sv01-it-tools
+    restart: unless-stopped
+
 volumes:
   caddy-data:
   caddy-config:

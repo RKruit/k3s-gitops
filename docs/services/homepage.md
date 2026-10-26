@@ -12,7 +12,7 @@
 
 ## Kuma-statuspage
 
-- Publiek: https://kuma.oostrandpark.com/status/sv01 — group `Sites` met alle HTTP-site-monitors (Komodo, Todo, Beszel, Kuma, Docs, Homepage).
+- Publiek: https://kuma.oostrandpark.com/status/sv01 — group `Sites` met alle HTTP-site-monitors (Komodo, Todo, Beszel, Kuma, Docs, Homepage, IT-Tools).
 - Aanmaken/bijwerken: `sv01/scripts/kuma-add-status-page.py` (idempotent: `addStatusPage` als slug ontbreekt, daarna `saveStatusPage`). `saveStatusPage` VERVANGT de groups/monitors op de page — voeg nieuwe site-monitors hieraan toe en herdraai het script.
 - Draai: `/home/rkruit/.hermes/venvs/monitoring/bin/python3 sv01/scripts/kuma-add-status-page.py` (leest `/srv/sv01-secrets/kuma-admin.env` via sudo).
 - Homepage-widget velden: `url` + `slug`; de page toont up/down/uptime/incident.

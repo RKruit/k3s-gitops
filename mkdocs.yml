@@ -53,6 +53,7 @@ nav:
       - todo-app: services/todo-app.md
       - Hermes + egress: services/hermes.md
       - Homepage: services/homepage.md
+      - IT-Tools: services/it-tools.md
   - Runbooks:
       - Deploy a change: runbooks/deploy.md
       - New hostname via Caddy: runbooks/caddy-new-site.md

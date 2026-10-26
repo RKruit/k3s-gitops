@@ -22,6 +22,7 @@ MONITORS = [
     dict(COMMON, type="http", name="Beszel hub", url="https://beszel.oostrandpark.com/"),
     dict(COMMON, type="http", name="Docs site", url="https://docs.oostrandpark.com/"),
     dict(COMMON, type="http", name="Homepage", url="https://homepage.oostrandpark.com/"),
+    dict(COMMON, type="http", name="IT-Tools", url="https://tools.oostrandpark.com/"),
     dict(COMMON, type="http", name="Uptime Kuma", url="http://127.0.0.1:3001/",
          accepted_statuscodes=["200-299", "302-302"]),
     dict(COMMON, type="http", name="Hindsight API", url="http://127.0.0.1:9177/health",
