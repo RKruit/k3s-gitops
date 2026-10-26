@@ -26,6 +26,8 @@ tls {
 | kuma.oostrandpark.com | `192.168.1.10:3001` | Kuma runs host-net |
 | beszel.oostrandpark.com | `beszel:8090` | same docker network |
 | docs.oostrandpark.com | `docs:8000` | this docs site |
+| homepage.oostrandpark.com | `homepage:3000` | same docker network |
+| tools.oostrandpark.com | `it-tools:80` | same docker network (stateless) |
 | sv02.oostrandpark.com | *(separate Caddy instance on sv02, `tls internal`)* | different host, different PKI |
 
 ## Gotchas

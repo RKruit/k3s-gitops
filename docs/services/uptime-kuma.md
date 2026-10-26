@@ -9,9 +9,9 @@
 - Data on NFS (`kuma-data` → `/volume1/k8sv2/kuma-data`). The SQLite DB is at `kuma.db`; **copy `kuma.db` + `kuma.db-wal` + `kuma.db-shm` before reading/backing it up**.
 - Admin creds: `/srv/sv01-secrets/kuma-admin.env` (user `hermes-monitoring`).
 
-## Monitors (as of 2026-10-25)
+## Monitors (as of 2026-10-26)
 
-komodo · todo-app · beszel · docs site · kuma-self · hindsight · ollama · pg0
+komodo · todo-app · beszel · docs site · homepage · it-tools · kuma-self · hindsight · ollama · pg0
 
 !!! note
     **sv02 is deliberately not monitored** (Robert's choice). Don't add sv02 monitors without an explicit request.

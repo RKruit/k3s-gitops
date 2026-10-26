@@ -28,6 +28,8 @@ flowchart LR
         caddy --> kuma["Uptime Kuma :3001<br>(host-net)"]
         caddy --> beszel["Beszel :8090"]
         caddy --> docs_site["MkDocs :8000"]
+        caddy --> homepage["Homepage :3000"]
+        caddy --> ittools["IT-Tools (tools)"]
         hermes["Hermes gateway<br>(isolated, no route)"] -- "HTTP(S)_PROXY" --> squid["squid egress"]
         squid -- "public web only" --> net["Internet"]
         hermes -- "NO_PROXY" --> ollama["Ollama (host) :11434"]
