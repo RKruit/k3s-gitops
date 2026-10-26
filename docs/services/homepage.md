@@ -12,11 +12,11 @@
 
 ## Kuma-statuspage
 
-- Publiek: https://kuma.oostrandpark.com/status/sv01 — group `Sites` met alle HTTP-site-monitors (Komodo, Todo, Beszel, Kuma, Docs; later Homepage).
+- Publiek: https://kuma.oostrandpark.com/status/sv01 — group `Sites` met alle HTTP-site-monitors (Komodo, Todo, Beszel, Kuma, Docs, Homepage).
 - Aanmaken/bijwerken: `sv01/scripts/kuma-add-status-page.py` (idempotent: `addStatusPage` als slug ontbreekt, daarna `saveStatusPage`). `saveStatusPage` VERVANGT de groups/monitors op de page — voeg nieuwe site-monitors hieraan toe en herdraai het script.
 - Draai: `/home/rkruit/.hermes/venvs/monitoring/bin/python3 sv01/scripts/kuma-add-status-page.py` (leest `/srv/sv01-secrets/kuma-admin.env` via sudo).
 - Homepage-widget velden: `url` + `slug`; de page toont up/down/uptime/incident.
 
 ## Monitoring
 
-Kuma-monitor "Homepage" staat als regel in `sv01/scripts/kuma-add-monitors.py`; draai dat script pas nádat de unbound-entry voor homepage.oostrandpark.com bestaat (anders down-alerts op een hostname die nog niet resolvet).
+Kuma-monitor "Homepage" (id 11) staat als regel in `sv01/scripts/kuma-add-monitors.py` en is aangemaakt (26-10-2026): UP met Telegram-alert (`Hermes Telegram` id 1) gekoppeld. Let op bij API-added monitors: `isDefault` op een notificatie geldt alleen als UI-default in het formulier — koppel notificaties altijd expliciet via `editMonitor` met `notificationIDList={"1": true}`.
