@@ -10,8 +10,8 @@ Secrets live **outside git**, on each host. This page lists **paths only** — n
 | `kuma-admin.env` | Uptime Kuma admin login (`hermes-monitoring`) | Kuma API scripts |
 | `beszel-admin.env` | Beszel UI + superuser login | hub CLI/automation |
 | `komodo-api.env` | Komodo API key + secret (admin) | resource API calls |
-| `ghcr.txt` | GHCR docker login | `docker login` (private todo-image pulls) |
-| `github.txt` | GitHub PAT | git/CI tooling |
+| `ghcr.txt` | GHCR docker login | `docker login` for private todo-image pulls — [GitHub](github.md) |
+| `github.txt` | GitHub PAT (scopes `repo`, `write:packages`) | working-copy HTTPS remote + tooling — [GitHub](github.md) |
 
 Backup this dir when rebuilding a host — it is **not** reproducible from git. See [new-host runbook](../runbooks/new-host.md).
 

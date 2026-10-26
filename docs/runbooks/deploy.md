@@ -2,7 +2,7 @@
 
 ## The normal path
 
-1. Edit the working copy (`~/gitops/k3s-gitops`), commit, **push**.
+1. Edit the working copy (`~/gitops/k3s-gitops`), commit, **push** (auth model and caveats: [GitHub](../infra/github.md)).
 2. The sync timer applies within 5 minutes. To apply immediately:
    ```bash
    sudo systemctl restart sv01-config-sync.service

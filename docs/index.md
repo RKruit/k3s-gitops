@@ -43,7 +43,7 @@ flowchart LR
 - [sv01](hosts/sv01.md) / [sv02](hosts/sv02.md) — machine inventories
 - Service pages under **Services** — how each thing is wired and what breaks it
 - **Runbooks** — deploy, expose a new hostname, Kuma API monitors, rebuild, backups
-- [Network & DNS](infra/network-dns.md), [NFS storage](infra/nfs-storage.md), [Secrets](infra/secrets.md)
+- [GitHub](infra/github.md), [Network & DNS](infra/network-dns.md), [NFS storage](infra/nfs-storage.md), [Secrets](infra/secrets.md)
 
 ## Rules of the road
 

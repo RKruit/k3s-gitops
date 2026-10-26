@@ -61,6 +61,7 @@ nav:
       - Rebuild a host: runbooks/new-host.md
       - Backups & restore: runbooks/backups-restore.md
   - Infra:
+      - GitHub: infra/github.md
       - Network & DNS: infra/network-dns.md
       - NFS storage: infra/nfs-storage.md
       - Secrets: infra/secrets.md
