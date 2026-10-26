@@ -1,4 +1,10 @@
 - Infra:
-    - Ollama API: http://192.168.1.10:11434
-    - Homepage docs: https://gethomepage.dev/
-    - Dashboard icons: https://gethomepage.dev/icons/
+    - Ollama API:
+        - abbr: OL
+          href: http://192.168.1.10:11434
+    - Homepage docs:
+        - abbr: DH
+          href: https://gethomepage.dev/
+    - Dashboard icons:
+        - abbr: DI
+          href: https://gethomepage.dev/icons/
