@@ -52,6 +52,7 @@ nav:
       - Komodo: services/komodo.md
       - todo-app: services/todo-app.md
       - Hermes + egress: services/hermes.md
+      - Homepage: services/homepage.md
   - Runbooks:
       - Deploy a change: runbooks/deploy.md
       - New hostname via Caddy: runbooks/caddy-new-site.md

@@ -209,6 +209,20 @@ services:
     volumes:
       - /opt/sv01-config:/docs:ro
 
+  # --- Homepage (2026-10-26): dashboard met alle interne links ---
+  # config uit de repo (sv01/compose/homepage), docker.sock ro voor status-dots,
+  # geen published port: Caddy routeert homepage.oostrandpark.com -> homepage:3000
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: sv01-homepage
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Amsterdam
+      HOMEPAGE_ALLOWED_HOSTS: homepage.oostrandpark.com
+    volumes:
+      - ./homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
 volumes:
   caddy-data:
   caddy-config:

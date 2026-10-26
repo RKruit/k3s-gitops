@@ -1,0 +1,30 @@
+- Homelab:
+    - Todo-app:
+        icon: mdi-check-circle
+        href: https://todo.oostrandpark.com
+        server: local
+        container: sv01-todo-app
+    - Komodo:
+        icon: komodo.png
+        href: https://komodo.oostrandpark.com
+        server: local
+        container: sv01-komodo-core
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://kuma.oostrandpark.com
+        server: local
+        container: sv01-uptime-kuma
+        widget:
+          type: uptimekuma
+          url: http://192.168.1.10:3001
+          slug: sv01
+    - Beszel:
+        icon: beszel.png
+        href: https://beszel.oostrandpark.com
+        server: local
+        container: sv01-beszel
+    - Docs:
+        icon: mkdocs.png
+        href: https://docs.oostrandpark.com
+        server: local
+        container: sv01-docs

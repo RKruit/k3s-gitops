@@ -35,3 +35,11 @@ docs.oostrandpark.com {
 	}
 	reverse_proxy docs:8000
 }
+
+# Homepage (2026-10-26): dashboard met alle interne links.
+homepage.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy homepage:3000
+}
