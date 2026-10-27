@@ -6,6 +6,11 @@
 (authelia) {
 	forward_auth authelia:9091 {
 		uri /api/authz/forward-auth
+		# PB/Komodo sturen bare Authorization-tokens (zonder Bearer-schema);
+		# authelia laat op de header-strategie de hele authz op die parse-fout
+		# mislukken, ook als de cookie geldig is → muurbounce-loop. Strip de
+		# header alléén uit de authz-subrequest; de app zelf krijgt hem gewoon.
+		header_up Authorization ""
 		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
 	}
 }
