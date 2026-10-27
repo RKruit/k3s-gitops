@@ -13,10 +13,12 @@ usermod -aG docker rkruit || true
 # 3. Systemd units uit de repo installeren
 install -m 644 /opt/sv01-config/sv01/systemd/sv01-config-sync.service /etc/systemd/system/
 install -m 644 /opt/sv01-config/sv01/systemd/sv01-config-sync.timer /etc/systemd/system/
+install -m 644 /opt/sv01-config/sv01/systemd/gh-webhook.service /etc/systemd/system/
 systemctl daemon-reload
 
 # 4. Timer activeren + eerste directe sync (pull + compose up)
 systemctl enable --now sv01-config-sync.timer
 systemctl restart sv01-config-sync.service
+systemctl enable --now gh-webhook.service
 
 echo "bootstrap klaar: $(systemctl is-active sv01-config-sync.timer) timer, $(docker ps --format '{{.Names}}: {{.Status}}' | tr '\n' ' ')"
