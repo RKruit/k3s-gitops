@@ -30,9 +30,13 @@ services:
     labels:
       diun.enable: "true"
     env_file: /srv/sv01-secrets/authelia.env
+    # Tweede config-bestand = OIDC-provider-blok (jwks + clients), buiten git:
+    # /srv/sv01-secrets/authelia-oidc.yml (conventie: secrets niet in de repo)
+    command: ["--config", "/config/configuration.yml", "--config", "/config/authelia-oidc.yml"]
     volumes:
       - ./authelia/configuration.yml:/config/configuration.yml:ro
       - ./authelia/users_database.yml:/config/users_database.yml:ro
+      - /srv/sv01-secrets/authelia-oidc.yml:/config/authelia-oidc.yml:ro
       - authelia-data:/config
     ports:
       - '192.168.1.10:9091:9091'

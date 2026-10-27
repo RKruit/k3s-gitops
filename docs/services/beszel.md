@@ -2,7 +2,7 @@
 title: Beszel
 type: service
 description: "Host & container metrics: hub/agent wiring, unix-socket mode, PocketBase quirks, superuser admin."
-related: [services/uptime-kuma.md, infra/secrets.md]
+related: [services/uptime-kuma.md, infra/secrets.md, services/authelia.md]
 ---
 
 # Beszel — host & container metrics
@@ -26,3 +26,10 @@ related: [services/uptime-kuma.md, infra/secrets.md]
 ## Admin
 
 Superuser CLI: `docker exec sv01-beszel /beszel superuser upsert <email> <password>` — creds live in `/srv/sv01-secrets/beszel-admin.env` (same login works for UI + superuser API).
+
+## Login / SSO (OIDC via Authelia)
+
+Since 2026-10-27 the login page also offers "Login via Authelia" (PocketBase OAuth2 on the `users` collection; client `beszel` defined in `/srv/sv01-secrets/authelia-oidc.yml`, redirect URI `https://beszel.oostrandpark.com/api/oauth2-redirect`).
+
+- The SSO account `rkruit` (email rkuit@gmail.com) **links to the original admin record**: PocketBase auto-links OAuth identities by verified email (the admin record's email was set to `rkuit@gmail.com`, `verified: true`), so the Telegram alert settings and alert rules survive.
+- The old password login keeps working in parallel (creds in `beszel-admin.env`) — both paths land on the same record.

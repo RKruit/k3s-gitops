@@ -1,13 +1,13 @@
 ---
 title: Authelia
 type: service
-description: "SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC is phase 2."
+description: "SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC live for Beszel."
 related: [services/caddy.md, runbooks/caddy-new-site.md, services/uptime-kuma.md, infra/secrets.md]
 ---
 
 # Authelia — SSO provider
 
-`authelia/authelia:4.39.28` on sv01 — single sign-on for every Caddy-served UI. One account (`rkruit`, in the git users-file), password login, Caddy `forward_auth` in front of each route. An OIDC identity-provider for native-SSO apps (Komodo, Beszel) is **phase 2** (not configured yet, see below).
+`authelia/authelia:4.39.28` on sv01 — single sign-on for every Caddy-served UI. One account (`rkruit`, in the git users-file), password login, Caddy `forward_auth` in front of each route. The OIDC identity-provider is **live** and Beszel already logs in through it (Komodo follows the same pattern later).
 
 | What | Where |
 |---|---|
@@ -29,13 +29,16 @@ related: [services/caddy.md, runbooks/caddy-new-site.md, services/uptime-kuma.md
 
 Kuma's hostname-monitors (Komodo, todo, beszel, docs, homepage, it-tools) run host-net from 192.168.1.10. Caddy forwards the real client IP as `X-Forwarded-For`, Authelia honors it, and an ACL rule (`domain_regex: '\.oostrandpark\.com$'` + `networks: ['192.168.1.10']` + `bypass`) lets those checks through unauthenticated. Verified in a smoke test: XFF=192.168.1.10 → 200 (bypass), without XFF → 302 to the portal. Rogue XFF presented directly to the raw :9091 LAN port yields at most an empty 200 from the authz endpoint (no app response), and the portal itself stays password-gated.
 
-## OIDC — phase 2 (deliberately not configured yet)
+## OIDC — live (Beszel uses it)
 
-Learned from 4.39.28 validation (config does not pass with a half-populated OIDC section):
+Configured on 2026-10-27 for Beszel's login button; Komodo can follow the same pattern later.
 
-- `identity_providers.oidc` requires **both** `jwks` (an RS256 RSA-2048 key) **and** at least one real client with valid redirect URIs — 4.39 does not auto-generate JWKS.
-- The env override for `oidc.hmac_secret` uses the single-underscore spelling `AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET` — the `AUTHELIA_IDENTITY_PROVIDERS_OIDC__HMAC_SECRET` (double underscore) variant is rejected as "not expected"; both were tested.
-- Plan: RS256 key in a secrets-file bind outside git, clients for Komodo and Beszel, then drop the phase-2 comment in `authelia.env`.
+- The provider block (`jwks` + `clients`) deliberately sits **outside git**: `/srv/sv01-secrets/authelia-oidc.yml`, bind-mounted read-only and loaded as a second `--config` file (compose `command`).
+- `jwks` = RSA-2048 RS256 key (key_id `sv01rsa`). Validation confirmed 4.39 requires an explicit `jwks` **and** at least one real client — no auto-generated JWKS.
+- The `oidc.hmac_secret` env override uses the single-underscore spelling `AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET`; the double-underscore variant is rejected as "not expected" (both tested).
+- `client_secret` is stored argon2-hashed (4.39 warns on plaintext); the plaintext for the app side lives in `/srv/sv01-secrets/beszel-oidc-client.env`.
+- Client `beszel`: redirect URI `https://beszel.oostrandpark.com/api/oauth2-redirect`, scopes `openid profile email`, policy one_factor.
+- Smoke check: `curl https://auth.oostrandpark.com/.well-known/openid-configuration` (unauthenticated).
 
 ## Ops
 

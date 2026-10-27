@@ -87,7 +87,7 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`Hermes + egress`](services/hermes.md) | Hermes gateway + squid egress: full isolation (no route, public-web-only proxy), host Ollama via bridge gateway. |
 | [`Homepage`](services/homepage.md) | gethomepage dashboard on homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma status-page widget. |
 | [`IT-Tools`](services/it-tools.md) | Stateless dev/web toolbox on tools.oostrandpark.com: wiring, history (k3s → compose), Kuma monitor. |
-| [`Authelia`](services/authelia.md) | SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC is phase 2. |
+| [`Authelia`](services/authelia.md) | SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC live for Beszel. |
 | [`Container-upkeep`](services/container-upkeep.md) | Automated container upkeep on sv01: daily image-update timer, autoheal (unhealthy restarts) and diun (update notifications via Telegram). |
 
 ### Runbooks

@@ -55,8 +55,10 @@ notifier:
   filesystem:
     filename: '/config/notification.txt'
 
-# OIDC-provider (apps met native SSO: Komodo, Beszel) volgt in fase 2: 4.39
-# verplicht bij identity_providers.oidc ÉN configureren van jwks (PEM-key) én
-# minstens één echte client met redirect-uri's — dan ook de hmac-secret via
+# OIDC-provider: ACTIEF sinds 2026-10-27 (Beszel gekoppeld; Komodo kan later
+# volgens hetzelfde patroon). Provider-blok (jwks + clients) staat bewust
+# BUITEN git in /srv/sv01-secrets/authelia-oidc.yml en wordt als tweede
+# --config bestand geladen (zie docker-compose). hmac-secret via
 # AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET (env-test bewees: dubbele
-# underscore-variant wordt NIET herkend in 4.39).
+# underscore-variant wordt NIET herkend in 4.39; client_secret in de secrets-
+# file is argon2-gehasht, PB-zijde houdt de plaintext in beszel-oidc-client.env).
