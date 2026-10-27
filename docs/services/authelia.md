@@ -39,6 +39,7 @@ Configured on 2026-10-27 for Beszel's login button; Komodo can follow the same p
 - `client_secret` is stored argon2-hashed (4.39 warns on plaintext); the plaintext for the app side lives in `/srv/sv01-secrets/beszel-oidc-client.env`.
 - Client `beszel`: redirect URI `https://beszel.oostrandpark.com/api/oauth2-redirect`, scopes `openid profile email`, policy one_factor.
 - Smoke check: `curl https://auth.oostrandpark.com/.well-known/openid-configuration` (unauthenticated).
+- `consent_mode: 'implicit'` on the client means no portal prompt: with a live session the authz endpoint 302s straight to the redirect URI (an `explicit` client shows an interactive consent page instead). Probe gotcha: the `state` parameter must be ≥ 8 chars or Authelia rejects it as too weak.
 
 ## Ops
 
