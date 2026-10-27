@@ -16,7 +16,7 @@ services:
       - caddy-data:/data
       - caddy-config:/config
 
-  # --- Authelia (2026-10-28): SSO-provider — 1 account (rkuit), wachtwoord-login ---
+  # --- Authelia (2026-10-28): SSO-provider — 1 account (rkruit), wachtwoord-login ---
   # Beschermt alle UI-routes via Caddy-forward_auth (snippet in Caddyfile);
   # login-portal: auth.oostrandpark.com. LAN-poort :9091 = ook voor de fase-2
   # sv02-Caddy-integratie (Frigate). Secrets: AUTHELIA_* uit

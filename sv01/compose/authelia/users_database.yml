@@ -2,7 +2,7 @@
 # Nieuwe hash genereren:
 #   sudo docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate argon2
 users:
-  rkuit:
+  rkruit:
     displayname: 'Robert'
     password: '$argon2id$v=19$m=65536,t=3,p=4$AlQMex0f+4z+4+63Mt2BpA$s9lJwxGHAR4W0dSiCOYKi797R18IqjgMw8eEUFLWAgM'
     email: 'rkuit@gmail.com'

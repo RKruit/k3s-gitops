@@ -7,13 +7,13 @@ related: [services/caddy.md, runbooks/caddy-new-site.md, services/uptime-kuma.md
 
 # Authelia — SSO provider
 
-`authelia/authelia:4.39.28` on sv01 — single sign-on for every Caddy-served UI. One account (`rkuit`, in the git users-file), password login, Caddy `forward_auth` in front of each route. An OIDC identity-provider for native-SSO apps (Komodo, Beszel) is **phase 2** (not configured yet, see below).
+`authelia/authelia:4.39.28` on sv01 — single sign-on for every Caddy-served UI. One account (`rkruit`, in the git users-file), password login, Caddy `forward_auth` in front of each route. An OIDC identity-provider for native-SSO apps (Komodo, Beszel) is **phase 2** (not configured yet, see below).
 
 | What | Where |
 |---|---|
 | Portal | https://auth.oostrandpark.com (Caddy → `authelia:9091`) |
 | Config | `sv01/compose/authelia/configuration.yml` + `users_database.yml` (git) |
-| Secrets | `/srv/sv01-secrets/authelia.env` (`AUTHELIA_*`; the rkuit password lives here as a comment) |
+| Secrets | `/srv/sv01-secrets/authelia.env` (`AUTHELIA_*`; the rkruit password lives here as a comment) |
 | Password hash | `users_database.yml` (argon2id, regenerate via `authelia crypto hash generate argon2`) |
 | Storage | local volume `authelia-data` on purpose — sqlite + network storage = locking-corruption risk (same call as Komodo's mongo) |
 | Sessions | in-memory — **a restart of sv01-authelia means every client re-logs once**; no Redis on purpose |
