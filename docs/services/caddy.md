@@ -1,8 +1,8 @@
 ---
+title: Caddy
+type: service
 description: "Reverse proxy + TLS on sv01: custom cloudflare-DNS-01 image, route table, stale-mount and reload gotchas."
-related:
-  - runbooks/caddy-new-site.md
-  - infra/network-dns.md
+related: [runbooks/caddy-new-site.md, infra/network-dns.md]
 ---
 
 # Caddy — reverse proxy + TLS

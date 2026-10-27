@@ -1,9 +1,8 @@
 ---
+title: Network & DNS
+type: infra
 description: "IP-plan, DNS policy (Cloudflare zones, DNS-01, manual unbound entries), sv01 hostname table, squid isolation ranges."
-related:
-  - services/caddy.md
-  - services/hermes.md
-  - hosts/sv02.md
+related: [services/caddy.md, services/hermes.md, hosts/sv02.md]
 ---
 
 # Network & DNS

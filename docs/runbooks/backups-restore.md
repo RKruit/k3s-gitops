@@ -1,8 +1,8 @@
 ---
+title: Backups & restore
+type: runbook
 description: "Backups & restore: honest current state (no scheduled job yet), NFS data locations, live-sqlite and per-instance-PKI cautions."
-related:
-  - infra/nfs-storage.md
-  - runbooks/new-host.md
+related: [infra/nfs-storage.md, runbooks/new-host.md]
 ---
 
 # Runbook: backups & restore

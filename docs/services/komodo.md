@@ -1,8 +1,8 @@
 ---
+title: Komodo
+type: service
 description: "Komodo (mongo/core/periphery): API automation — and why it must never deploy the sv01 stack."
-related:
-  - hosts/sv01.md
-  - infra/secrets.md
+related: [hosts/sv01.md, infra/secrets.md]
 ---
 
 # Komodo — deploy dashboard

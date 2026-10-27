@@ -3,10 +3,15 @@
 
 Convention (the ``docs/`` tree is "OKF-light", no external gem):
 
-- every page under ``docs/`` starts with YAML frontmatter::
+- every page under ``docs/`` starts with YAML frontmatter (OKF v0.2 conform):
 
+      type:        REQUIRED non-empty (backfill per directory: --backfill-types)
+      title:       non-empty display name, backfilled from the mkdocs nav
       description: one-liner stating what the page is for (no |, no newline)
-      related:     optional list of docs-root-relative paths to other pages
+      related:     optional doc-root-relative paths, INLINE list style [a, b]
+
+- docs/index.md additionally carries ``okf_version: "0.2"``; ``log.md`` is a
+  reserved OKF file (frontmatter/nav checks are exempted when present).
 
 - ``docs/index.md`` carries the generated overview between
   ``<!-- okf:index:start -->`` and ``<!-- okf:index:end -->``.
@@ -37,6 +42,7 @@ FM_RE = re.compile(r"\A---\n(.*?\n)---\n", re.DOTALL)
 MD_LINK = re.compile(r"\[[^\]\n]*\]\(([^()\s]+)\)")
 MARK_START = "<!-- okf:index:start -->"
 MARK_END = "<!-- okf:index:end -->"
+TYPE_BY_DIR = {"hosts": "host", "services": "service", "runbooks": "runbook", "infra": "infra"}
 
 
 def parse_nav() -> list[tuple[str, list[tuple[str, str]]]]:
@@ -109,6 +115,7 @@ def build_index(nav: list[tuple[str, list[tuple[str, str]]]], fm_by_rel: dict[st
 
 def main(argv: list[str]) -> int:
     write_index = "--write-index" in argv
+    backfill = "--backfill-types" in argv
     problems: list[str] = []
 
     pages = sorted(DOCS.rglob("*.md"), key=lambda p: str(p))
@@ -121,15 +128,56 @@ def main(argv: list[str]) -> int:
         rel = str(page.relative_to(DOCS))
         fm, body = load_page(page)
         if fm is None:
+            if rel == "log.md":
+                fm_by_rel[rel] = {}
+                continue
             problems.append(f"{rel}: no YAML frontmatter at the top")
             fm_by_rel[rel] = {}
             continue
+        if rel == "log.md":
+            fm_by_rel[rel] = fm
+            continue
+        if backfill and (not isinstance(fm.get("type"), str) or not isinstance(fm.get("title"), str)):
+            nav_titles = {rel_: t_ for _section, entries in nav for t_, rel_ in entries}
+            kind = "index" if rel == "index.md" else TYPE_BY_DIR.get(rel.split("/", 1)[0], "concept")
+            addendum = ""
+            if not isinstance(fm.get("type"), str):
+                addendum += f"type: {kind}\n"
+                fm["type"] = kind
+            if isinstance(nav_titles.get(rel), str) and not isinstance(fm.get("title"), str):
+                addendum += f"title: {nav_titles[rel]}\n"
+                fm["title"] = nav_titles[rel]
+            extra = 'okf_version: "0.2"\n' if (rel == "index.md" and not isinstance(fm.get("okf_version"), str)) else ""
+
+            fm_text = FM_RE.match(page.read_text()).group(0)
+            m_block = re.search(r"related:\n((?:  - [^\n]+\n)+)", fm_text)
+            if m_block:
+                entries_ = [e.strip() for e in re.findall(r"^\s+- (.+)$", m_block.group(1), re.MULTILINE)]
+                fm_text = fm_text.replace(m_block.group(0), "related: [" + ", ".join(entries_) + "]\n", 1)
+            fm_new = ("---\n" + addendum + extra) + fm_text[4:]
+            page.write_text(page.read_text().replace(FM_RE.match(page.read_text()).group(0), fm_new, 1))
+            if extra:
+                fm["okf_version"] = "0.2"
         desc = fm.get("description")
         if not isinstance(desc, str) or not desc.strip():
             problems.append(f"{rel}: 'description' missing or empty")
         elif "|" in desc or "\n" in desc:
             problems.append(f"{rel}: 'description' must be one line without '|'")
         fm["description"] = (desc or "").strip()
+        ftype = fm.get("type")
+        if not isinstance(ftype, str) or not ftype.strip():
+            problems.append(
+                f"{rel}: 'type' missing/non-empty required by OKF v0.2 (run: scripts/okf_check.py --backfill-types)"
+            )
+        ftitle = fm.get("title")
+        if not isinstance(ftitle, str) or not ftitle.strip() or ":" in ftitle:
+            problems.append(
+                f"{rel}: 'title' missing or invalid (run: scripts/okf_check.py --backfill-types)"
+            )
+        if FM_RE.match(body) and re.search(r"related:\n\s+- ", FM_RE.match(body).group(0)):
+            problems.append(
+                f"{rel}: related uses block-style list; use inline [a, b] style (run: scripts/okf_check.py --backfill-types)"
+            )
         fm_by_rel[rel] = fm
 
         related = fm.get("related", [])
@@ -163,7 +211,7 @@ def main(argv: list[str]) -> int:
 
     nav_paths = {rel for _section, entries in nav for _title, rel in entries}
     page_rels = {str(p.relative_to(DOCS)) for p in pages}
-    for orphan in sorted(page_rels - nav_paths):
+    for orphan in sorted(p for p in (page_rels - nav_paths) if p != "log.md"):
         problems.append(f"{orphan}: page is not in mkdocs.yml nav")
     for dangling in sorted(nav_paths - page_rels):
         problems.append(f"{dangling}: nav entry has no page on disk")

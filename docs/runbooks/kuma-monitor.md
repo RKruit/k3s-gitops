@@ -1,8 +1,8 @@
 ---
+title: Add Kuma monitor (API)
+type: runbook
 description: "Add/update Kuma monitors via the socket.io API: venv setup, v2.5.7 payload gotchas, verification via beats and DB."
-related:
-  - services/uptime-kuma.md
-  - services/homepage.md
+related: [services/uptime-kuma.md, services/homepage.md]
 ---
 
 # Runbook: add / update a Kuma monitor via the API

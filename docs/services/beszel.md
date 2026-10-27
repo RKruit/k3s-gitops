@@ -1,8 +1,8 @@
 ---
+title: Beszel
+type: service
 description: "Host & container metrics: hub/agent wiring, unix-socket mode, PocketBase quirks, superuser admin."
-related:
-  - services/uptime-kuma.md
-  - infra/secrets.md
+related: [services/uptime-kuma.md, infra/secrets.md]
 ---
 
 # Beszel — host & container metrics

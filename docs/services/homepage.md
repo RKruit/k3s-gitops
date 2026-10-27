@@ -1,8 +1,8 @@
 ---
+title: Homepage
+type: service
 description: "gethomepage-dashboard op homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma-statuspage-widget."
-related:
-  - services/uptime-kuma.md
-  - runbooks/kuma-monitor.md
+related: [services/uptime-kuma.md, runbooks/kuma-monitor.md]
 ---
 
 # Homepage — homelab dashboard

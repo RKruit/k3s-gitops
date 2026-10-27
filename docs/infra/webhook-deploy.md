@@ -1,9 +1,8 @@
 ---
+title: GitHub push-deploy
+type: infra
 description: "Push-deploy keten GitHub → CF-tunnel → loopback-receiver → sync-unit: architectuur, beveiliging, setup, pitfalls."
-related:
-  - infra/github.md
-  - runbooks/deploy.md
-  - hosts/sv01.md
+related: [infra/github.md, runbooks/deploy.md, hosts/sv01.md]
 ---
 
 # GitHub push-deploy (webhook)

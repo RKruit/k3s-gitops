@@ -1,8 +1,8 @@
 ---
+title: IT-Tools
+type: service
 description: "Stateless dev/web-toolbox op tools.oostrandpark.com: wiring, historie (k3s → compose), Kuma-monitor."
-related:
-  - services/homepage.md
-  - runbooks/kuma-monitor.md
+related: [services/homepage.md, runbooks/kuma-monitor.md]
 ---
 
 # IT-Tools — dev/web tools

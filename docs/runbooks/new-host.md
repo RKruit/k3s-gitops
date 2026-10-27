@@ -1,9 +1,8 @@
 ---
+title: Rebuild a host
+type: runbook
 description: "Rebuild/bootstrap a host: idempotent sv01 bootstrap, prerequisites (free ports, restored secrets), data survival."
-related:
-  - infra/nfs-storage.md
-  - infra/secrets.md
-  - runbooks/backups-restore.md
+related: [infra/nfs-storage.md, infra/secrets.md, runbooks/backups-restore.md]
 ---
 
 # Runbook: rebuild / bootstrap a host

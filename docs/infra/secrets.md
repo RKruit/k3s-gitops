@@ -1,8 +1,8 @@
 ---
+title: Secrets
+type: infra
 description: "Secrets inventory: paths-only policy, per-host secret files and their consumers, hygiene rules."
-related:
-  - infra/github.md
-  - runbooks/new-host.md
+related: [infra/github.md, runbooks/new-host.md]
 ---
 
 # Secrets inventory

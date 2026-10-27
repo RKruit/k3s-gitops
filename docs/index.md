@@ -1,9 +1,9 @@
 ---
+title: Home
+type: index
+okf_version: "0.2"
 description: "Entry point: what the two-host homelab runs, the deploy model, topology, rules of the road, and the generated doc index."
-related:
-  - hosts/sv01.md
-  - runbooks/deploy.md
-  - infra/github.md
+related: [hosts/sv01.md, runbooks/deploy.md, infra/github.md]
 ---
 
 # Oostrandpark Homelab

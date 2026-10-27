@@ -1,8 +1,8 @@
 ---
+title: NFS storage
+type: infra
 description: "NFS storage pattern (local-driver volumes + nfs4 opts), live sv01 volume mapping, safe new-subdir creation."
-related:
-  - runbooks/new-host.md
-  - services/todo-app.md
+related: [runbooks/new-host.md, services/todo-app.md]
 ---
 
 # NFS storage

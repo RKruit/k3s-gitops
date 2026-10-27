@@ -1,8 +1,8 @@
 ---
+title: Hermes + egress
+type: service
 description: "Hermes gateway + squid egress: full isolation (no route, public-web-only proxy), host Ollama via bridge gateway."
-related:
-  - hosts/sv01.md
-  - infra/network-dns.md
+related: [hosts/sv01.md, infra/network-dns.md]
 ---
 
 # Hermes gateway + egress (squid)

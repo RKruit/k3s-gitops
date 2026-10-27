@@ -1,8 +1,8 @@
 ---
+title: todo-app
+type: service
 description: "Private GHCR image at todo.oostrandpark.com; NFS data continuity with the old k3s PVC dir, image update path."
-related:
-  - infra/nfs-storage.md
-  - runbooks/deploy.md
+related: [infra/nfs-storage.md, runbooks/deploy.md]
 ---
 
 # todo-app

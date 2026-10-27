@@ -1,9 +1,8 @@
 ---
+title: New hostname via Caddy
+type: runbook
 description: "Expose a new hostname: Caddy route, explicit reload, manual unbound entry, DNS-01 timing, monitor hookup."
-related:
-  - services/caddy.md
-  - infra/network-dns.md
-  - runbooks/kuma-monitor.md
+related: [services/caddy.md, infra/network-dns.md, runbooks/kuma-monitor.md]
 ---
 
 # Runbook: expose a new hostname via Caddy

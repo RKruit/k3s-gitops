@@ -1,9 +1,8 @@
 ---
+title: GitHub
+type: infra
 description: "RKuit/k3s-gitops as single source of truth: repo layout, two-clone model, credential paths, no-CI rationale."
-related:
-  - runbooks/deploy.md
-  - infra/webhook-deploy.md
-  - infra/secrets.md
+related: [runbooks/deploy.md, infra/webhook-deploy.md, infra/secrets.md]
 ---
 
 # GitHub
