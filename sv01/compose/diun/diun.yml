@@ -1,0 +1,14 @@
+# diun — update-watchdog: controleert registries en meldt nieuwe image-tags op
+# Telegram. Watchen gebeurt OPT-IN via container-label `diun.enable=true`
+# (watch_by_default=false). Token + chatids zitten NIET in dit bestand maar in
+# de env-file van het compose-service: /srv/sv01-secrets/diun.env
+# (DIUN_NOTIF_TELEGRAM_TOKEN / DIUN_NOTIF_TELEGRAM_CHATIDS).
+watch:
+  schedule: "0 5 * * *" # dagelijks 05:00 — ná de image-update-run van 04:17
+  first_check_notif: false # eerste run = baseline, geen meldingen
+notif:
+  telegram:
+    enable: true
+providers:
+  docker:
+    watch_by_default: false

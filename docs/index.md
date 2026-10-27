@@ -86,6 +86,7 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`Hermes + egress`](services/hermes.md) | Hermes gateway + squid egress: full isolation (no route, public-web-only proxy), host Ollama via bridge gateway. |
 | [`Homepage`](services/homepage.md) | gethomepage-dashboard op homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma-statuspage-widget. |
 | [`IT-Tools`](services/it-tools.md) | Stateless dev/web-toolbox op tools.oostrandpark.com: wiring, historie (k3s → compose), Kuma-monitor. |
+| [`Container-upkeep`](services/container-upkeep.md) | Automatische container-upkeep op sv01: dagelijkse image-update timer, autoheal (unhealthy-restart) en diun (update-melding via Telegram). |
 
 ### Runbooks
 

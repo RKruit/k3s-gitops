@@ -1,0 +1,12 @@
+[Unit]
+Description=sv01 image-update timer (daily 04:17 + jitter)
+
+[Timer]
+# offset t.o.v. :00 en RandomizedDelaySec: botsing met de 5-min-config-sync
+# en de webhook-triggered sync zoveel mogelijk vermijden
+OnCalendar=*-*-* 04:17:00
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

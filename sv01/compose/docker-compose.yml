@@ -20,6 +20,8 @@ services:
     image: ghcr.io/rkruit/todo-app:latest
     container_name: sv01-todo-app
     restart: unless-stopped
+    labels:
+      autoheal: "true"
     environment:
       TZ: Europe/Amsterdam
     volumes:
@@ -97,6 +99,11 @@ services:
     image: nousresearch/hermes-agent:stable
     container_name: sv01-hermes
     restart: unless-stopped
+    # bewust niet in de dagelijkse image-update: update = handmatig volgens
+    # services/hermes.md (diun meldt wel wanneer er een nieuwe stable is)
+    pull_policy: never
+    labels:
+      diun.enable: "true"
     depends_on:
       - egress-proxy
     command: ["gateway", "run"]
@@ -128,6 +135,7 @@ services:
     image: ubuntu/squid:6.6-24.04_edge
     container_name: sv01-hermes-egress
     restart: unless-stopped
+    pull_policy: never # behoort bij hermes: geen auto-updates
     logging:
       driver: json-file
       options:
@@ -147,6 +155,9 @@ services:
     container_name: sv01-uptime-kuma
     restart: unless-stopped
     network_mode: host
+    labels:
+      autoheal: "true"
+      diun.enable: "true"
     environment:
       UPTIME_KUMA_DB_TYPE: sqlite
     logging:
@@ -163,6 +174,8 @@ services:
     image: henrygd/beszel:latest
     container_name: sv01-beszel
     restart: unless-stopped
+    labels:
+      diun.enable: "true"
     environment:
       APP_URL: https://beszel.oostrandpark.com
     ports:
@@ -182,6 +195,8 @@ services:
     container_name: sv01-beszel-agent
     restart: unless-stopped
     network_mode: host
+    labels:
+      diun.enable: "true"
     logging:
       driver: json-file
       options:
@@ -206,6 +221,15 @@ services:
     container_name: sv01-docs
     restart: unless-stopped
     command: ["serve", "--dev-addr", "0.0.0.0:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3)"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      autoheal: "true"
+      diun.enable: "true"
     volumes:
       - /opt/sv01-config:/docs:ro
 
@@ -216,6 +240,9 @@ services:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: sv01-homepage
     restart: unless-stopped
+    labels:
+      autoheal: "true"
+      diun.enable: "true"
     environment:
       TZ: Europe/Amsterdam
       HOMEPAGE_ALLOWED_HOSTS: homepage.oostrandpark.com
@@ -229,6 +256,15 @@ services:
     image: corentinth/it-tools:latest
     container_name: sv01-it-tools
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider -T 3 http://127.0.0.1:80/ || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      autoheal: "true"
+      diun.enable: "true"
 
   # --- GitHub push-deploy (2026-10-27): Cloudflare Tunnel-connector ---
   # Connector voor CF-tunnel 'sv01-hooks': routet GitHub-webhook-POST's naar de
@@ -249,6 +285,45 @@ services:
     volumes:
       - ./cloudflared/config.yaml:/etc/cloudflared/config.yaml:ro
       - /srv/sv01-secrets/cloudflared-creds.json:/etc/cloudflared/creds.json:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # --- Container-upkeep (2026-10-27): watchdogs + dagelijkse image-update ---
+  # autoheal: herstart containers met label autoheal=true die unhealthy zijn.
+  # diun: meldt nieuwe image-tags op Telegram (opt-in via label diun.enable).
+  # De dagelijkse pull is host-side: sv01-image-update.timer (excl. hermes/
+  # egress-proxy/caddy — zie sv01/scripts/image-update.sh + docspage).
+  autoheal:
+    image: willfarrell/autoheal:latest
+    container_name: sv01-autoheal
+    restart: unless-stopped
+    labels:
+      diun.enable: "true"
+    environment:
+      AUTOHEAL_INTERVAL: "60"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  diun:
+    image: crazymax/diun:4
+    container_name: sv01-diun
+    restart: unless-stopped
+    command: ["serve", "--config", "/etc/diun/diun.yml"]
+    env_file: /srv/sv01-secrets/diun.env
+    labels:
+      diun.enable: "true"
+    volumes:
+      - ./diun/diun.yml:/etc/diun/diun.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - diun-data:/data
     logging:
       driver: json-file
       options:
@@ -297,6 +372,14 @@ volumes:
       type: nfs4
       o: addr=192.168.1.2,rw,hard,timeo=600
       device: ":/volume1/k8sv2/beszel-data"
+
+  # diun-cache (digest-state) — regenereerbaar, maar volgens conventie op NFS
+  diun-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/diun-data"
 
   # socket tussen beszel-hub en agent — NIET op NFS (unix socket)
   beszel-socket:
