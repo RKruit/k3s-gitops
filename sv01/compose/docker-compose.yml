@@ -16,6 +16,32 @@ services:
       - caddy-data:/data
       - caddy-config:/config
 
+  # --- Authelia (2026-10-28): SSO-provider — 1 account (rkuit), wachtwoord-login ---
+  # Beschermt alle UI-routes via Caddy-forward_auth (snippet in Caddyfile);
+  # login-portal: auth.oostrandpark.com. LAN-poort :9091 = ook voor de fase-2
+  # sv02-Caddy-integratie (Frigate). Secrets: AUTHELIA_* uit
+  # /srv/sv01-secrets/authelia.env. SQLite op lokaal volume (NFS = corruptie-
+  # risico, zoals mongo); sessions in-memory → restart sv01-authelia =
+  # opnieuw inloggen.
+  authelia:
+    image: authelia/authelia:4.39.28
+    container_name: sv01-authelia
+    restart: unless-stopped
+    labels:
+      diun.enable: "true"
+    env_file: /srv/sv01-secrets/authelia.env
+    volumes:
+      - ./authelia/configuration.yml:/config/configuration.yml:ro
+      - ./authelia/users_database.yml:/config/users_database.yml:ro
+      - authelia-data:/config
+    ports:
+      - '192.168.1.10:9091:9091'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   todo-app:
     image: ghcr.io/rkruit/todo-app:latest
     container_name: sv01-todo-app
@@ -387,6 +413,9 @@ volumes:
 
   # socket tussen beszel-hub en agent — NIET op NFS (unix socket)
   beszel-socket:
+
+  # authelia sqlite-db — LOKAAL (niet NFS): sqlite-locking-risico, zoals mongo
+  authelia-data:
 
 networks:
   # interne netwerk: geen default route, geen internet, geen LAN

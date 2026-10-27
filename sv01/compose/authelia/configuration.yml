@@ -1,0 +1,62 @@
+# Authelia-configuratie — sv01 SSO-provider (2026-10-28), naar template v4.39.28.
+# Alle secrets komen uit de env-file (/srv/sv01-secrets/authelia.env) als AUTHELIA_*-envvars.
+# Valideer wijzigingen lokaal VÓÓR het pushen:
+#   sudo docker run --rm --env-file /srv/sv01-secrets/authelia.env \
+#     -v $PWD/configuration.yml:/config/configuration.yml authelia/authelia:4.39.28 authelia validate-config
+
+authentication_backend:
+  file:
+    # 1 account, beheerd in dit git-bestand. Wachtwoord-wijziging = nieuwe
+    # argon2-hash genereren + edit + sync (zie users_database.yml-hoofdcomment).
+    path: '/config/users_database.yml'
+  # Geen SMTP in dit lab: password-reset/-change uit (hash wordt in de repo
+  # gewisseld).
+  password_reset:
+    disable: true
+  password_change:
+    disable: true
+
+# Alles achter Caddy-forward_auth: standaard één-factor (wachtwoord).
+# Uitzondering: Uptime Kuma (host-net: 192.168.1.10) moet de sites unauthenticeerd
+# kunnen health-checken (monitors draaien op de publieke hostnames). Caddy zet de
+# echte client-IP in X-Forwarded-For die Authelia verwerkt; getest met
+# validate-run: XFF=192.168.1.10 → bypass (200), anders → 302 login-redirect.
+# LAN-bypass-oppervlak via :9091 is beperkt (de authz-endpoint geeft max. een
+# lege 200, geen app-data) en blijft binnen het vertrouwde LAN.
+access_control:
+  rules:
+    - domain_regex: '\.oostrandpark\.com$'
+      networks: ['192.168.1.10']
+      policy: 'bypass'
+  default_policy: 'one_factor'
+
+# Sessions in de Authelia-container zelf (memory): geen extra Redis-container,
+# consequentie = restart van sv01-authelia betekent opnieuw inloggen.
+# Cookie op *.oostrandpark.com zodat één login over alle Caddy-hosts dekt
+# (sv02-Caddy doet forward_auth direct naar 192.168.1.10:9091).
+session:
+  cookies:
+    - domain: 'oostrandpark.com'
+      authelia_url: 'https://auth.oostrandpark.com'
+      inactivity: '168h'
+      expiration: '168h'
+      remember_me: '720h'
+
+# SQLite op een LOKAAL named volume — bewust NIET op NFS: sqlite+NetFS =
+# locking-corruptierisico (zelfde conventie als Komodo-mongo).
+storage:
+  local:
+    path: '/config/db.sqlite3'
+
+# Verplichte sectie ondanks uitgeschakelde password-reset (4.39-validering).
+# Filesystem-notifier wordt alleen gebruikt voor identity-verification-mails;
+# met reset uit blijft dit bestand ongeschreven.
+notifier:
+  filesystem:
+    filename: '/config/notification.txt'
+
+# OIDC-provider (apps met native SSO: Komodo, Beszel) volgt in fase 2: 4.39
+# verplicht bij identity_providers.oidc ÉN configureren van jwks (PEM-key) én
+# minstens één echte client met redirect-uri's — dan ook de hmac-secret via
+# AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET (env-test bewees: dubbele
+# underscore-variant wordt NIET herkend in 4.39).

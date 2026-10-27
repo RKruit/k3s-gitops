@@ -16,6 +16,7 @@ related: [services/caddy.md, infra/network-dns.md, runbooks/kuma-monitor.md]
        reverse_proxy <upstream>
    }
    ```
+   UI route? Then also add `import authelia` above the `reverse_proxy` line — the Authelia SSO wall ([authelia](../services/authelia.md)). Machine/webhook routes (like `hooks`) stay bare.
 2. Commit + push, let the sync apply (`sudo systemctl restart sv01-config-sync.service` to force).
 3. Because of the stale-single-file-mount pitfall, reload explicitly:
    ```bash

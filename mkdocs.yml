@@ -54,6 +54,7 @@ nav:
       - Hermes + egress: services/hermes.md
       - Homepage: services/homepage.md
       - IT-Tools: services/it-tools.md
+      - Authelia: services/authelia.md
       - Container-upkeep: services/container-upkeep.md
   - Runbooks:
       - Deploy a change: runbooks/deploy.md

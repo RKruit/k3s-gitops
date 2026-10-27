@@ -16,12 +16,15 @@ related: [runbooks/kuma-monitor.md, services/beszel.md]
 - Data on NFS (`kuma-data` → `/volume1/k8sv2/kuma-data`). The SQLite DB is at `kuma.db`; **copy `kuma.db` + `kuma.db-wal` + `kuma.db-shm` before reading/backing it up**.
 - Admin creds: `/srv/sv01-secrets/kuma-admin.env` (user `hermes-monitoring`).
 
-## Monitors (as of 2026-10-27)
+## Monitors (as of 2026-10-28)
 
-komodo · todo-app · beszel · docs site · homepage · it-tools · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel)
+komodo · todo-app · beszel · docs site · homepage · it-tools · authelia · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel)
 
 !!! note
     **sv02 is deliberately not monitored** (Robert's choice). Don't add sv02 monitors without an explicit request.
+
+!!! note
+    The hostname-monitors ride *through* the Authelia wall: Kuma runs host-net (192.168.1.10) and Authelia's ACL lets that XFF bypass ([authelia](authelia.md)). Don't gate that rule off without moving Kuma's checks.
 
 ## API automation
 

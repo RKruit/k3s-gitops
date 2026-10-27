@@ -35,7 +35,10 @@ tls {
 | docs.oostrandpark.com | `docs:8000` | this docs site |
 | homepage.oostrandpark.com | `homepage:3000` | same docker network |
 | tools.oostrandpark.com | `it-tools:80` | same docker network (stateless) |
+| auth.oostrandpark.com | `authelia:9091` | Authelia SSO portal — deliberately NO forward_auth (the login page must not require itself) |
 | sv02.oostrandpark.com | *(separate Caddy instance on sv02, `tls internal`)* | different host, different PKI |
+
+All seven UI routes sit behind Authelia via the `(authelia)` forward_auth snippet: a new UI route needs `import authelia` before its `reverse_proxy` (snippet imports are without parens). The Authelia wall and its Kuma bypass are documented in [authelia](authelia.md).
 
 ## Gotchas
 

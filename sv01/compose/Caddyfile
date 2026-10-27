@@ -1,7 +1,20 @@
+# Authelia forward_auth snippet (2026-10-28): SSO-wal voor alle UI-routes.
+# Route = `import (authelia)` vóór reverse_proxy; login-portal auth.oostrandpark.com.
+# Uptime Kuma kan er dóór (Authelia-ACL-bypass op XFF 192.168.1.10 — Caddy levert
+# de echte client-IP, test bewees 200/302-splitsing), authelia/configuration.yml).
+# sv02-Caddy kan straks hetzelfde direct naar 192.168.1.10:9091 doen (Frigate).
+(authelia) {
+	forward_auth authelia:9091 {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+	}
+}
+
 todo.oostrandpark.com {
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
+	import authelia
 	reverse_proxy todo-app:80
 }
 
@@ -9,6 +22,7 @@ komodo.oostrandpark.com {
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
+	import authelia
 	reverse_proxy core:9120
 }
 
@@ -18,6 +32,7 @@ kuma.oostrandpark.com {
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
+	import authelia
 	reverse_proxy 192.168.1.10:3001
 }
 
@@ -25,6 +40,7 @@ beszel.oostrandpark.com {
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
+	import authelia
 	reverse_proxy beszel:8090
 }
 
@@ -33,6 +49,7 @@ docs.oostrandpark.com {
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
+	import authelia
 	reverse_proxy docs:8000
 }
 
@@ -41,6 +58,7 @@ homepage.oostrandpark.com {
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
+	import authelia
 	reverse_proxy homepage:3000
 }
 
@@ -49,5 +67,14 @@ tools.oostrandpark.com {
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
+	import authelia
 	reverse_proxy it-tools:80
+}
+
+# Authelia SSO-portal zelf (2026-10-28): GEEN forward_auth (anders login-loop).
+auth.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy authelia:9091
 }
