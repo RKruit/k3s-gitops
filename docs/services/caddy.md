@@ -40,6 +40,9 @@ tls {
 
 All seven UI routes sit behind Authelia via the `(authelia)` forward_auth snippet: a new UI route needs `import authelia` before its `reverse_proxy` (snippet imports are without parens). The Authelia wall and its Kuma bypass are documented in [authelia](authelia.md).
 
+!!! warning "COOP breaks OAuth popups"
+    PocketBase sends `Cross-Origin-Opener-Policy: same-origin` on every response. On the beszel route that header **nulls `window.opener`** of the cross-origin OIDC popup → the `/api/oauth2-redirect` callback cannot post the code back → SDK shows `oauth2-redirect-failure` and every retry re-opens the popup (endless login loop). Fix (in place since 2026-10-27): `header { -Cross-Origin-Opener-Policy }` in the beszel site block. Watch for this on any other COOP-sending app that gets OIDC popup login.
+
 ## Gotchas
 
 - **Mount the whole dir, not the single file.** `- .:/etc/caddy:ro` is deliberate: single-file bind mounts go *stale* when the file is atomically rewritten (every patch tool writes a new inode) — `caddy reload` then happily reads the old file and logs `config is unchanged`.
