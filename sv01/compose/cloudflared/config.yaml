@@ -1,0 +1,14 @@
+# Lokale ingress-config voor CF-tunnel sv01-hooks (hooks.oostrandpark.com)
+# In plaats van remote-managed routes in het CF-dashboard (de wizard weigerde
+# routes vóór een Healthy-connector) beheert git deze ingress.
+# Credentials: /etc/cloudflared/creds.json (bind-mount uit /srv/sv01-secrets,
+# bewust NIET in het repo).
+tunnel: 36da8963-aea2-4869-a520-8bd3b7f84d01
+credentials-file: /etc/cloudflared/creds.json
+
+ingress:
+  # GitHub push-webhook → host-side receiver (systemd gh-webhook.service)
+  - hostname: hooks.oostrandpark.com
+    service: http://localhost:9100
+  # verplichte catch-all
+  - service: http_status:404

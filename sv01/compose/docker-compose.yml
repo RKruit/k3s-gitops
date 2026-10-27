@@ -235,15 +235,20 @@ services:
   # host-side receiver (systemd gh-webhook.service, 127.0.0.1:9100) die de
   # sv01-config-sync-unit restart. host-net zodat cloudflared localhost:9100
   # bereikt; verder alleen UITgaande verbindingen, geen published ports.
-  # Token uit /srv/sv01-secrets/gh-webhook.env (TUNNEL_TOKEN); routes/ingress
-  # worden in het Cloudflare-dashboard beheerd (Networking > Tunnels > sv01-hooks).
+  # Ingress = LOKAAL uit de repo (de CF-wizard wilde geen routes op een
+  # niet-Healthy tunnel): sv01/compose/cloudflared/config.yaml.
+  # TunnelSecret in /srv/sv01-secrets/cloudflared-creds.json (ro). user=0 nodig:
+  # image draait non-root en mag 640-creds anders niet lezen.
   cloudflared:
     image: cloudflare/cloudflared:2026.10.4
     container_name: sv01-cloudflared
     restart: unless-stopped
+    user: "0:0"
     network_mode: host
-    env_file: /srv/sv01-secrets/gh-webhook.env
-    command: ["tunnel", "--no-autoupdate", "run"]
+    command: ["tunnel", "--no-autoupdate", "--config", "/etc/cloudflared/config.yaml", "run"]
+    volumes:
+      - ./cloudflared/config.yaml:/etc/cloudflared/config.yaml:ro
+      - /srv/sv01-secrets/cloudflared-creds.json:/etc/cloudflared/creds.json:ro
     logging:
       driver: json-file
       options:
