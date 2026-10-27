@@ -16,7 +16,7 @@ SERVICES=$("${COMPOSE[@]}" config --services | grep -vEv "$EXCL" || true)
 
 if [ -n "$SERVICES" ]; then
   # shellcheck disable=SC2086
-  "${COMPOSE[@]}" pull --ignore-buildable-images $SERVICES
+  "${COMPOSE[@]}" pull $SERVICES
 fi
 # recreate alleen containers waarvan de image/config is veranderd
 "${COMPOSE[@]}" up -d --remove-orphans
