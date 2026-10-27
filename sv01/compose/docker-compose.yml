@@ -316,12 +316,16 @@ services:
     image: crazymax/diun:4
     container_name: sv01-diun
     restart: unless-stopped
-    command: ["serve", "--config", "/etc/diun/diun.yml"]
     env_file: /srv/sv01-secrets/diun.env
+    environment:
+      # docker provider met defaults = opt-in via label diun.enable=true.
+      # diun 4.33's strict schema is per-sectie inconsistent in snake/camelCase
+      # → we laten het diun.yml-bestand weg en zetten alles via env-vars.
+      DIUN_PROVIDERS_DOCKER: "true"
+      DIUN_WATCH_SCHEDULE: "0 5 * * *" # dagelijks 05:00 — ná de updater van 04:17
     labels:
       diun.enable: "true"
     volumes:
-      - ./diun/diun.yml:/etc/diun/diun.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - diun-data:/data
     logging:

@@ -55,7 +55,7 @@ een eigen rol — updateen, herstarten, melden:
   (`DIUN_NOTIF_TELEGRAM_TOKEN` / `DIUN_NOTIF_TELEGRAM_CHATIDS`), níet in git.
 - State (cache/db) op NFS: volume `diun-data` → `/volume1/k8sv2/diun-data`.
   Kwijtraken is onschuldig (baseline opnieuw, eerste run meldt niets).
-- Test-melding: `sudo docker exec sv01-diun diun notif test --config /etc/diun/diun.yml`.
+- Test-melding: `sudo docker exec sv01-diun diun notif test`.
 
 ## Verificatie
 
