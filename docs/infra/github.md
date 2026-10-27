@@ -8,7 +8,7 @@ The single source of truth is **[RKuit/k3s-gitops](https://github.com/RKuit/k3s-
 - `docs/` + `mkdocs.yml` — this documentation site
 - `base/`, `argocd/`, `bootstrap/`, `config_k8s/` — legacy k3s/ArgoCD manifests (reference only)
 
-**No GitHub Actions, on purpose.** The deploy loop is the 5-minute systemd timer (pull + `docker compose up -d`), and the docs rebuild in-container from the same pull. No CI to maintain — but also: *every push to `main` reaches sv01 within ≤5 minutes.* Don't push WIP/experiments to `main`, and run the [deploy runbook checks](../runbooks/deploy.md) after pushing anything risky.
+**No GitHub Actions, on purpose.** The deploy loop is the 5-minute systemd timer (pull + `docker compose up -d`), and the docs rebuild in-container from the same pull. No CI to maintain — but also: *every push to `main` reaches sv01 within ≤5 minutes.* Don't push WIP/experiments to `main`, and run the [deploy runbook checks](../runbooks/deploy.md) after pushing anything risky. As of October 2026 a GitHub push-webhook makes deploys near-instant (seconds) — see [GitHub push-deploy](webhook-deploy.md); the timer stays as fallback.
 
 ## Two clones on sv01
 

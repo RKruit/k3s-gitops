@@ -230,6 +230,26 @@ services:
     container_name: sv01-it-tools
     restart: unless-stopped
 
+  # --- GitHub push-deploy (2026-10-27): Cloudflare Tunnel-connector ---
+  # Connector voor CF-tunnel 'sv01-hooks': routet GitHub-webhook-POST's naar de
+  # host-side receiver (systemd gh-webhook.service, 127.0.0.1:9100) die de
+  # sv01-config-sync-unit restart. host-net zodat cloudflared localhost:9100
+  # bereikt; verder alleen UITgaande verbindingen, geen published ports.
+  # Token uit /srv/sv01-secrets/gh-webhook.env (TUNNEL_TOKEN); routes/ingress
+  # worden in het Cloudflare-dashboard beheerd (Networking > Tunnels > sv01-hooks).
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.4
+    container_name: sv01-cloudflared
+    restart: unless-stopped
+    network_mode: host
+    env_file: /srv/sv01-secrets/gh-webhook.env
+    command: ["tunnel", "--no-autoupdate", "run"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   caddy-data:
   caddy-config:

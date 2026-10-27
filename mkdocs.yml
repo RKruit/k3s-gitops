@@ -62,6 +62,7 @@ nav:
       - Backups & restore: runbooks/backups-restore.md
   - Infra:
       - GitHub: infra/github.md
+      - GitHub push-deploy: infra/webhook-deploy.md
       - Network & DNS: infra/network-dns.md
       - NFS storage: infra/nfs-storage.md
       - Secrets: infra/secrets.md
