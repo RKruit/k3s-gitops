@@ -7,6 +7,7 @@ v2.5.x socket-API: setup = tuple-args, login = dict, add = (monitor,).
 Verplicht in elke monitor-payload: conditions: [] + accepted_statuscodes.
 sv02 bewust NIET in de set; alleen uitbreiden op Roberts verzoek.
 """
+import json
 import subprocess, sys, time
 import socketio
 
@@ -23,6 +24,7 @@ MONITORS = [
     dict(COMMON, type="http", name="Docs site", url="https://docs.oostrandpark.com/"),
     dict(COMMON, type="http", name="Homepage", url="https://homepage.oostrandpark.com/"),
     dict(COMMON, type="http", name="IT-Tools", url="https://tools.oostrandpark.com/"),
+    dict(COMMON, type="http", name="GitHub webhook (hooks)", url="https://hooks.oostrandpark.com/"),
     dict(COMMON, type="http", name="Uptime Kuma", url="http://127.0.0.1:3001/",
          accepted_statuscodes=["200-299", "302-302"]),
     dict(COMMON, type="http", name="Hindsight API", url="http://127.0.0.1:9177/health",
@@ -92,5 +94,25 @@ for m in MONITORS:
         print("add", m["name"], "ERR", ex, flush=True)
 
 final = fetch_monitors(sio)
+
+# --- notificaties idempotent linken (les: API-monitors krijgen de
+#     isDefault-notificatie NIET automatisch mee) ---
+for mname in [m["name"] for m in MONITORS]:
+    mon = next((v for v in final.values() if v.get("name") == mname), None)
+    if mon is None:
+        print(f"notif {mname}: monitor ontbreekt", flush=True)
+        continue
+    raw = mon.get("notificationIDList")
+    lst = raw if isinstance(raw, dict) else (json.loads(raw) if isinstance(raw, str) and raw.strip() else {})
+    if lst.get("1"):
+        continue
+    lst["1"] = True
+    mon["notificationIDList"] = lst  # dict — editMonitor verwacht géén json-string
+    try:
+        r = sio.call("editMonitor", (mon,), timeout=15)
+        print("notif link", mname, "->", r, flush=True)
+    except Exception as ex:
+        print("notif link", mname, "ERR", ex, flush=True)
+
 print("--- monitors:", sorted(final.keys()) if final else "(leeg)", flush=True)
 sio.disconnect()

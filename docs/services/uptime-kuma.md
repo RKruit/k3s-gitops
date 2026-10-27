@@ -9,9 +9,9 @@
 - Data on NFS (`kuma-data` → `/volume1/k8sv2/kuma-data`). The SQLite DB is at `kuma.db`; **copy `kuma.db` + `kuma.db-wal` + `kuma.db-shm` before reading/backing it up**.
 - Admin creds: `/srv/sv01-secrets/kuma-admin.env` (user `hermes-monitoring`).
 
-## Monitors (as of 2026-10-26)
+## Monitors (as of 2026-10-27)
 
-komodo · todo-app · beszel · docs site · homepage · it-tools · kuma-self · hindsight · ollama · pg0
+komodo · todo-app · beszel · docs site · homepage · it-tools · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel)
 
 !!! note
     **sv02 is deliberately not monitored** (Robert's choice). Don't add sv02 monitors without an explicit request.
@@ -24,4 +24,4 @@ The v2 socket.io API is picky — the exact payload rules and the idempotent scr
 
 - A monitor added with a wrong `type` value (e.g. `tcp` instead of `port`) returns *Unknown Monitor Type* and that monitor's scheduler hangs — fix the type, don't just re-add.
 - Success on monitor-add is visible as immediate up/down beats at the 60 s interval.
-- Telegram notifications were set up in the UI by Robert (the bot token path isn't reachable to tooling — keep it that way).
+- API-added monitors do **not** inherit the isDefault notification: `kuma-add-monitors.py` links Telegram notification 1 idempotently via `editMonitor` — which expects `notificationIDList` as a **dict** (`{'1': True}`), not a JSON string (a string silently inserts id `'0'` and fails the FK constraint).

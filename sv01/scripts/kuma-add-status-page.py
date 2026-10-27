@@ -80,7 +80,7 @@ if monitors is None:
     sys.exit("no monitorList push received")
 
 # alleen HTTP-site-monitors op de publieke status-page (komodo/todo/kuma/beszel/docs/homepage/it-tools)
-site_names = ["komodo", "todo", "kuma", "beszel", "docs", "homepage", "it-tools"]
+site_names = ["komodo", "todo", "kuma", "beszel", "docs", "homepage", "it-tools", "hooks"]
 chosen = []
 for mid, m in monitors.items():
     name = m.get("name", "")

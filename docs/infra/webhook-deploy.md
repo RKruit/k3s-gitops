@@ -50,7 +50,7 @@ flowchart LR
 
 ## Health/monitoring
 
-- Receiver: `curl http://127.0.0.1:9100/` → 200 `ok` (GET is de healthcheck).
+- Receiver: `curl http://127.0.0.1:9100/` → 200 `ok` (GET is de healthcheck). Kuma-monitor **"GitHub webhook (hooks)"** (id 13, https://hooks.oostrandpark.com/, notificatie Telegram id 1) bewaakt de volledige keten inclusief CF-edge, op de publieke statuspage in groep *Sites*.
 - End-to-end zonder GitHub: een gesigneerde HMAC-POST naar `https://hooks.oostrandpark.com/` → 200 én `deploy triggered` in journald — bewijst edge → tunnel → receiver → sync-unit.
 - Tunnel-status in het dashboard moet **Healthy** zijn (4 verbindingen).
 
