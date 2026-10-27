@@ -84,9 +84,9 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`Komodo`](services/komodo.md) | Komodo (mongo/core/periphery): API automation — and why it must never deploy the sv01 stack. |
 | [`todo-app`](services/todo-app.md) | Private GHCR image at todo.oostrandpark.com; NFS data continuity with the old k3s PVC dir, image update path. |
 | [`Hermes + egress`](services/hermes.md) | Hermes gateway + squid egress: full isolation (no route, public-web-only proxy), host Ollama via bridge gateway. |
-| [`Homepage`](services/homepage.md) | gethomepage-dashboard op homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma-statuspage-widget. |
-| [`IT-Tools`](services/it-tools.md) | Stateless dev/web-toolbox op tools.oostrandpark.com: wiring, historie (k3s → compose), Kuma-monitor. |
-| [`Container-upkeep`](services/container-upkeep.md) | Automatische container-upkeep op sv01: dagelijkse image-update timer, autoheal (unhealthy-restart) en diun (update-melding via Telegram). |
+| [`Homepage`](services/homepage.md) | gethomepage dashboard on homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma status-page widget. |
+| [`IT-Tools`](services/it-tools.md) | Stateless dev/web toolbox on tools.oostrandpark.com: wiring, history (k3s → compose), Kuma monitor. |
+| [`Container-upkeep`](services/container-upkeep.md) | Automated container upkeep on sv01: daily image-update timer, autoheal (unhealthy restarts) and diun (update notifications via Telegram). |
 
 ### Runbooks
 
@@ -103,7 +103,7 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | Page | Description |
 |---|---|
 | [`GitHub`](infra/github.md) | RKuit/k3s-gitops as single source of truth: repo layout, two-clone model, credential paths, no-CI rationale. |
-| [`GitHub push-deploy`](infra/webhook-deploy.md) | Push-deploy keten GitHub → CF-tunnel → loopback-receiver → sync-unit: architectuur, beveiliging, setup, pitfalls. |
+| [`GitHub push-deploy`](infra/webhook-deploy.md) | Push-deploy chain GitHub → CF tunnel → loopback receiver → sync unit: architecture, security, setup, pitfalls. |
 | [`Network & DNS`](infra/network-dns.md) | IP-plan, DNS policy (Cloudflare zones, DNS-01, manual unbound entries), sv01 hostname table, squid isolation ranges. |
 | [`NFS storage`](infra/nfs-storage.md) | NFS storage pattern (local-driver volumes + nfs4 opts), live sv01 volume mapping, safe new-subdir creation. |
 | [`Secrets`](infra/secrets.md) | Secrets inventory: paths-only policy, per-host secret files and their consumers, hygiene rules. |
