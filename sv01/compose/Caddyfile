@@ -37,6 +37,12 @@ kuma.oostrandpark.com {
 }
 
 beszel.oostrandpark.com {
+	header {
+		# COOP same-origin (PocketBase default) nullt window.opener van de
+		# cross-origin OIDC-popup → OAuth-callback postMessage breekt
+		# (oauth2-redirect-failure-loop). Strip = popup-flow werkt.
+		-Cross-Origin-Opener-Policy
+	}
 	tls {
 		dns cloudflare {env.CF_API_TOKEN}
 	}
