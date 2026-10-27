@@ -1,3 +1,11 @@
+---
+description: "RKuit/k3s-gitops as single source of truth: repo layout, two-clone model, credential paths, no-CI rationale."
+related:
+  - runbooks/deploy.md
+  - infra/webhook-deploy.md
+  - infra/secrets.md
+---
+
 # GitHub
 
 The single source of truth is **[RKuit/k3s-gitops](https://github.com/RKuit/k3s-gitops)** — a **private** repo. Everything deploys from it, these docs are part of it, and the [MkDocs container](../index.md) rebuilds itself from it on every sync pull.

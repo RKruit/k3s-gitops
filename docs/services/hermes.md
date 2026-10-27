@@ -1,3 +1,10 @@
+---
+description: "Hermes gateway + squid egress: full isolation (no route, public-web-only proxy), host Ollama via bridge gateway."
+related:
+  - hosts/sv01.md
+  - infra/network-dns.md
+---
+
 # Hermes gateway + egress (squid)
 
 `sv01-hermes` (`nousresearch/hermes-agent:stable`, `gateway run`) + `sv01-hermes-egress` (`ubuntu/squid:6.6-24.04_edge`) — a fenced environment for the Telegram-agent gateway, isolated from the rest of the network.

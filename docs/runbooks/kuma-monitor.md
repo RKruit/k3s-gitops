@@ -1,3 +1,10 @@
+---
+description: "Add/update Kuma monitors via the socket.io API: venv setup, v2.5.7 payload gotchas, verification via beats and DB."
+related:
+  - services/uptime-kuma.md
+  - services/homepage.md
+---
+
 # Runbook: add / update a Kuma monitor via the API
 
 Script: `sv01/scripts/kuma-add-monitors.py` — idempotent, reads creds from `/srv/sv01-secrets/kuma-admin.env` (user `hermes-monitoring`).

@@ -1,3 +1,10 @@
+---
+description: "gethomepage-dashboard op homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma-statuspage-widget."
+related:
+  - services/uptime-kuma.md
+  - runbooks/kuma-monitor.md
+---
+
 # Homepage — homelab dashboard
 
 `ghcr.io/gethomepage/homepage` — link-dashboard voor alle sv01-sites: https://homepage.oostrandpark.com (Caddy-route, CF DNS-01). Stateless: alle config staat in de repo (`sv01/compose/homepage/`), geen database en geen NFS-volume.

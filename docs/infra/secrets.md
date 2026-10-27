@@ -1,3 +1,10 @@
+---
+description: "Secrets inventory: paths-only policy, per-host secret files and their consumers, hygiene rules."
+related:
+  - infra/github.md
+  - runbooks/new-host.md
+---
+
 # Secrets inventory
 
 Secrets live **outside git**, on each host. This page lists **paths only** — never paste values into git or these docs. If a secret value ever lands in the repo: rotate it, don't just delete the commit.

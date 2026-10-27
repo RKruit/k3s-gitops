@@ -1,3 +1,11 @@
+---
+description: "Rebuild/bootstrap a host: idempotent sv01 bootstrap, prerequisites (free ports, restored secrets), data survival."
+related:
+  - infra/nfs-storage.md
+  - infra/secrets.md
+  - runbooks/backups-restore.md
+---
+
 # Runbook: rebuild / bootstrap a host
 
 sv01's bootstrap is idempotent — safe to re-run after a reinstall:

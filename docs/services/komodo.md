@@ -1,3 +1,10 @@
+---
+description: "Komodo (mongo/core/periphery): API automation — and why it must never deploy the sv01 stack."
+related:
+  - hosts/sv01.md
+  - infra/secrets.md
+---
+
 # Komodo — deploy dashboard
 
 `komodo.oostrandpark.com` → `core:9120`. Three services in one compose project: **mongo + core + periphery**.

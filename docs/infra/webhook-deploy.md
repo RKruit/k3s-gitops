@@ -1,3 +1,11 @@
+---
+description: "Push-deploy keten GitHub → CF-tunnel → loopback-receiver → sync-unit: architectuur, beveiliging, setup, pitfalls."
+related:
+  - infra/github.md
+  - runbooks/deploy.md
+  - hosts/sv01.md
+---
+
 # GitHub push-deploy (webhook)
 
 Push naar `main` → deploy op sv01 **binnen enkele seconden** in plaats van ≤5 min. De webhook is het primaire triggersignaal; de 5-minuten-timer blijft als fallback draaien (mist een webhook, dan vangt de timer het binnen 5 min alsnog op).

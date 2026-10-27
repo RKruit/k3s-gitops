@@ -1,3 +1,10 @@
+---
+description: "Private GHCR image at todo.oostrandpark.com; NFS data continuity with the old k3s PVC dir, image update path."
+related:
+  - infra/nfs-storage.md
+  - runbooks/deploy.md
+---
+
 # todo-app
 
 `ghcr.io/rkruit/todo-app:latest` (private image) at https://todo.oostrandpark.com.

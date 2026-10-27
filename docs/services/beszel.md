@@ -1,3 +1,10 @@
+---
+description: "Host & container metrics: hub/agent wiring, unix-socket mode, PocketBase quirks, superuser admin."
+related:
+  - services/uptime-kuma.md
+  - infra/secrets.md
+---
+
 # Beszel — host & container metrics
 
 `henrygd/beszel` hub + agent, both in the sv01 compose project. UI: https://beszel.oostrandpark.com (hub API stays loopback-only: `127.0.0.1:8090:8090`).

@@ -1,3 +1,10 @@
+---
+description: "Stateless dev/web-toolbox op tools.oostrandpark.com: wiring, historie (k3s → compose), Kuma-monitor."
+related:
+  - services/homepage.md
+  - runbooks/kuma-monitor.md
+---
+
 # IT-Tools — dev/web tools
 
 `corentinth/it-tools` — verzameling dev- en webtools (hashes, converters, encoders, formatters): https://tools.oostrandpark.com (Caddy-route, CF DNS-01). Volledig stateless: geen volumes, geen database, geen NFS-volume.

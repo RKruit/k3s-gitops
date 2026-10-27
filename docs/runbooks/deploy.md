@@ -1,3 +1,10 @@
+---
+description: "Deploy a change: edit → push → sync unit applies; GHCR pull rule, rkruit-pull rule, verification checks."
+related:
+  - infra/github.md
+  - infra/webhook-deploy.md
+---
+
 # Runbook: deploy a change
 
 ## The normal path

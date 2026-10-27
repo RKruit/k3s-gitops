@@ -1,3 +1,10 @@
+---
+description: "Health checks + Telegram alerts (Kuma v2.5.7, host-net :3001): design choices, monitor set, API gotchas."
+related:
+  - runbooks/kuma-monitor.md
+  - services/beszel.md
+---
+
 # Uptime Kuma 2.x
 
 `louislam/uptime-kuma:2` (v2.5.7) — health checks + Telegram alerts. UI on `:3001` and https://kuma.oostrandpark.com.

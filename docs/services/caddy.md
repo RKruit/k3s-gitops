@@ -1,3 +1,10 @@
+---
+description: "Reverse proxy + TLS on sv01: custom cloudflare-DNS-01 image, route table, stale-mount and reload gotchas."
+related:
+  - runbooks/caddy-new-site.md
+  - infra/network-dns.md
+---
+
 # Caddy — reverse proxy + TLS
 
 Runs as a **custom locally-built image** (`sv01/compose/Dockerfile`): `caddy:2` plus the `caddy-dns/cloudflare` plugin, built with xcaddy on `caddy:2-builder`.
