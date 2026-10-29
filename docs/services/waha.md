@@ -24,7 +24,7 @@ related: [services/uptime-kuma.md, services/beszel.md, infra/secrets.md, infra/n
 ## Daily report (07:00 local)
 
 - Script: `~/whatsapp/daily-report.py` (host-side), scheduled via the Hermes cronjob.
-- Sources: Kuma public status-page API (`http://127.0.0.1:3001/api/status-page/sv01` + `/heartbeat` — no auth needed) and Beszel (`/api/collections/systems/records` + `system_stats`, auth via `/srv/sv01-secrets/beszel-admin.env`).
+- Sources: the full monitor set via `kuma.db` + `-wal` + `-shm` copy read by sqlite (Kuma's socket `heartbeatList` pushes are unreliable for scripted reads; the `time` column is UTC — script adds +1 h) and Beszel PocketBase API (auth via `/srv/sv01-secrets/beszel-admin.env`).
 - Sends via `POST http://127.0.0.1:3000/api/sendText` (`{session, chatId, text}`, header `X-Api-Key`).
 - Send failures go to Telegram (`hermes_opark_bot`) so a dead session is never silent.
 
