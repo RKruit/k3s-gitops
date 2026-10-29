@@ -52,6 +52,7 @@ nav:
       - Komodo: services/komodo.md
       - todo-app: services/todo-app.md
       - Hermes + egress: services/hermes.md
+      - WAHA (WhatsApp bridge): services/waha.md
       - Homepage: services/homepage.md
       - IT-Tools: services/it-tools.md
       - Authelia: services/authelia.md

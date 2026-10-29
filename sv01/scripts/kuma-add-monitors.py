@@ -32,6 +32,7 @@ MONITORS = [
          keyword="healthy"),
     dict(COMMON, type="http", name="Ollama", url="http://127.0.0.1:11434/"),
     dict(COMMON, type="port", name="PostgreSQL (pg0)", hostname="127.0.0.1", port=5432),
+    dict(COMMON, type="port", name="WAHA (WhatsApp bridge)", hostname="127.0.0.1", port=3000),
 ]
 
 

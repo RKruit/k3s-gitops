@@ -34,6 +34,7 @@ Robert's standing preference: **persistent data belongs on NFS** — default to 
 | `kuma-data` | `kuma-data` | |
 | `beszel-data` | `beszel-data` | |
 | `beszel-agent-data` | `beszel-agent-data` | |
+| `waha-data` | `waha-data` | WhatsApp bridge session store |
 | `beszel-socket` | *(local — not NFS)* | unix socket, must be a local FS |
 | `komodo-mongo-*` | *(local — not NFS)* | wiredTiger-on-NFS risk |
 

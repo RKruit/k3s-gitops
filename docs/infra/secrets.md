@@ -19,6 +19,7 @@ Secrets live **outside git**, on each host. This page lists **paths only** — n
 | `komodo-api.env` | Komodo API key + secret (admin) | resource API calls |
 | `ghcr.txt` | GHCR docker login | `docker login` for private todo-image pulls — [GitHub](github.md) |
 | `github.txt` | GitHub PAT (scopes `repo`, `write:packages`) | working-copy HTTPS remote + tooling — [GitHub](github.md) |
+| `waha.env` | WAHA API key + dashboard login + report chat target | WAHA container env + the daily-report cronjob |
 
 Backup this dir when rebuilding a host — it is **not** reproducible from git. See [new-host runbook](../runbooks/new-host.md).
 

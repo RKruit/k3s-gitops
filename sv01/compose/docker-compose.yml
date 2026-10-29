@@ -321,6 +321,42 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # --- WhatsApp-bridge (2026-10-29): WAHA core (devlikeapro) — dagrapport-bot ---
+  # Stuurt dagelijks de homelab-status naar Robert's WhatsApp (cronjob 07:00 →
+  # ~/whatsapp/daily-report.py → POST /api/sendText). NOWEB-engine (Baileys,
+  # licht image zonder chrome). Sessies persistent op NFS (één QR-scan).
+  # API/dashboard alléén op host-loopback :3000 — bewust géén Caddy-route
+  # (niet publiek). Creds + chat-target: /srv/sv01-secrets/waha.env.
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: sv01-waha
+    restart: unless-stopped
+    labels:
+      autoheal: "true"
+      diun.enable: "true"
+    env_file: /srv/sv01-secrets/waha.env
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      WHATSAPP_START_SESSION: default
+      WHATSAPP_RESTART_SESSION: "true"
+      WAHA_PRINT_QR: "false"
+      TZ: Europe/Amsterdam
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:3000/ping"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - waha-data:/app/.sessions
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # --- Container-upkeep (2026-10-27): watchdogs + dagelijkse image-update ---
   # autoheal: herstart containers met label autoheal=true die unhealthy zijn.
   # diun: meldt nieuwe image-tags op Telegram (opt-in via label diun.enable).
@@ -414,6 +450,14 @@ volumes:
       type: nfs4
       o: addr=192.168.1.2,rw,hard,timeo=600
       device: ":/volume1/k8sv2/diun-data"
+
+  # sessie-opslag van de WAHA WhatsApp-bridge — NFS volgens conventie
+  waha-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/waha-data"
 
   # socket tussen beszel-hub en agent — NIET op NFS (unix socket)
   beszel-socket:

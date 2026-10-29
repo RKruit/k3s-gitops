@@ -12,7 +12,7 @@ Config-as-code for a two-host homelab, managed in [RKruit/k3s-gitops](https://gi
 
 | Host | Address | Role |
 |---|---|---|
-| **sv01** | 192.168.1.10 | Docker Compose stack: Caddy, todo-app, Komodo, Hermes gateway, Kuma, Beszel, Authelia SSO. Also runs host-side: Ollama, Hindsight, Postgres. |
+| **sv01** | 192.168.1.10 | Docker Compose stack: Caddy, todo-app, Komodo, Hermes gateway, Kuma, Beszel, Authelia SSO, WAHA WhatsApp bridge. Also runs host-side: Ollama, Hindsight, Postgres. |
 | **sv02** | sv02.oostrandpark.com | Docker Compose: Mosquitto 2.0, Caddy 2.8 (`sv02-docker.service`). |
 
 ## Deploy model
@@ -42,11 +42,13 @@ flowchart LR
         hermes["Hermes gateway<br>(isolated, no route)"] -- "HTTP(S)_PROXY" --> squid["squid egress"]
         squid -- "public web only" --> net["Internet"]
         hermes -- "NO_PROXY" --> ollama["Ollama (host) :11434"]
+        waha["WAHA WhatsApp bridge<br>:3000 loopback, no route"] -- "daily report, outbound" --> net
     end
     todo --- v1[("NFS<br>/volume1/k8sv2")]
     komodo --- v2[("Komodo volumes<br>(local: wiredTiger)")]
     kuma --- v3[("NFS kuma-data")]
     beszel --- v4[("NFS beszel-data")]
+    waha --- v5[("NFS waha-data")]
 ```
 
 ## Where to look
@@ -85,6 +87,7 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`Komodo`](services/komodo.md) | Komodo (mongo/core/periphery): API automation — and why it must never deploy the sv01 stack. |
 | [`todo-app`](services/todo-app.md) | Private GHCR image at todo.oostrandpark.com; NFS data continuity with the old k3s PVC dir, image update path. |
 | [`Hermes + egress`](services/hermes.md) | Hermes gateway + squid egress: full isolation (no route, public-web-only proxy), host Ollama via bridge gateway. |
+| [`WAHA (WhatsApp bridge)`](services/waha.md) | WAHA core bridge (NOWEB engine): loopback-only WhatsApp send API :3000 for the daily homelab report cronjob; NFS session storage, no Caddy route. |
 | [`Homepage`](services/homepage.md) | gethomepage dashboard on homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma status-page widget. |
 | [`IT-Tools`](services/it-tools.md) | Stateless dev/web toolbox on tools.oostrandpark.com: wiring, history (k3s → compose), Kuma monitor. |
 | [`Authelia`](services/authelia.md) | SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC live for Beszel. |
