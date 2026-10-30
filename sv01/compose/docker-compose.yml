@@ -357,37 +357,11 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # --- MQTT-broker (2026-10-30, fase 2): Mosquitto voor de Homey MQTT Client-app
-  # (nl.scanno.mqtt) en sv01-side automatisatie. LAN-bound op 192.168.1.10:1883,
-  # bewust geen Caddy-route/geen publieke poort (raw TCP). Auth verplicht:
-  # passwd via /srv/sv01-secrets/mosquitto.pw (buiten git), ACL in de repo.
-  # persistence.db op NFS volgens conventie (single writer, geen locking-risico).
-  mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: sv01-mosquitto
-    restart: unless-stopped
-    user: "1883:1883"
-    labels:
-      autoheal: "true"
-      diun.enable: "true"
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 1883"]
-      interval: 60s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    ports:
-      - "192.168.1.10:1883:1883"
-    volumes:
-      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./mosquitto/acl.file:/mosquitto/config/acl.file:ro
-      - /srv/sv01-secrets/mosquitto.pw:/mosquitto/config/passwd:ro
-      - mosquitto-data:/mosquitto/data
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # --- MQTT-broker: Mosquitto draait bewust ALS HOST-SERVICE (geen container):
+  # Ubuntu-apparmor confineert het mosquitto-binary tot /etc/mosquitto +
+  # /var/lib/mosquitto, container-varianten krijgen 'Unable to open config file'.
+  # Zie sv01/mosquitto/README.md + docs/services/mosquitto.md; systemd-unit
+  # mosquitto.service (apt-pakket), config in /etc/mosquitto/conf.d/00-sv01.conf.
 
   # --- Container-upkeep (2026-10-27): watchdogs + dagelijkse image-update ---
   # autoheal: herstart containers met label autoheal=true die unhealthy zijn.
@@ -490,14 +464,6 @@ volumes:
       type: nfs4
       o: addr=192.168.1.2,rw,hard,timeo=600
       device: ":/volume1/k8sv2/waha-data"
-
-  # mosquitto persistence.db — NFS volgens conventie (broker = single writer)
-  mosquitto-data:
-    driver: local
-    driver_opts:
-      type: nfs4
-      o: addr=192.168.1.2,rw,hard,timeo=600
-      device: ":/volume1/k8sv2/mosquitto-data"
 
   # socket tussen beszel-hub en agent — NIET op NFS (unix socket)
   beszel-socket:

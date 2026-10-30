@@ -40,7 +40,7 @@ Source of truth: `/home/rkruit/homey-inventory/` (`REPORT.md`, inventory JSON du
 
 ## Phase 2 — automation (2026-10-30)
 
-- **MQTT bridge**: Mosquitto on sv01 ([mosquitto](mosquitto.md)); the Homey app `nl.scanno.mqtt` connects as user `homey` and publishes `homey/…` topics; sv01 cron/automation publishes control topics Homey flows can trigger on. One-time app-side config in the Homey app UI (broker host/port/user/password).
+- **MQTT bridge**: host-native Mosquitto broker on sv01 ([mosquitto](mosquitto.md)); the Homey app `nl.scanno.mqtt` connects as user `homey` and publishes `homey/…` topics; sv01 cron/automation publishes control topics Homey flows can trigger on. One-time app-side config in the Homey app UI (broker host/port/user/password).
 - **Energy exporter**: host systemd unit `sv01-homey-energy` (`sv01/systemd/homey-energy.service`, script `sv01/scripts/homey_energy_export.py`) — pulls `GET /api/manager/energy/live` every 60 s with the CLI's cached session (zero cloud calls; heals a dead session with one CLI re-auth per 10 min max) and serves `http://192.168.1.10:8890/energy.json`. The homepage tile (customapi) shows current consumption, solar yield and the top consumer. Kuma watches the endpoint. LAN-only, no auth (read-only power numbers).
 - **Remote control from sv01**: prefer MQTT (see above); for direct REST use the CLI one-liners:
 

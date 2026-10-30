@@ -1,8 +1,0 @@
-# MQTT ACL on sv01 (phase 2, 2026-10-30)
-# homey: only the homey/ topic tree ( publishes telemetry, consumes commands)
-# hermes: full control (sv01-side automation, cron jobs, monitoring)
-user homey
-topic readwrite homey/#
-
-user hermes
-topic readwrite #
