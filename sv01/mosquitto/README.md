@@ -15,11 +15,25 @@ alpine's own package).
 | repo | deployed | role |
 |---|---|---|
 | `sv01/mosquitto/00-sv01.conf` | `/etc/mosquitto/conf.d/00-sv01.conf` | listener 1883 on 192.168.1.10, auth, ACL, logging |
-| `sv01/mosquitto/acl.file` | `/etc/mosquitto/acl.file` (`mosquitto:mosquitto` 640) | `homey` → `homey/#` only; `hermes` → everything |
-| `/srv/sv01-secrets/mosquitto.pw` | `/etc/mosquitto/passwd` (`mosquitto:mosquitto` 640) | hashed credentials (2 users) |
+| `sv01/mosquitto/acl.file` | `/etc/mosquitto/acl.file` (`mosquitto:mosquitto` 640) | `homey` → `homey/#` only; `hermes` → everything; `zendure` → `zendure/#` only |
+| `/srv/sv01-secrets/mosquitto.pw` | `/etc/mosquitto/passwd` (`root:root`, 644) | hashed credentials (3 users: homey, hermes, zendure) |
 
 Secrets (plain, one-time view for client setup): `/srv/sv01-secrets/mosquitto.env`
-(`HOMEY_MQTT_PASS`, `HERMES_MQTT_PASS`) — outside git.
+(`HOMEY_MQTT_PASS`, `HERMES_MQTT_PASS`, `ZENDURE_MQTT_PASS`) — outside git.
+
+## The `zendure` user (SolarFlow 2400 AC+, local MQTT mode)
+
+The 2400 AC+ (latest firmware) supports a configurable MQTT client —
+`HA.Mqtt.SetConfig {enable, server, port, protocol: mqtt, username, password}`
+(zendSDK), reachable in the app under the device's advanced network settings.
+Point it at `192.168.1.10:1883` with user `zendure` + `ZENDURE_MQTT_PASS` and
+the device publishes telemetry under `zendure/…` locally instead of relying on
+the Zendure cloud; sv01 can steer via the same topics. **Trade-off to decide
+before switching:** with the client pointed at a local broker the Zendure app /
+ZENKI-AI (HEMS) control for that device is no longer available via the cloud
+(community reports: "via de app is een besturing dan niet meer mogelijk") —
+arbitrage logic then has to come from sv01 itself (NextEnergy prices are
+already known there). Legacy-device alternative: web-Bluetooth config tool.
 
 ## Deploy a config change
 
