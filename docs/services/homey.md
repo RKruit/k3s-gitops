@@ -31,7 +31,7 @@ Hub: **Homey Pro van Robert**, id `66e57ca24da8fc528fb04f47`, firmware 13.5.3, L
 | flow folder | `POST /api/manager/flow/flowfolder {"name":"Buiten"}`; assign via flow-PUT `folder` | 200 |
 | flow trigger | `POST /api/manager/flow/flow/<id>/trigger` (per hub schema; advanced: `/advancedflow/<id>/trigger`) | scope `homey.flow.start` |
 | logic variables | `PUT /api/manager/logic/variable/<id> {"value":…}` | also writable via OAuth client |
-| app settings | **not exposed** via manager API (fw 13.5.3) — configure in the app UI | e.g. `nl.scanno.mqtt` broker config |
+| **app settings** | `GET`/`PUT /api/manager/apps/app/<id>/setting/<name>` (singular `setting`, body `{"value": …}`; whole set without `/:name`), restart via `POST /app/<id>/restart` | scope `homey.app.control`; verify with GET; the earlier "not exposed" note was a wrong path (`/settings` 404s, `setting` works) |
 
 ## Phase 1 — reorganisation (COMPLETE, 2026-10-30)
 
@@ -40,7 +40,7 @@ Source of truth: `/home/rkruit/homey-inventory/` (`REPORT.md`, inventory JSON du
 
 ## Phase 2 — automation (2026-10-30)
 
-- **MQTT bridge**: host-native Mosquitto broker on sv01 ([mosquitto](mosquitto.md)); the Homey app `nl.scanno.mqtt` connects as user `homey` and publishes `homey/…` topics; sv01 cron/automation publishes control topics Homey flows can trigger on. One-time app-side config in the Homey app UI (broker host/port/user/password).
+- **MQTT bridge — fully configured via the API (2026-10-30)**: host-native Mosquitto broker on sv01 ([mosquitto](mosquitto.md)); the Homey app `nl.scanno.mqtt` connects as user `homey` (broker `192.168.1.10:1883`, keepalive 60) — settings pushed through `PUT /api/manager/apps/app/<id>/setting/<name>` with keys `url`, `ip_port`, `tls`, `selfsigned`, `keepalive`, `user`, `password` (scanno's app reads exactly those; `PUT` body `{"value": …}`), then `POST /app/<id>/restart`. Bridge flow **"Hermes MQTT bridge (sv01)"** (id `189feb5b-e336-4883-ad82-eef81d30480b`): MQTT trigger card on `homey/hermes/#` → action publishes `echo [[message]] (via [[topic]])` to `homey/hermes/echo` — proof: sv01 publishes to `homey/hermes/test`, echo arrives at sv01. End-to-end verified. Note the scanno app connects **lazily** — only when a trigger/action card exists or another app subscribes; no flow = no client. Token syntax inside flow args is `[[token]]` (`{{token}}` passes through literally), and a flow created via `POST` may read back `enabled: false` — force an extra `PUT … {"enabled": true}`. sv01-side usage: publish commands to `homey/hermes/…` (user `hermes`), trigger flows, or extend the bridge flow with action cards.
 - **Energy exporter**: host systemd unit `sv01-homey-energy` (`sv01/systemd/homey-energy.service`, script `sv01/scripts/homey_energy_export.py`) — pulls `GET /api/manager/energy/live` every 60 s with the CLI's cached session (zero cloud calls; heals a dead session with one CLI re-auth per 10 min max) and serves `http://192.168.1.10:8890/energy.json`. The homepage tile (customapi) shows current consumption, solar yield and the top consumer. Kuma watches the endpoint. LAN-only, no auth (read-only power numbers).
 - **Remote control from sv01**: prefer MQTT (see above); for direct REST use the CLI one-liners:
 

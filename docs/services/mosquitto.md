@@ -35,7 +35,7 @@ weakens the host — not recommended.
 
 ## Integration
 
-- **Homey** (`nl.scanno.mqtt` v3): broker `192.168.1.10`, port `1883`, user `homey` + password from `mosquitto.env`. The app's broker config itself is set once in the Homey app UI (settings are not exposed via the manager API). The app publishes telemetry and can trigger flows from MQTT messages.
+- **Homey** (`nl.scanno.mqtt` v3): broker `192.168.1.10`, port `1883`, user `homey` — **configured through the Homey app-settings API** (`PUT /api/manager/apps/app/nl.scanno.mqtt/setting/<name>`), connection verified in the broker log (`New client connected … as homey_… (u'homey')`). A bridge flow subscribes `homey/hermes/#` and echoes to `homey/hermes/echo` — see [homey](homey.md).
 - **sv01 / Hermes**: user `hermes` (ACL `#`) for cron jobs and scripts.
 - **Homepage**: the energy tile reads `http://192.168.1.10:8890/energy.json` (host-side exporter — see [homey](homey.md)), not MQTT.
 
