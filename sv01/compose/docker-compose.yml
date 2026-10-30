@@ -61,6 +61,12 @@ services:
   mongo:
     image: mongo:9.0
     container_name: sv01-komodo-mongo
+    # uid 999 = image's `mongodb` user; db files are already 999-owned.
+    # Started as non-root the official entrypoint skips its `gosu` branch —
+    # that step spins (sched_yield, 100% CPU, mongod never boots) under the
+    # docker-default AppArmor profile since the 2026-10-30 upgrade
+    # (apparmor 5.0.2 / kernel 7.0.0 / runc 1.4.0 + reboot).
+    user: "999:999"
     labels:
       komodo.skip:
     command: ["mongod", "--quiet", "--wiredTigerCacheSizeGB", "0.25"]
