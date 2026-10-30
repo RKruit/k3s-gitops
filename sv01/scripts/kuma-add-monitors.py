@@ -36,6 +36,7 @@ MONITORS = [
     dict(COMMON, type="port", name="Mosquitto MQTT", hostname="192.168.1.10", port=1883),
     dict(COMMON, type="http", name="Homey energy export", url="http://192.168.1.10:8890/energy.json",
          keyword="consumed_w"),
+    dict(COMMON, type="ping", name="Homey Pro (hub)", hostname="192.168.68.128"),
 ]
 
 
