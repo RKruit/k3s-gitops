@@ -18,7 +18,7 @@ related: [runbooks/kuma-monitor.md, services/beszel.md]
 
 ## Monitors (as of 2026-10-30)
 
-komodo · todo-app · beszel · docs site · homepage · it-tools · authelia · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel) · waha (WhatsApp bridge, port) · mosquitto (MQTT, port 1883) · homey energy export (http :8890, keyword — goes DOWN when the hub is offline) · homey pro hub (ping 192.168.68.128)
+komodo · todo-app · beszel · docs site · homepage · it-tools · authelia · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel) · waha (WhatsApp bridge, port) · mosquitto (MQTT, port 1883) · homey energy export (keyword-type, :8890 — goes DOWN when the hub is offline) · homey pro hub (ping 192.168.68.128)
 
 !!! note
     **sv02 is deliberately not monitored** (Robert's choice). Don't add sv02 monitors without an explicit request.
@@ -32,6 +32,7 @@ The v2 socket.io API is picky — the exact payload rules and the idempotent scr
 
 ## Gotchas
 
+- Keyword checks need type `keyword` in v2: on type `http` the keyword field is stored but never evaluated (server/model/monitor.js:688) — such a monitor stays UP on a 200 response without the keyword (proven 2026-10-30).
 - A monitor added with a wrong `type` value (e.g. `tcp` instead of `port`) returns *Unknown Monitor Type* and that monitor's scheduler hangs — fix the type, don't just re-add.
 - Success on monitor-add is visible as immediate up/down beats at the 60 s interval.
 - API-added monitors do **not** inherit the isDefault notification: `kuma-add-monitors.py` links Telegram notification 1 idempotently via `editMonitor` — which expects `notificationIDList` as a **dict** (`{'1': True}`), not a JSON string (a string silently inserts id `'0'` and fails the FK constraint).
