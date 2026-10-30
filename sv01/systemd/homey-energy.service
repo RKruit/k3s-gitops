@@ -1,0 +1,14 @@
+[Unit]
+Description=Homey energy exporter (energy/live -> JSON served on 192.168.1.10:8890)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rkruit
+ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/homey_energy_export.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

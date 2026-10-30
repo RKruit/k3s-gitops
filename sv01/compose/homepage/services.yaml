@@ -33,3 +33,24 @@
         href: https://tools.oostrandpark.com
         server: local
         container: sv01-it-tools
+    - Homey Energie:
+        icon: mdi-home-bolt
+        href: https://my.homey.app
+        widget:
+          type: customapi
+          # host-side exporter (systemd sv01-homey-energy): energy/live van de
+          # hub -> JSON; alleen bereikbaar op het LAN, geen auth nodig
+          url: http://192.168.1.10:8890/energy.json
+          refreshInterval: 60000
+          mappings:
+            - field: consumed_w
+              label: Verbruik
+              format: number
+            - field: generated_w
+              label: Opbrengst
+              format: number
+            - field: top_1_name
+              label: Grootste last
+            - field: top_1_w
+              label: Top W
+              format: number

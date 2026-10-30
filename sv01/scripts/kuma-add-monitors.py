@@ -33,6 +33,8 @@ MONITORS = [
     dict(COMMON, type="http", name="Ollama", url="http://127.0.0.1:11434/"),
     dict(COMMON, type="port", name="PostgreSQL (pg0)", hostname="127.0.0.1", port=5432),
     dict(COMMON, type="port", name="WAHA (WhatsApp bridge)", hostname="127.0.0.1", port=3000),
+    dict(COMMON, type="port", name="Mosquitto MQTT", hostname="192.168.1.10", port=1883),
+    dict(COMMON, type="http", name="Homey energy export", url="http://192.168.1.10:8890/energy.json"),
 ]
 
 

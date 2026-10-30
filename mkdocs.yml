@@ -57,6 +57,8 @@ nav:
       - IT-Tools: services/it-tools.md
       - Authelia: services/authelia.md
       - Container-upkeep: services/container-upkeep.md
+      - Mosquitto (MQTT): services/mosquitto.md
+      - Homey Pro: services/homey.md
   - Runbooks:
       - Deploy a change: runbooks/deploy.md
       - New hostname via Caddy: runbooks/caddy-new-site.md

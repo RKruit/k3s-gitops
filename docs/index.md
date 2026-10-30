@@ -43,12 +43,17 @@ flowchart LR
         squid -- "public web only" --> net["Internet"]
         hermes -- "NO_PROXY" --> ollama["Ollama (host) :11434"]
         waha["WAHA WhatsApp bridge<br>:3000 loopback, no route"] -- "daily report, outbound" --> net
+        mosq["Mosquitto MQTT :1883<br>LAN-only, auth"]
     end
+    homey["Homey Pro (192.168.68.128)"] -- "MQTT Client app (homey/#)" --> mosq
+    homey -- "energy/live (local REST)" --> exp["homey-energy exporter<br>:8890 (host service)"]
+    exp -- "energy.json" --> homepage
     todo --- v1[("NFS<br>/volume1/k8sv2")]
     komodo --- v2[("Komodo volumes<br>(local: wiredTiger)")]
     kuma --- v3[("NFS kuma-data")]
     beszel --- v4[("NFS beszel-data")]
     waha --- v5[("NFS waha-data")]
+    mosq --- v6[("NFS mosquitto-data")]
 ```
 
 ## Where to look
@@ -92,6 +97,8 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`IT-Tools`](services/it-tools.md) | Stateless dev/web toolbox on tools.oostrandpark.com: wiring, history (k3s → compose), Kuma monitor. |
 | [`Authelia`](services/authelia.md) | SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC live for Beszel. |
 | [`Container-upkeep`](services/container-upkeep.md) | Automated container upkeep on sv01: daily image-update timer, autoheal (unhealthy restarts) and diun (update notifications via Telegram). |
+| [`Mosquitto (MQTT)`](services/mosquitto.md) | Mosquitto 2.x MQTT broker on sv01 — LAN-only port 1883, mandatory auth, NFS persistence; feeds the Homey MQTT Client app and sv01-side automation. |
+| [`Homey Pro`](services/homey.md) | Homey Pro hub access from sv01 — Athom OAuth client (read/control) + Homey CLI root-scope session for writes, phase-1 reorganisation result, MQTT bridge, energy exporter, remote-control recipes. |
 
 ### Runbooks
 
