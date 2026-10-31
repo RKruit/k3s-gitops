@@ -59,7 +59,7 @@ STATUS_PORT = 8891
 CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
-CHARGE_TARGET = 100 # %: charge to the device SOC ceiling (Robert: altijd naar 100%)
+CHARGE_TARGET = 90 # %: stop grid-charging at this SOC (Robert: max 90%; minder degradatie)
 PRICE_STALE = 5400 # s: prices older than this -> treat as unknown (idle, safe)
 STATUS_DIR = "/var/lib/zendure-follow"
 
