@@ -44,7 +44,18 @@ SN = "HEC4NLNBP107471"
 WIDGET_URL = "https://mijn.nextenergy.nl/Website_CW/MarketPrices"
 MARGIN = 20        # W: keep this much always importing while discharging
 HOLD_HI = 40       # W: import band 0..HOLD_HI -> hold (no writes) in discharge regime
-CHARGE_AT = -40    # W: export beyond this -> charge (surplus bonus, any regime)
+CHARGE_AT = -40    # W: legacy threshold (kept for reference)
+# Surplus-charge gate (anti-chatter): a fleeting surplus must persist before
+# the battery flips to charge; once charging it holds until the surplus is
+# really gone. Measured 31-10-2026: the raw threshold flickered and produced
+# few-second charge bursts Robert saw.
+SURPLUS_ENTER = -120     # W rolling-mean required to start charging
+# (micro-surplus ~60 W: charging vs saldering is break-even incl. roundtrip
+# loss + wear, so leave it to the grid; only meaningful surpluses charge)
+SURPLUS_RELEASE = -30    # W rolling-mean where charging stops again
+SURPLUS_DWELL = 30       # s the mean must stay below SURPLUS_ENTER before engage
+# (micro-dips of ~10 s = ~0.001 kWh; relay cycling costs more than that)
+SURPLUS_WINDOW = 8       # s rolling window for the mean
 EXPORT_NUDGE = 10  # W: export beyond this inside the hold band -> shave 15 W off
 OUT_CAP = 800      # W: max discharge (socket/group limit; Robert keeps 800 W)
 IN_CAP = 800       # W: max charge
@@ -87,6 +98,9 @@ state = {
     "rest_since": None,
     "pending_write": None,
     "retries": 0,
+    "p1_hist": [],
+    "surplus_gate": False,
+    "surplus_since": None,
     "price_regime": "no_prices",
     "price_now": None,
     "price_charge_thr": None,
@@ -299,6 +313,35 @@ def price_regime(now_dt):
     return "idle"
 
 
+def surplus_gate_eval(p1_avg, soc, ceil_pct):
+    """Stateful anti-chatter gate for surplus charging; returns True/False."""
+    def _dbg(msg):
+        if os.environ.get("ZF_DEBUG"):
+            print(f"GATE {msg} (avg={p1_avg}, soc={soc})", flush=True)
+    gate = state["surplus_gate"]
+    if not gate:
+        if p1_avg is not None and p1_avg < SURPLUS_ENTER:
+            if state["surplus_since"] is None:
+                state["surplus_since"] = time.time()
+                _dbg(f"arm {SURPLUS_DWELL}s")
+            if time.time() - state["surplus_since"] >= SURPLUS_DWELL and soc < ceil_pct:
+                state["surplus_gate"] = True
+                _dbg(f"engage after {round(time.time() - state['surplus_since'], 1)}s")
+                return True
+        else:
+            if state["surplus_since"] is not None:
+                _dbg("disarm (surplus gone during dwell)")
+            state["surplus_since"] = None
+        return False
+    # engaged: hold until the surplus is really gone (or the battery is full)
+    if soc >= ceil_pct or p1_avg is None or p1_avg > SURPLUS_RELEASE:
+        state["surplus_gate"] = False
+        state["surplus_since"] = None
+        _dbg("release")
+        return False
+    return True
+
+
 def damped_charge_target(p1, props, last_written):
     """Incremental surplus-charging law (verified): export converges to MARGIN."""
     charged = (last_written["inputLimit"] or 0)      # device follows its limit
@@ -307,7 +350,7 @@ def damped_charge_target(p1, props, last_written):
     return int(5 * round(tgt_c / 5))
 
 
-def compute_target(p1, props, last_written, p_regime):
+def compute_target(p1, props, last_written, p_regime, p1_avg=None):
     """Return (out_target, in_target) or None to hold the current state.
 
     p1: net grid power in W (positive = import, negative = export).
@@ -320,7 +363,7 @@ def compute_target(p1, props, last_written, p_regime):
 
     lw_out = last_written["outputLimit"] or 0
     lw_in = last_written["inputLimit"] or 0
-    surplus_charge = p1 < CHARGE_AT and soc < ceil_pct
+    surplus_charge = surplus_gate_eval(p1_avg, soc, ceil_pct)
 
     if p_regime == "charge" and soc < CHARGE_TARGET:
         if lw_in == IN_CAP:
@@ -378,6 +421,8 @@ def main_loop(observe):
             last_ok = time.time()
             state["last_p1"] = p1
             state["p1_age_s"] = 0
+            state["p1_hist"] = [(t, v) for (t, v) in state["p1_hist"] if time.time() - t <= SURPLUS_WINDOW + 1]
+            state["p1_hist"].append((last_ok, p1))
         except Exception as e:
             state["p1_age_s"] = round(time.time() - last_ok, 1) if last_ok else None
             state["last_error"] = f"P1: {e}"
@@ -394,8 +439,18 @@ def main_loop(observe):
             if state["direction"] and props.get("smartMode") == 0:
                 state["direction"] = None  # device rebooted/flipped the RAM flag; re-ensure next write
             fresh = last_p1 is not None and (time.time() - last_ok) <= FAIL_GRACE
+            cutoff = time.time() - SURPLUS_WINDOW
+            fresh_hist = [(t, v) for (t, v) in state["p1_hist"] if t >= cutoff]
+            p1_avg = round(sum(v for _, v in fresh_hist) / len(fresh_hist), 1) if fresh_hist else None
+            state["p1_avg"] = p1_avg
             p_regime = price_regime(datetime.datetime.now().astimezone())
-            tgt = compute_target(last_p1, props, state["last_written"], p_regime) if fresh else (0, 0)
+            tgt = compute_target(last_p1, props, state["last_written"], p_regime, p1_avg) if fresh else (0, 0)
+            if os.environ.get("ZF_DEBUG"):
+                sig = (state["regime"], state["surplus_gate"], None if tgt is None else tuple(tgt))
+                if sig != state.get("_last_dbg"):
+                    state["_last_dbg"] = sig
+                    print(f"DBG p1={last_p1} avg8s={p1_avg} p_regime={p_regime} regime={state['regime']} "
+                          f"gate={state['surplus_gate']} tgt={sig[2]}", flush=True)
             state["target"] = {"outputLimit": tgt[0], "inputLimit": tgt[1]} if tgt else state["target"]
 
             now = time.time()
