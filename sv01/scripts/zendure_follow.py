@@ -56,6 +56,7 @@ SURPLUS_RELEASE = -30    # W rolling-mean where charging stops again
 SURPLUS_DWELL = 30       # s the mean must stay below SURPLUS_ENTER before engage
 # (micro-dips of ~10 s = ~0.001 kWh; relay cycling costs more than that)
 SURPLUS_WINDOW = 8       # s rolling window for the mean
+SURPLUS_TARGET = 95      # %: surplus charging may fill up to this SoC (Robert)
 EXPORT_NUDGE = 10  # W: export beyond this inside the hold band -> shave 15 W off
 OUT_CAP = 800      # W: max discharge (socket/group limit; Robert keeps 800 W)
 IN_CAP = 800       # W: max charge
@@ -324,7 +325,7 @@ def surplus_gate_eval(p1_avg, soc, ceil_pct):
             if state["surplus_since"] is None:
                 state["surplus_since"] = time.time()
                 _dbg(f"arm {SURPLUS_DWELL}s")
-            if time.time() - state["surplus_since"] >= SURPLUS_DWELL and soc < ceil_pct:
+            if time.time() - state["surplus_since"] >= SURPLUS_DWELL and soc < SURPLUS_TARGET:
                 state["surplus_gate"] = True
                 _dbg(f"engage after {round(time.time() - state['surplus_since'], 1)}s")
                 return True
@@ -333,8 +334,8 @@ def surplus_gate_eval(p1_avg, soc, ceil_pct):
                 _dbg("disarm (surplus gone during dwell)")
             state["surplus_since"] = None
         return False
-    # engaged: hold until the surplus is really gone (or the battery is full)
-    if soc >= ceil_pct or p1_avg is None or p1_avg > SURPLUS_RELEASE:
+    # engaged: hold until the surplus is really gone or the SoC target is reached
+    if soc >= SURPLUS_TARGET or p1_avg is None or p1_avg > SURPLUS_RELEASE:
         state["surplus_gate"] = False
         state["surplus_since"] = None
         _dbg("release")
