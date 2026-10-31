@@ -60,6 +60,11 @@ CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
 CHARGE_TARGET = 90 # %: stop grid-charging at this SOC (Robert: max 90%; minder degradatie)
+# One-day tweak (Robert 31-10): today only discharge from 16:00 on — the 15h
+# hour is 1 ct/kWh cheaper than 16h+, so holding the energy one more hour pays.
+# Reverts automatically tomorrow (remove these two lines to make it permanent).
+DISCHARGE_NOT_BEFORE_DATE = "2026-10-31"
+DISCHARGE_NOT_BEFORE_HOUR = 16
 PRICE_STALE = 5400 # s: prices older than this -> treat as unknown (idle, safe)
 STATUS_DIR = "/var/lib/zendure-follow"
 
@@ -285,6 +290,9 @@ def price_regime(now_dt):
         state["price_regime"] = "charge"
         return "charge"
     if state["price_now"] >= d_thr:
+        if str(now_dt.date()) == DISCHARGE_NOT_BEFORE_DATE and now_dt.hour < DISCHARGE_NOT_BEFORE_HOUR:
+            state["price_regime"] = f"idle (wacht tot {DISCHARGE_NOT_BEFORE_HOUR}:00)"
+            return "idle"
         state["price_regime"] = "dispatch_window"
         return "discharge"
     state["price_regime"] = "idle"
