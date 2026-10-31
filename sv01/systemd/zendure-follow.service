@@ -1,0 +1,15 @@
+# /etc/systemd/system/zendure-follow.service
+[Unit]
+Description=Zendure zero-export controller (HomeWizard P1 -> SolarFlow 2400 AC+ zenSDK, status on 192.168.1.10:8891)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rkruit
+ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/zendure_follow.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
