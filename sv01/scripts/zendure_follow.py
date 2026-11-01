@@ -210,6 +210,8 @@ def verify_or_retry(props_report):
     if landed and flow_ok:
         state["pending_write"] = None
         state["retries"] = 0
+        if str(state["last_error"]).startswith("retry write:"):
+            state["last_error"] = ""  # write verified again
         return
     try:
         body = json.dumps({"sn": SN, "properties": props}).encode()
@@ -270,6 +272,8 @@ def price_thread():
                 state["prices_today"] = prices
                 state["prices_fetched_at"] = time.time()
                 save_prices(prices, state["prices_fetched_at"])
+                if str(state["last_error"]).startswith("prices:"):
+                    state["last_error"] = ""
         except Exception as e:
             state["last_error"] = f"prices: {e}"
         # fetch again 2 min past the next full hour (midnight rollover lands fast)
@@ -421,6 +425,8 @@ def main_loop(observe):
             state["p1_age_s"] = 0
             state["p1_hist"] = [(t, v) for (t, v) in state["p1_hist"] if time.time() - t <= SURPLUS_WINDOW + 1]
             state["p1_hist"].append((last_ok, p1))
+            if str(state["last_error"]).startswith("P1:"):
+                state["last_error"] = ""  # P1 healthy again
         except Exception as e:
             state["p1_age_s"] = round(time.time() - last_ok, 1) if last_ok else None
             state["last_error"] = f"P1: {e}"
@@ -428,6 +434,8 @@ def main_loop(observe):
         try:
             props = read_bat()
             state["soc"] = props.get("electricLevel")
+            if str(state["last_error"]).startswith("BAT:"):
+                state["last_error"] = ""  # battery reachable again
             verify_or_retry(props)
             if state["last_written"]["outputLimit"] is None:
                 state["last_written"] = {"outputLimit": int(props.get("outputLimit") or 0),
