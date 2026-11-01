@@ -64,6 +64,32 @@ def fetch_monitors(sio, wait=2.5):
     return box
 
 
+def fetch_notifications(sio, wait=2.5):
+    """Notificatielijst via login-push-event (getNotifications ack't in 2.5.9 niet).
+
+    Let op 2.5.9-shape: top-level heeft id/name maar type zit IN de
+    JSON-string 'config' — die hier meegeparseerd als config_parsed."""
+    out = []
+    @sio.on("notificationList")
+    def _on(data):
+        out.append(data)
+    sio.emit("getNotifications")
+    time.sleep(wait)
+    data = out[-1] if out else []
+    res = {}
+    for n in (data or []):
+        if not isinstance(n, dict):
+            continue
+        try:
+            cfg = json.loads(n.get("config") or "{}")
+        except Exception:
+            cfg = {}
+        if isinstance(cfg, dict):
+            n["config_parsed"] = cfg
+        res[n.get("id")] = n
+    return res
+
+
 creds = read_env_file("/srv/sv01-secrets/kuma-admin.env")
 USER = creds.get("KUMA_ADMIN_USER", "hermes-monitoring")
 PWD = creds.get("KUMA_ADMIN_PASSWORD", "")
@@ -107,6 +133,28 @@ final = fetch_monitors(sio)
 
 # --- notificaties idempotent linken (les: API-monitors krijgen de
 #     isDefault-notificatie NIET automatisch mee) ---
+# Twee keren: id 1 = Telegram (Hermes Telegram), plus de webhook-notificatie
+# 'Hermes Webhook' (POST naar de gateway -> agent-triage-route kuma-alerts).
+WEBHOOK_NOTIFICATION = {
+    "type": "webhook", "name": "Hermes Webhook",
+    "webhookURL": "http://127.0.0.1:8644/webhooks/kuma-alerts",
+    "httpMethod": "post", "applyExisting": True, "isDefault": False,
+}
+notifs = fetch_notifications(sio)
+wh = next((n for n in notifs.values()
+           if (n.get("config_parsed") or {}).get("type") == "webhook"
+           and "webhooks/kuma-alerts" in json.dumps(n.get("config_parsed") or {})), None)
+if wh is None:
+    r = sio.call("addNotification", (WEBHOOK_NOTIFICATION, None), timeout=15)
+    print("addNotification webhook ->", r, flush=True)
+    nid = r.get("id") if isinstance(r, dict) else None
+    if not nid:
+        sys.exit("addNotification gaf geen id terug")
+else:
+    nid = wh["id"]
+LINKED_NOTIFS = {"1": True, str(nid): True}
+print("link-notificaties:", sorted(LINKED_NOTIFS), flush=True)
+
 for mname in [m["name"] for m in MONITORS]:
     mon = next((v for v in final.values() if v.get("name") == mname), None)
     if mon is None:
@@ -114,9 +162,11 @@ for mname in [m["name"] for m in MONITORS]:
         continue
     raw = mon.get("notificationIDList")
     lst = raw if isinstance(raw, dict) else (json.loads(raw) if isinstance(raw, str) and raw.strip() else {})
-    if lst.get("1"):
+    need = [k for k in LINKED_NOTIFS if not lst.get(k)]
+    if not need:
         continue
-    lst["1"] = True
+    for k in need:
+        lst[k] = True
     mon["notificationIDList"] = lst  # dict — editMonitor verwacht géén json-string
     try:
         r = sio.call("editMonitor", (mon,), timeout=15)
