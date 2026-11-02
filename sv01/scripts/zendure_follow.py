@@ -66,7 +66,7 @@ STATUS_PORT = 8891
 CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
-CHARGE_TARGET = 100 # %: stop grid-charging at this SOC (Robert 01-11-2026: 100%, grote prijsspreiding)
+CHARGE_TARGET = 90  # %: stop grid-charging at this SOC (Robert 02-11-2026 terug naar max 90%; zon mag tot 100%, zie SURPLUS_TARGET)
 # One-day tweak (Robert 31-10): today only discharge from 16:00 on — the 15h
 # hour is 1 ct/kWh cheaper than 16h+, so holding the energy one more hour pays.
 # Reverts automatically tomorrow (remove these two lines to make it permanent).
