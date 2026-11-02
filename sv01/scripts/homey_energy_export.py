@@ -30,7 +30,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 HID = '66e57ca24da8fc528fb04f47'
-HUB = 'http://192.168.68.128'
+HUB = 'http://192.168.68.188'  # ethernet (live 02-11-2026); wifi standby .128
 SCF = '/home/rkruit/.athom-cli/settings.json'
 OUT = '/srv/homey-metrics/energy.json'
 BIND = ('192.168.1.10', 8890)

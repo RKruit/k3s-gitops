@@ -7,7 +7,7 @@ related: [services/mosquitto.md, services/homepage.md, services/uptime-kuma.md]
 
 # Homey Pro (hub) — access, automation, energy
 
-Hub: **Homey Pro van Robert**, id `66e57ca24da8fc528fb04f47`, firmware 13.5.3, LAN URL `http://192.168.68.128` (plain URL works from sv01; the `*.homey.homeylocal.com` form resolves via mDNS on the hub's own L2 only).
+Hub: **Homey Pro van Robert**, id `66e57ca24da8fc528fb04f47`, firmware 13.5.3, LAN URL `http://192.168.68.188` — ethernet, live since 2026-11-02 (preferred address; the old Wi-Fi address `192.168.68.128` stays up as standby/failover until Wi-Fi is disabled). Plain URL works from sv01; the `*.homey.homeylocal.com` form resolves via mDNS on the hub's own L2 only.
 
 ## Access model (two working paths)
 

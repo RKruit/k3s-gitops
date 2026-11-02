@@ -40,7 +40,7 @@ MONITORS = [
          keyword="consumed_w"),
     dict(COMMON, type="keyword", name="Zendure regelaar", url="http://192.168.1.10:8891/status.json",
          retryInterval=30, keyword='"last_error":""'),
-    dict(COMMON, type="ping", name="Homey Pro (hub)", hostname="192.168.68.128"),
+    dict(COMMON, type="ping", name="Homey Pro (hub)", hostname="192.168.68.188"),  # ethernet
 ]
 
 

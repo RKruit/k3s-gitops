@@ -45,7 +45,7 @@ flowchart LR
         waha["WAHA WhatsApp bridge<br>:3000 loopback, no route"] -- "daily report, outbound" --> net
     end
     mosq["Mosquitto MQTT :1883<br>host service, apparmor-confined, auth"]
-    homey["Homey Pro (192.168.68.128)"] -- "MQTT Client app (homey/#)" --> mosq
+    homey["Homey Pro (192.168.68.188)"] -- "MQTT Client app (homey/#)" --> mosq
     homey -- "energy/live (local REST)" --> exp["homey-energy exporter<br>:8890 (host service)"]
     exp -- "energy.json" --> homepage
     todo --- v1[("NFS<br>/volume1/k8sv2")]
