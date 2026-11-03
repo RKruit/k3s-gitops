@@ -7,10 +7,15 @@ the cheapest hours, discharge to the house (zero export) in the most expensive
 hours, idle in between so energy is preserved for the peaks. PV-surplus charging
 stays in as a free bonus but the strategy never depends on it.
 
-Price source: public NextEnergy widget (mijn.nextenergy.nl/Website_CW/MarketPrices),
-scraped hourly with headless chromium (same proven recipe as nextenergy_report.py).
-Thresholds = percentiles of today's hourly prices (charge <= CHARGE_PCT quantile,
-discharge >= DISCHARGE_PCT quantile), gated on a minimum spread; flat days idle.
+Price source: NextEnergy app-API (personal contract; today + yesterday in one
+login, recipe from zendure_schedule_report.py). DP labels lead the clock by one
+hour -- DP[label] holds the price of CLOCK hour label+1 -- confirmed against
+Robert's billing page 03-11-2026 (mon 06-07 = DP[5] 0,42, 14-15 = DP[13] 0,37).
+So clock hour 0 = yesterday's DP[23] and clock hour h = DP[h-1]. Fallback: the
+public widget (same DP shift applied; its clock hour 0 stays unknown -> idle).
+Thresholds = percentiles of today's 24 CLOCK-hour prices (charge <= CHARGE_PCT
+quantile, discharge >= DISCHARGE_PCT quantile), gated on a minimum spread;
+flat days idle.
 
 Control laws (verified 31-10-2026):
   price=charge  (SOC < CHARGE_TARGET)  -> 0 / IN_CAP (grid charge, full speed)
@@ -25,6 +30,7 @@ the controller never pushes power outward.
 Status on http://192.168.1.10:8891/status.json
 """
 import datetime
+import http.cookiejar
 import json
 import os
 import re
@@ -34,6 +40,7 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -42,6 +49,8 @@ P1_URL = "http://192.168.68.173/api/v1/data"
 BAT_URL = "http://192.168.68.227"
 SN = "HEC4NLNBP107471"
 WIDGET_URL = "https://mijn.nextenergy.nl/Website_CW/MarketPrices"
+APP_AUTH_FILE = "/srv/sv01-secrets/nextenergy.env"
+APP_CFG_FILE = os.path.expanduser("~/.hermes/zendure/nextenergy_app.json")
 MARGIN = 20        # W: keep this much always importing while discharging
 HOLD_HI = 40       # W: import band 0..HOLD_HI -> hold (no writes) in discharge regime
 CHARGE_AT = -40    # W: legacy threshold (kept for reference)
@@ -90,6 +99,7 @@ state = {
     "last_write_at": None,
     "last_error": "",
     "direction": None,
+    "price_source": "-",
     "rested": False,
     "rest_since": None,
     "pending_write": None,
@@ -234,8 +244,9 @@ def quantile(sorted_vals, frac):
     return sorted_vals[q]
 
 
-def fetch_prices():
-    """Scrape today's hourly all-in prices; returns {hour: euro_per_kwh} or {}."""
+def fetch_widget():
+    """Scrape the widget's 24 DP-labelled bars; returns {label: euro/kWh} or {}.
+    NOTE: labels lead the clock by one hour (see module docstring)."""
     for budget in (15000, 25000):
         with tempfile.TemporaryDirectory() as tmp:
             cmd = ["chromium-browser", "--headless=new", "--disable-gpu", "--no-sandbox",
@@ -251,6 +262,127 @@ def fetch_prices():
                 for m in BAR_RE.finditer(dom)}
         if len(bars) >= 20:
             return dict(bars)
+    return {}
+
+
+def app_dp(day):
+    """DP-set {label: euro/kWh} for calendar day `day` via the NextEnergy app
+    API (personal contract). Recipe: nextenergy_app.json + secrets file.
+    Returns None on any failure."""
+    if not (os.path.exists(APP_AUTH_FILE) and os.path.exists(APP_CFG_FILE)):
+        return None
+    try:
+        cfg = json.load(open(APP_CFG_FILE))
+        creds = {}
+        with open(APP_AUTH_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    creds[k] = v
+        base = cfg["base_url"]
+        jar = http.cookiejar.CookieJar()
+        opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(jar))
+        H = {"Content-Type": "application/json; charset=UTF-8",
+             "Accept": "application/json", "OutSystems-locale": "en-US",
+             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/131",
+             "Origin": base, "Referer": base + "/Mobile_EnergyNext/Login",
+             "X-Requested-With": "XMLHttpRequest"}
+        opener.open(base + "/Mobile_EnergyNext/Login", timeout=20).read()
+        modver = cfg.get("module_version_fallback", "")
+        try:
+            ts = int(time.time() * 1000)
+            mv = json.loads(opener.open(base + "/Mobile_EnergyNext/"
+                                        "moduleservices/moduleversioninfo?%d" % ts,
+                                        timeout=20).read())
+            modver = mv.get("versionToken", modver)
+        except Exception:
+            pass
+        crf = ""
+        for c in jar:
+            if c.name == "nr2Users_Customers":
+                m = re.search(r"crf=([^;]+)", urllib.parse.unquote(c.value))
+                crf = m.group(1) if m else ""
+        login = {"versionInfo": {"moduleVersion": modver,
+                                 "apiVersion": cfg["login_api_version"]},
+                 "viewName": "CommonScreensFlow.Login",
+                 "inputParameters": {"Username": creds["NEXTENERGY_EMAIL"],
+                                     "Password": creds["NEXTENERGY_PASSWORD"],
+                                     "DeviceId": ""}}
+        h = dict(H)
+        h["X-CSRFToken"] = crf
+        resp = json.loads(opener.open(urllib.request.Request(
+            base + cfg["login_path"], data=json.dumps(login).encode(),
+            headers=h, method="POST"), timeout=25).read())
+        if resp.get("exception"):
+            return None
+        # de CSRF-token verandert bij login: opnieuw ophalen uit de cookie
+        crf = ""
+        for c in jar:
+            if c.name == "nr2Users_Customers":
+                m = re.search(r"crf=([^;]+)", urllib.parse.unquote(c.value))
+                crf = m.group(1) if m else ""
+        body = json.loads(json.dumps(cfg["price_body"]))
+        body["versionInfo"]["moduleVersion"] = modver
+        body["clientVariables"]["PriceDate"] = day.isoformat()
+        body["clientVariables"]["PriceCostLevel"] = cfg["cost_level"]
+        h2 = dict(H)
+        h2["X-CSRFToken"] = crf
+        h2["Referer"] = base + "/Mobile_EnergyNext/MarketPrices"
+        resp = json.loads(opener.open(urllib.request.Request(
+            base + cfg["price_path"], data=json.dumps(body).encode(),
+            headers=h2, method="POST"), timeout=25).read())
+        if resp.get("exception"):
+            return None
+        lst = (resp.get("data", {}).get("DataPoints") or {}).get("List") or []
+        prices = {int(it["Label"]): float(it["Value"]) for it in lst
+                  if it.get("Value") is not None}
+        return prices if 20 <= len(prices) <= 24 else None
+    except Exception:
+        return None
+
+
+def dp_to_clock(dp_today, dp_prev):
+    """DP labels -> clock hours: clock hour 0 = DP[23] of yesterday,
+    clock hour h (1..23) = DP[h-1] of today (labels lead the clock by 1)."""
+    if not dp_today:
+        return None
+    prices = {}
+    p0 = (dp_prev or {}).get(23)
+    if p0 is not None:
+        prices[0] = p0
+    for h in range(1, 24):
+        v = dp_today.get(h - 1)
+        if v is not None:
+            prices[h] = v
+    return prices or None
+
+
+def widget_to_clock(bars):
+    """Widget bars are DP-labelled too -> clock 1..23; their clock hour 0 is
+    unknown (tomorrow's first hour sits in DP[23]) -> treated as unknown."""
+    return {h + 1: v for h, v in bars.items() if 0 <= h <= 22} or None
+
+
+def fetch_prices():
+    """Actuele prijzen in KLOK-uren {0..23: euro/kWh}, of {} bij falen.
+    Primary: app-API (personal contract; today + yesterday for the midnight
+    wrap). Fallback: public widget with the same DP shift applied."""
+    today = datetime.date.today()
+    dp_t = app_dp(today)
+    dp_y = app_dp(today - datetime.timedelta(days=1)) if dp_t else None
+    if dp_t:
+        prices = dp_to_clock(dp_t, dp_y)
+        if prices:
+            state["price_source"] = "app"
+            return prices
+    bars = fetch_widget()
+    if bars:
+        prices = widget_to_clock(bars)
+        if prices:
+            state["price_source"] = "widget"
+            return prices
     return {}
 
 
