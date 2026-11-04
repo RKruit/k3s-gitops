@@ -39,9 +39,9 @@ Same exit-IP caveat as the other share-apps: relayed third-party traffic leaves 
 
 ## IP-type override — why proposals say "residential"
 
-Mysterium's location oracle labels the whole AS50266 (Odido — the ISP behind this Glasoperator FTTH line, rDNS `*.ftth.glasoperator.nl`) as `cellular`, which hides the node from consumers that filter for residential IPs. Since 2026-11-04 the container starts with app-level location flags placed **before** the `service` command (after the subcommand they crash-loop, same class as the `--udp.ports` case): `--location.type manual --location.country NL --location.city "Almere Stad" --location.ip-type residential`.
+Mysterium's location oracle labels the whole AS50266 (Odido — the ISP behind this Glasoperator FTTH line, rDNS `*.ftth.glasoperator.nl`) as `cellular`, which hides the node from consumers that filter for residential IPs. Since 2026-11-04 the container starts with app-level location flags placed **before** the `service` command (after the subcommand they crash-loop, same class as the `--udp.ports` case): `--location.type manual --location.country NL --location.city Almere --location.ip-type residential`.
 
-Trade-offs: the manual resolver keeps the auto-detected public IP (via `--ip-detector`) and the static country/city, but the published proposals lose the ASN/ISP fields (they come from the oracle). Accepted for now — remove the override if Mysterium support re-classifies AS50266, which also restores full location metadata.
+Trade-offs: the manual resolver keeps the auto-detected public IP (via `--ip-detector`) and the static country/city, but the published proposals lose the ASN/ISP fields (they come from the oracle). City is set to `Almere` because the image entrypoint execs its arguments unquoted — a space-containing value (`Almere Stad`) word-splits and the binary dies (`No help topic for 'Stad'`), so single-word values only. Accepted for now — remove the override if Mysterium support re-classifies AS50266, which also restores full location metadata.
 
 ## Onboarding (Robert's part)
 

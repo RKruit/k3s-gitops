@@ -512,7 +512,9 @@ services:
     # same class as --udp.ports): the oracle labels ASN 50266 (Odido behind
     # this Glasoperator FTTH line) as "cellular", which hides the node from
     # residential-filtering consumers; manual resolver = truthful "residential".
-    command: ["--location.type", "manual", "--location.country", "NL", "--location.city", "Almere Stad", "--location.ip-type", "residential", "service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
+    # NOTE: the image entrypoint execs args UNQUOTED — space-containing values
+    # die on word-splitting ('No help topic for Stad'); use single-word city.
+    command: ["--location.type", "manual", "--location.country", "NL", "--location.city", "Almere", "--location.ip-type", "residential", "service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
     labels:
       diun.enable: "true"
     ports:
