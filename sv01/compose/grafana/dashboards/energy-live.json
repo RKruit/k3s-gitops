@@ -924,9 +924,9 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "nextenergy_price_hour",
+     "expr": "nextenergy_price_hour{aa_order!=\"\"}",
      "instant": true,
-     "legendFormat": "{{hour}}:00",
+     "legendFormat": "{{hour}}",
      "refId": "A"
     }
    ]

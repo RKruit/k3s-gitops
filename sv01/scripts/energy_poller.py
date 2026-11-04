@@ -201,11 +201,13 @@ def scrape():
             # label-based full-day price table (bars panel): every hour of today
             # as a receive-time gauge, so future hours (e.g. 23:00) are visible
             # before they start — no future timestamps needed.
-            # UNPADDED hour labels ("7", not "07") per Robert; the bargauge
-            # keeps order only if the query answers unpadded hours in a sane
-            # order — verified empirically 04-11-2026 (see commit trail).
+            # hour = BARE hour label per Robert ("1" for 01:00); aa_order = the
+            # zero-padded twin that keeps the series order chronological (VM
+            # sorts by label-name then value: aa_order < hour → padded wins the
+            # sort; tested empirically 04-11-2026 — bare-only labels jumble).
             for hstr, price in hourly.items():
-                lines.append(f'nextenergy_price_hour{{hour="{int(hstr)}"}} {float(price)}')
+                h = int(hstr)
+                lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
         if pr.get("fetched"):
             lines.append(f"nextenergy_prices_age_s {int(time.time() - float(pr['fetched']))}")
     except Exception as e:
