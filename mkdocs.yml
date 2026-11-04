@@ -53,6 +53,7 @@ nav:
       - todo-app: services/todo-app.md
       - Hermes + egress: services/hermes.md
       - WAHA (WhatsApp bridge): services/waha.md
+      - Traffmonetizer: services/traffmonetizer.md
       - Homepage: services/homepage.md
       - IT-Tools: services/it-tools.md
       - Authelia: services/authelia.md
