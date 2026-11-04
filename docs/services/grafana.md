@@ -35,7 +35,7 @@ Caddy route grafana.oostrandpark.com (Authelia forward_auth → anonymous Viewer
 
 | Dashboard | uid | Contents |
 |---|---|---|
-| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price, regime), power-flow chart, SoC 24 h, price curve + controller thresholds |
+| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller thresholds |
 | Energie — Verloop | `energy-daily` | price curve + thresholds, rolling-24 h kWh (import/export/PV/battery), SoC, regime, gas m³ |
 
 Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/compose/grafana/dashboards/*.json`, mounted read-only. `allowUiUpdates: true` — UI edits are possible but land in Grafana's own DB, **not** git; export an edit back to git if it must survive a re-provision.

@@ -1,7 +1,7 @@
 {
  "uid": "energy-live",
  "title": "Energie \u2014 Live",
- "description": "Realtime energiedashboard: net (P1), huisverbruik, SolarEdge PV, Zendure-accu, regime en NextEnergy-prijs.",
+ "description": "Realtime energiedashboard: net (P1), huisverbruik, SolarEdge PV, Zendure-accu en NextEnergy-prijs.",
  "tags": [
   "energy",
   "sv01"
@@ -454,7 +454,7 @@
    "gridPos": {
     "x": 0,
     "y": 4,
-    "w": 6,
+    "w": 12,
     "h": 4
    },
    "fieldConfig": {
@@ -507,97 +507,6 @@
      },
      "expr": "nextenergy_price_current_eur",
      "legendFormat": "prijs",
-     "refId": "A"
-    }
-   ]
-  },
-  {
-   "id": 8,
-   "title": "Regime",
-   "type": "stat",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "victoriametrics"
-   },
-   "gridPos": {
-    "x": 6,
-    "y": 4,
-    "w": 6,
-    "h": 4
-   },
-   "fieldConfig": {
-    "defaults": {
-     "unit": "short",
-     "decimals": null,
-     "color": {
-      "mode": "thresholds"
-     },
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "purple",
-        "value": null
-       }
-      ]
-     },
-     "mappings": [
-      {
-       "type": "value",
-       "options": {
-        "0": {
-         "text": "Idle",
-         "index": 0
-        },
-        "1": {
-         "text": "Hold",
-         "index": 1
-        },
-        "2": {
-         "text": "Ontladen",
-         "index": 2
-        },
-        "3": {
-         "text": "Laden",
-         "index": 3
-        }
-       }
-      },
-      {
-       "type": "special",
-       "options": {
-        "match": "null",
-        "result": {
-         "text": "-"
-        }
-       }
-      }
-     ]
-    },
-    "overrides": []
-   },
-   "options": {
-    "colorMode": "value",
-    "graphMode": "area",
-    "justifyMode": "auto",
-    "textMode": "auto",
-    "orientation": "auto",
-    "reduceOptions": {
-     "calcs": [
-      "lastNotNull"
-     ],
-     "fields": "",
-     "values": false
-    }
-   },
-   "targets": [
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "victoriametrics"
-     },
-     "expr": "controller_regime",
-     "legendFormat": "regime",
      "refId": "A"
     }
    ]
