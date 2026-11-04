@@ -927,9 +927,18 @@
      },
      "expr": "nextenergy_price_hour",
      "instant": true,
-     "format": "table",
-     "legendFormat": "\u20ac/kWh",
+     "legendFormat": "{{hour}}",
      "refId": "A"
+    }
+   ],
+   "transformations": [
+    {
+     "id": "labelsToFields",
+     "options": {}
+    },
+    {
+     "id": "merge",
+     "options": {}
     }
    ]
   }
