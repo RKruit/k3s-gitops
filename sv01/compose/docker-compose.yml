@@ -508,7 +508,11 @@ services:
     # successor but that flag is NOT yet defined on `service` (verified
     # 04-11-2026: 'flag provided but not defined') — deprecated-but-working
     # is the only option today; re-check on a future myst upgrade.
-    command: ["service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
+    # Location flags BEFORE `service` are app-level (after it they crash-loop,
+    # same class as --udp.ports): the oracle labels ASN 50266 (Odido behind
+    # this Glasoperator FTTH line) as "cellular", which hides the node from
+    # residential-filtering consumers; manual resolver = truthful "residential".
+    command: ["--location.type", "manual", "--location.country", "NL", "--location.city", "Almere Stad", "--location.ip-type", "residential", "service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
     labels:
       diun.enable: "true"
     ports:

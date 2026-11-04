@@ -37,6 +37,12 @@ Same exit-IP caveat as the other share-apps: relayed third-party traffic leaves 
 - **Version caveat**: myst 1.39.9's help text advertises `--udp.ports` as the successor, but that flag is *not defined* on the `service` command (verified: crash-loop). The deprecated-but-working `--wireguard.listen.ports` is used; re-check on a future myst upgrade.
 - **Node UI is deliberately NOT WAN-forwarded** (and has no Caddy route): it is plain HTTP with no login on `http://192.168.1.10:4449` — LAN access only. Reach it from any LAN segment (server LAN + IoT/main LAN). If remote UI access is ever needed, an SSH tunnel (`ssh -L 4449:127.0.0.1:4449 sv01`) is the safe pattern, or a Caddy+Authelia route if requested.
 
+## IP-type override — why proposals say "residential"
+
+Mysterium's location oracle labels the whole AS50266 (Odido — the ISP behind this Glasoperator FTTH line, rDNS `*.ftth.glasoperator.nl`) as `cellular`, which hides the node from consumers that filter for residential IPs. Since 2026-11-04 the container starts with app-level location flags placed **before** the `service` command (after the subcommand they crash-loop, same class as the `--udp.ports` case): `--location.type manual --location.country NL --location.city "Almere Stad" --location.ip-type residential`.
+
+Trade-offs: the manual resolver keeps the auto-detected public IP (via `--ip-detector`) and the static country/city, but the published proposals lose the ASN/ISP fields (they come from the oracle). Accepted for now — remove the override if Mysterium support re-classifies AS50266, which also restores full location metadata.
+
 ## Onboarding (Robert's part)
 
 1. Open the [MyMystNodes setup page](https://my.mystnodes.com/setup-node) → choose Docker (Linux host) → connect the node by pasting the node's link/credentials from the UI at `http://192.168.1.10:4449`.
