@@ -373,7 +373,7 @@ services:
   # autoheal: herstart containers met label autoheal=true die unhealthy zijn.
   # diun: meldt nieuwe image-tags op Telegram (opt-in via label diun.enable).
   # De dagelijkse pull is host-side: sv01-image-update.timer (excl. hermes/
-  # egress-proxy/caddy/traffmonetizer — zie sv01/scripts/image-update.sh + docspage).
+  # egress-proxy/caddy — zie sv01/scripts/image-update.sh + docspage).
   autoheal:
     image: willfarrell/autoheal:latest
     container_name: sv01-autoheal
@@ -421,13 +421,15 @@ services:
   # mappable; the container stays fully ephemeral + capless, which is the
   # protection that matters here. Token: TRAFFMONETIZER_TOKEN in
   # /srv/sv01-secrets/sv01.env (outside git). Device name "sv01" in dashboard.
-  # NO daily auto-update (excluded in sv01/scripts/image-update.sh) — updates
-  # are manual for this one.
+  # Auto-update: floating tag via de dagelijkse image-update (Robert 2026-11-04);
+  # diun meldt nieuwe tags op Telegram.
   traffmonetizer:
     image: traffmonetizer/cli_v2:latest
     container_name: sv01-traffmonetizer
     restart: unless-stopped
     cap_drop: [ALL]
+    labels:
+      diun.enable: "true"
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
     command: ["start", "accept", "--token", "${TRAFFMONETIZER_TOKEN}", "--device-name", "sv01"]
