@@ -16,7 +16,7 @@ Untrusted-vendor software from the same product category, treated accordingly:
 - **Network**: default bridge, no published ports, no host-net — outbound TCP/UDP only.
 - **What it can't touch**: `cap_drop: [ALL]`, **no volumes**, no docker socket, no host mounts; scratch `/tmp` via tmpfs. Rootfs deliberately writable (same distroless-write-profile caveat as traffmonetizer); a `--force-recreate` wipes all state.
 - **Resources**: 256 MB / 0.5 CPU cap; json-file logs capped at 10 MB × 3.
-- **Credentials**: `PAWNS_EMAIL` + `PAWNS_PASSWORD` in `/srv/sv01-secrets/sv01.env` (outside git), interpolated into the CLI args `-email=… -password=…`. ⚠️ A `$` inside the password must be escaped as `$$` in that file (`sv01.env` is compose-interpolated). If a password contains `$` and causes auth trouble, prefer changing the Pawns account password to one without `$`.
+- **Credentials**: `PAWNS_EMAIL` + `PAWNS_PASSWORD` in `/srv/sv01-secrets/sv01.env` (outside git), interpolated into the CLI args `-email=… -password=…`. ⚠️ **Password charset matters**: `pawns-cli` fails auth (`authenticate user failed — please use SDK or gui app`) when the password contains special characters; IPRoyal's own troubleshooting recommends an **letters+numbers-only password** for this account.
 - **Device identity**: `-device-name=sv01`, `-device-id=sv01` — the dashboard entry is identifiable; `-accept-tos` accepts the ToS headlessly.
 
 ## Same limitation: the exit IP is not isolated
