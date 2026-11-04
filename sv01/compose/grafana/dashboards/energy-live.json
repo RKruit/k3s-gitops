@@ -419,7 +419,7 @@
    },
    "options": {
     "colorMode": "value",
-    "graphMode": "area",
+    "graphMode": "none",
     "justifyMode": "auto",
     "textMode": "auto",
     "orientation": "auto",
