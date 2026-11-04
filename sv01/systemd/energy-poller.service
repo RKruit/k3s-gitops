@@ -1,0 +1,15 @@
+[Unit]
+Description=sv01 energy poller (P1/Zendure/Homey/prices -> VictoriaMetrics on 127.0.0.1:8428)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rkruit
+ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/energy_poller.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

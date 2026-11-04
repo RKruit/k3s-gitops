@@ -13,7 +13,7 @@ Secrets live **outside git**, on each host. This page lists **paths only** — n
 
 | File | Contains | Consumed by |
 |---|---|---|
-| `sv01.env` | CF_API_TOKEN, Komodo DB creds, BESZEL_KEY/TOKEN | sync unit `--env-file`, compose env_file (periphery: symlinked as `/etc/komodo/sv01-secrets/sv01.env`) |
+| `sv01.env` | CF_API_TOKEN, Komodo DB creds, BESZEL_KEY/TOKEN, GRAFANA_ADMIN_PASSWORD | sync unit `--env-file`, compose env_file (periphery: symlinked as `/etc/komodo/sv01-secrets/sv01.env`) |
 | `kuma-admin.env` | Uptime Kuma admin login (`hermes-monitoring`) | Kuma API scripts |
 | `beszel-admin.env` | Beszel UI + superuser login | hub CLI/automation |
 | `komodo-api.env` | Komodo API key + secret (admin) | resource API calls |

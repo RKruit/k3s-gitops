@@ -648,7 +648,72 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # --- Grafana + VictoriaMetrics (2026-11-04): energy dashboards ---
+  # Single-node VictoriaMetrics (Prometheus-compatible, small footprint):
+  # host-native energy-poller.service (sv01/scripts/energy_poller.py) pushes
+  # P1/Zendure/controller/Homey/price samples every 10 s to 127.0.0.1:8428.
+  # Grafana UI = Caddy route grafana.oostrandpark.com (Authelia-gated,
+  # anonymous Viewer; Grafana admin login via the same route) — no published
+  # port. Dashboards + datasource provisioned from sv01/compose/grafana/.
+  # Both databases on NFS per convention (kuma already proves sqlite-on-NFS
+  # fine at this write rate; watch VM logs — NFS is not VM's favorite FS).
+  victoria-metrics:
+    image: victoriametrics/victoria-metrics:latest
+    container_name: sv01-victoria-metrics
+    restart: unless-stopped
+    labels:
+      diun.enable: "true"
+    command: ["-retentionPeriod=3y", "-storageDataPath=/data"]
+    ports:
+      - "127.0.0.1:8428:8428"
+    volumes:
+      - vm-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sv01-grafana
+    restart: unless-stopped
+    labels:
+      diun.enable: "true"
+    environment:
+      GF_SECURITY_ADMIN_USER: rkruit
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SERVER_ROOT_URL: https://grafana.oostrandpark.com
+      TZ: Europe/Amsterdam
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
+  # grafana + VM data — NFS per convention (fresh subdirs created 777
+  # BEFORE first apply; see docs/infra/nfs-storage.md)
+  grafana-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/grafana-data"
+
+  vm-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/vm-data"
+
   caddy-data:
   caddy-config:
   komodo-keys:

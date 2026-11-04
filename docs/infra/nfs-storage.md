@@ -35,6 +35,8 @@ Robert's standing preference: **persistent data belongs on NFS** — default to 
 | `beszel-data` | `beszel-data` | |
 | `beszel-agent-data` | `beszel-agent-data` | |
 | `waha-data` | `waha-data` | WhatsApp bridge session store |
+| `grafana-data` | `grafana-data` | Grafana sqlite (dashboards live in git; sqlite-on-NFS same precedent as kuma) |
+| `vm-data` | `vm-data` | VictoriaMetrics TSDB — watch item on NFS (see [grafana](../services/grafana.md)) |
 | `beszel-socket` | *(local — not NFS)* | unix socket, must be a local FS |
 | `komodo-mongo-*` | *(local — not NFS)* | wiredTiger-on-NFS risk |
 

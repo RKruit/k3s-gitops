@@ -61,6 +61,7 @@ nav:
       - EarnApp (Bright Data): services/earnapp.md
       - Homepage: services/homepage.md
       - IT-Tools: services/it-tools.md
+      - Grafana: services/grafana.md
       - Authelia: services/authelia.md
       - Container-upkeep: services/container-upkeep.md
       - Mosquitto (MQTT): services/mosquitto.md

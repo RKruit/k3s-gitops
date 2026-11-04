@@ -30,6 +30,7 @@ related: [services/caddy.md, services/hermes.md, hosts/sv02.md]
 | komodo.oostrandpark.com | 192.168.1.10 | core:9120 |
 | kuma.oostrandpark.com | 192.168.1.10 | :3001 (host-net) |
 | beszel.oostrandpark.com | 192.168.1.10 | beszel:8090 |
+| grafana.oostrandpark.com | 192.168.1.10 | grafana:3000 (energy dashboards) |
 | docs.oostrandpark.com | 192.168.1.10 | docs:8000 |
 | auth.oostrandpark.com | 192.168.1.10 | authelia:9091 (SSO portal) |
 

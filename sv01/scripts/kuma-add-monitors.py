@@ -23,6 +23,9 @@ MONITORS = [
     dict(COMMON, type="http", name="Beszel hub", url="https://beszel.oostrandpark.com/"),
     dict(COMMON, type="http", name="Docs site", url="https://docs.oostrandpark.com/"),
     dict(COMMON, type="http", name="Homepage", url="https://homepage.oostrandpark.com/"),
+    # create AFTER Robert's unbound entry for the hostname (Kuma resolves
+    # via unbound; runs only when the script below is executed on purpose)
+    dict(COMMON, type="http", name="Grafana UI", url="https://grafana.oostrandpark.com/"),
     dict(COMMON, type="http", name="IT-Tools", url="https://tools.oostrandpark.com/"),
     dict(COMMON, type="http", name="Authelia", url="https://auth.oostrandpark.com/api/health"),
     dict(COMMON, type="http", name="GitHub webhook (hooks)", url="https://hooks.oostrandpark.com/"),

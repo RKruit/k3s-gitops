@@ -35,10 +35,11 @@ tls {
 | docs.oostrandpark.com | `docs:8000` | this docs site |
 | homepage.oostrandpark.com | `homepage:3000` | same docker network |
 | tools.oostrandpark.com | `it-tools:80` | same docker network (stateless) |
+| grafana.oostrandpark.com | `grafana:3000` | energy dashboards ([Grafana](grafana.md)) |
 | auth.oostrandpark.com | `authelia:9091` | Authelia SSO portal — deliberately NO forward_auth (the login page must not require itself) |
 | sv02.oostrandpark.com | *(separate Caddy instance on sv02, `tls internal`)* | different host, different PKI |
 
-All seven UI routes sit behind Authelia via the `(authelia)` forward_auth snippet: a new UI route needs `import authelia` before its `reverse_proxy` (snippet imports are without parens). The Authelia wall and its Kuma bypass are documented in [authelia](authelia.md).
+All UI routes sit behind Authelia via the `(authelia)` forward_auth snippet: a new UI route needs `import authelia` before its `reverse_proxy` (snippet imports are without parens). The Authelia wall and its Kuma bypass are documented in [authelia](authelia.md).
 
 !!! warning "COOP breaks OAuth popups"
     PocketBase sends `Cross-Origin-Opener-Policy: same-origin` on every response. On the beszel route that header **nulls `window.opener`** of the cross-origin OIDC popup → the `/api/oauth2-redirect` callback cannot post the code back → SDK shows `oauth2-redirect-failure` and every retry re-opens the popup (endless login loop). Fix (in place since 2026-10-27): `header { -Cross-Origin-Opener-Policy }` in the beszel site block. Watch for this on any other COOP-sending app that gets OIDC popup login.

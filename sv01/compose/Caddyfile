@@ -82,6 +82,17 @@ tools.oostrandpark.com {
 	reverse_proxy it-tools:80
 }
 
+# Grafana (2026-11-04): energy dashboards (VictoriaMetrics datasource in
+# the grafana container). Anonymous Viewer inside grafana; Grafana admin
+# = rkruit (password in sv01.env). Route gated by Authelia like the rest.
+grafana.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	import authelia
+	reverse_proxy grafana:3000
+}
+
 # Authelia SSO-portal zelf (2026-10-28): GEEN forward_auth (anders login-loop).
 auth.oostrandpark.com {
 	tls {
