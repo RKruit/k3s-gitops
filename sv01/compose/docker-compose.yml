@@ -529,6 +529,41 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # --- Honeygain (2026-11-04): bandwidth sharing (passive income) ---
+  # Same untrusted-vendor hard sandbox as traffmonetizer/pawns (egress-only
+  # CLI: default bridge, no caps, no volumes, no ports, tmpfs scratch,
+  # limits, logs 10m x3, diun + daily auto-update on floating :latest).
+  # Vetting note 2026-11-04: Google's XCPE report explicitly names
+  # Honeygain's own AppSalt SDK (silent optIn() without consent screen on
+  # third-party devices; owner Oxylabs gave no reply when contacted).
+  # Deployed anyway on Robert's explicit decision — exposure consciously
+  # accepted; revisit if the vendor ever publishes a public statement.
+  # device sv01 = the one earning device on this network (Honeygain only
+  # pays for devices on different IPs). Creds via compose-interpolation
+  # from sv01.env: HONEYGAIN_EMAIL / HONEYGAIN_PASSWORD ($ in a password
+  # must be doubled to $$). No -token mode exists in this image — only
+  # -email/-pass/-device (Google-signup accounts need a password set first).
+  honeygain:
+    image: honeygain/honeygain:latest
+    container_name: sv01-honeygain
+    restart: unless-stopped
+    cap_drop: [ALL]
+    labels:
+      diun.enable: "true"
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    command: ["-tou-accept", "-email", "${HONEYGAIN_EMAIL}", "-pass", "${HONEYGAIN_PASSWORD}", "-device", "sv01"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   caddy-data:
   caddy-config:
