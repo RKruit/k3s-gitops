@@ -474,6 +474,56 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # --- MystNodes (2026-11-04): Mysterium dVPN node — bandwidth sharing (passive income) ---
+  # Same untrusted-vendor category as traffmonetizer/pawns BUT this one ACCEPTS
+  # inbound sessions (it is a dVPN exit/entry node), so it needs more than the
+  # egress-only hard sandbox:
+  #   - vendor requires NET_ADMIN (+ /dev/net/tun) to build tun/wg interfaces
+  #     inside the container; cap_drop ALL is kept, only the 3 documented caps
+  #     (NET_ADMIN, SETUID, SETGID) are re-granted;
+  #   - published UDP 61000-61100 = the node's WireGuard listener range
+  #     (--wireguard.listen.ports). The DEFAULT range 56000-56100 was rejected
+  #     on purpose: it collides with an existing stale OPNsense WAN forward
+  #     (udp 10000-60000 -> 192.168.1.3, the old sv02 box). OPNsense forwards
+  #     WAN udp 61000-61100 -> this host (see docs/services/mystnodes.md).
+  #   - node UI = plain http :4449, no login: LAN access only
+  #     (http://192.168.1.10:4449), deliberately NOT given a Caddy route and
+  #     NOT WAN-forwarded.
+  # Compensating isolation: own network (no reach to the other sv01
+  # containers), no docker socket, single NFS volume for identity/keystore,
+  # mem/cpu limits, log rotation. Egress must stay open (broker + sessions).
+  myst:
+    image: mysteriumnetwork/myst:latest
+    container_name: sv01-myst
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add:
+      - NET_ADMIN
+      - SETUID
+      - SETGID
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    command: ["service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
+    labels:
+      diun.enable: "true"
+    ports:
+      - "4449:4449"
+      - "61000-61100:61000-61100/udp"
+    volumes:
+      - myst-data:/var/lib/mysterium-node
+    networks:
+      - myst-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   caddy-data:
   caddy-config:
@@ -533,6 +583,14 @@ volumes:
       o: addr=192.168.1.2,rw,hard,timeo=600
       device: ":/volume1/k8sv2/waha-data"
 
+  # MystNodes identity/keystore + node-database — NFS volgens conventie
+  myst-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/myst-data"
+
   # socket tussen beszel-hub en agent — NIET op NFS (unix socket)
   beszel-socket:
 
@@ -551,3 +609,6 @@ networks:
     ipam:
       config:
         - subnet: 172.29.0.0/24
+  # MystNodes eigen netwerk: los van de rest van de stack (geen toegang tot
+  # de andere sv01-containers), mét internet-egress (broker/session-traffic)
+  myst-net:
