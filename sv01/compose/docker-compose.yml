@@ -600,6 +600,54 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # --- EarnApp (2026-11-04): Bright Data bandwidth sharing (passive income) ---
+  # Official Linux support is BACK (was "temporarily disabled" per vendor;
+  # help center documents Linux install again — Robert's correction of the
+  # earlier "rules out home servers" verdict). NOT named in Google's XCPE
+  # report. Image: NOT a proxyrack-style runtime wildcard — acoilier/earnapp
+  # is a community wrapper that BAKES the official BrightData installer at
+  # BUILD time with a PINNED SHA256 (upstream change = their public CI build
+  # fails, no silent code swaps); Trivy-scanned, cosign-signed, public CI.
+  # The first boot still fetches the actual agent binaries from the vendor —
+  # the sandbox is the containment.
+  # Deviation from the all-ephemeral recipe (like myst): /etc/earnapp
+  # (device identity + state) on a named NFS volume — recreating the container
+  # must NOT orphan the dashboard device. Else: no caps, no published ports,
+  # default bridge, tmpfs, limits, logs, diun + autoheal (image ships a
+  # HEALTHCHECK = earnapp status 'Current status: enabled').
+  # UUID: sdk-node-<32hex> pre-generated into sv01.env (EARNAPP_UUID);
+  # account linking = ONE browser click on https://earnapp.com/r/<uuid>
+  # (Robert, AFTER first boot — runbook in the docspage).
+  earnapp:
+    image: acoilier/earnapp:latest
+    container_name: sv01-earnapp
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      diun.enable: "true"
+      autoheal: "true"
+    tmpfs:
+      # acoilier's tested hardening defaults ("/tmp:exec" — installer execs
+      # from tmp; deliberately NOT the class noexec default here)
+      - /tmp:exec,mode=1777
+      - /run
+    environment:
+      EARNAPP_UUID: ${EARNAPP_UUID}
+    volumes:
+      - earnapp-data:/etc/earnapp
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   caddy-data:
   caddy-config:
@@ -666,6 +714,15 @@ volumes:
       type: nfs4
       o: addr=192.168.1.2,rw,hard,timeo=600
       device: ":/volume1/k8sv2/myst-data"
+
+  # EarnApp device identity + node state (uuid en co) — NFS volgens conventie;
+  # persistent identity is een vendor-eis (leeg = orphan dashboard-devices)
+  earnapp-data:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=192.168.1.2,rw,hard,timeo=600
+      device: ":/volume1/k8sv2/earnapp-data"
 
   # socket tussen beszel-hub en agent — NIET op NFS (unix socket)
   beszel-socket:
