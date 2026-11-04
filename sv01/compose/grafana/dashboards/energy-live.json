@@ -900,7 +900,27 @@
      "min": 0,
      "mappings": []
     },
-    "overrides": []
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "NU"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       },
+       {
+        "id": "displayName",
+        "value": "\u25c4 nu"
+       }
+      ]
+     }
+    ]
    },
    "options": {
     "orientation": "vertical",

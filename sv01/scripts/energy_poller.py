@@ -205,9 +205,16 @@ def scrape():
             # zero-padded twin that keeps the series order chronological (VM
             # sorts by label-name then value: aa_order < hour → padded wins the
             # sort; tested empirically 04-11-2026 — bare-only labels jumble).
+            # CURRENT hour: exported with the constant label hour="NU" so the
+            # bargauge can highlight it with a STATIC byName override (blue).
+            # aa_order keeps it in its slot; the old hour-numbered series for
+            # that hour is deliberately not pushed, so bars stay 24 total.
             for hstr, price in hourly.items():
                 h = int(hstr)
-                lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
+                if h == datetime.now(TZ).hour:
+                    lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="NU"}} {float(price)}')
+                else:
+                    lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
         if pr.get("fetched"):
             lines.append(f"nextenergy_prices_age_s {int(time.time() - float(pr['fetched']))}")
     except Exception as e:
