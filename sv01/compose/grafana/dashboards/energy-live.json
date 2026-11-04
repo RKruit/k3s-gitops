@@ -858,6 +858,80 @@
      "refId": "B"
     }
    ]
+  },
+  {
+   "id": 13,
+   "title": "Stroomprijzen (NextEnergy)",
+   "type": "barchart",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 16,
+    "w": 12,
+    "h": 6
+   },
+   "timeFrom": "now/d",
+   "interval": "1h",
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyEUR",
+     "decimals": 2,
+     "color": {
+      "mode": "fixed",
+      "fixedColor": "green"
+     },
+     "mappings": [],
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "orientation": "auto",
+    "showValue": "never",
+    "stacking": "none",
+    "groupWidth": 0.7,
+    "barWidth": 0.9,
+    "barRadius": 0,
+    "xField": "Time",
+    "xTickLabelRotation": -45,
+    "xTickLabelSort": "asc",
+    "xTickLabelSpacing": 0,
+    "includeTimeField": true,
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": false,
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "single",
+     "sort": "none"
+    },
+    "fillOpacity": 80,
+    "lineWidth": 1
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "last_over_time(nextenergy_price_eur[1h])",
+     "legendFormat": "\u20ac/kWh",
+     "refId": "A"
+    }
+   ]
   }
  ]
 }
