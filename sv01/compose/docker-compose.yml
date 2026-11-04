@@ -503,9 +503,12 @@ services:
       - SETGID
     devices:
       - /dev/net/tun:/dev/net/tun
-    # --udp.ports = provider WireGuard listener range (was --wireguard.listen.ports,
-    # deprecated upstream 1.39); must match the published UDP range above
-    command: ["service", "--agreed-terms-and-conditions", "--udp.ports", "61000:61100"]
+    # --wireguard.listen.ports = provider WG listener range; MUST match the
+    # published UDP range above. 1.39.9 help claims --udp.ports is the
+    # successor but that flag is NOT yet defined on `service` (verified
+    # 04-11-2026: 'flag provided but not defined') — deprecated-but-working
+    # is the only option today; re-check on a future myst upgrade.
+    command: ["service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
     labels:
       diun.enable: "true"
     ports:
