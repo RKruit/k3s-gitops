@@ -373,7 +373,7 @@ services:
   # autoheal: herstart containers met label autoheal=true die unhealthy zijn.
   # diun: meldt nieuwe image-tags op Telegram (opt-in via label diun.enable).
   # De dagelijkse pull is host-side: sv01-image-update.timer (excl. hermes/
-  # egress-proxy/caddy — zie sv01/scripts/image-update.sh + docspage).
+  # egress-proxy/caddy/traffmonetizer — zie sv01/scripts/image-update.sh + docspage).
   autoheal:
     image: willfarrell/autoheal:latest
     container_name: sv01-autoheal
@@ -406,6 +406,34 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - diun-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # --- Traffmonetizer (2026-11-04): bandwidth-sharing CLI (passive income) ---
+  # Untrusted vendor (see docs/services/traffmonetizer.md for the decision
+  # context incl. the Nov-2026 XCPE report): deliberately hard sandbox —
+  # no caps, read-only rootfs, no volumes, NO published ports, default-bridge
+  # egress only (all outbound TCP/UDP). Token: TRAFFMONETIZER_TOKEN in
+  # /srv/sv01-secrets/sv01.env (outside git). Device name "sv01" in dashboard.
+  # NO daily auto-update (excluded in sv01/scripts/image-update.sh) — updates
+  # are manual for this one.
+  traffmonetizer:
+    image: traffmonetizer/cli_v2:latest
+    container_name: sv01-traffmonetizer
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    command: ["start", "accept", "--token", "${TRAFFMONETIZER_TOKEN}", "--device-name", "sv01"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
     logging:
       driver: json-file
       options:
