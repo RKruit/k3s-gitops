@@ -483,9 +483,9 @@ services:
   #     (NET_ADMIN, SETUID, SETGID) are re-granted;
   #   - published UDP 61000-61100 = the node's WireGuard listener range
   #     (--wireguard.listen.ports). The DEFAULT range 56000-56100 was rejected
-  #     on purpose: it collides with an existing stale OPNsense WAN forward
-  #     (udp 10000-60000 -> 192.168.1.3, the old sv02 box). OPNsense forwards
-  #     WAN udp 61000-61100 -> this host (see docs/services/mystnodes.md).
+  #     on purpose: it collided with a then-existing OPNsense WAN forward
+  #     (udp 10000-60000 -> 192.168.1.3, since deleted 04-11-2026). OPNsense
+  #     forwards WAN udp 61000-61100 -> this host (see docs/services/mystnodes.md).
   #   - node UI = plain http :4449, no login: LAN access only
   #     (http://192.168.1.10:4449), deliberately NOT given a Caddy route and
   #     NOT WAN-forwarded.
