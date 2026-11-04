@@ -93,6 +93,7 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`Hermes + egress`](services/hermes.md) | Hermes gateway + squid egress: full isolation (no route, public-web-only proxy), host Ollama via bridge gateway. |
 | [`WAHA (WhatsApp bridge)`](services/waha.md) | WAHA core bridge (NOWEB engine): loopback-only WhatsApp send API :3000 for the daily homelab report cronjob; NFS session storage, no Caddy route. |
 | [`Traffmonetizer`](services/traffmonetizer.md) | traffmonetizer/cli_v2: bandwidth-sharing CLI (passive income) in a hard sandbox on sv01; no ports, no volumes, no caps, manual image updates only. |
+| [`Pawns.app (IPRoyal)`](services/pawns.md) | iproyal/pawns-cli: IPRoyal Pawns.app bandwidth-sharing CLI (passive income) in a hard sandbox on sv01; no ports, no volumes, no caps, auto-updated daily with diun. |
 | [`Homepage`](services/homepage.md) | gethomepage dashboard on homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma status-page widget. |
 | [`IT-Tools`](services/it-tools.md) | Stateless dev/web toolbox on tools.oostrandpark.com: wiring, history (k3s → compose), Kuma monitor. |
 | [`Authelia`](services/authelia.md) | SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC live for Beszel. |

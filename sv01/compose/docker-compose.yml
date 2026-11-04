@@ -443,6 +443,32 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+  # --- Pawns.app (2026-11-04): IPRoyal-bandbreedte-delen (passive income) ---
+  # Zelfde patroon als traffmonetizer: untrusted vendor → hard sandbox —
+  # geen caps, geen volumes, geen ports, tmpfs scratch, limits, diun,
+  # daily auto-update (floating :latest). Credentials via compose-interpolatie
+  # uit sv01.env (PAWNS_EMAIL / PAWNS_PASSWORD) in de CLI-args; let op: een
+  # `$` in het wachtwoord moet verdubbeld ($$) om interpolatie te ontwijken.
+  pawns:
+    image: iproyal/pawns-cli:latest
+    container_name: sv01-pawns
+    restart: unless-stopped
+    cap_drop: [ALL]
+    labels:
+      diun.enable: "true"
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    command: ["-email=${PAWNS_EMAIL}", "-password=${PAWNS_PASSWORD}", "-device-name=sv01", "-device-id=sv01", "-accept-tos"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   caddy-data:
