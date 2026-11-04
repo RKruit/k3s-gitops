@@ -777,6 +777,87 @@
      "refId": "A"
     }
    ]
+  },
+  {
+   "id": 12,
+   "title": "Stroomkosten (vandaag)",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 14,
+    "w": 12,
+    "h": 6
+   },
+   "timeFrom": "now/d",
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyEUR",
+     "decimals": 2,
+     "custom": {
+      "axisPlacement": "auto",
+      "axisColorMode": "text",
+      "drawStyle": "line",
+      "lineInterpolation": "stepAfter",
+      "lineWidth": 2,
+      "fillOpacity": 30,
+      "gradientMode": "none",
+      "pointSize": 1,
+      "showPoints": "never",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "scaleDistribution": {
+       "type": "linear"
+      },
+      "hideFrom": {
+       "legend": false,
+       "tooltip": false,
+       "viz": false
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "spanNulls": true
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "increase(purchase_eur[1h])",
+     "legendFormat": "inkoop \u20ac/u",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "increase(purchase_eur[1h]) - increase(export_eur[1h])",
+     "legendFormat": "netto \u20ac/u (inkoop \u2212 export)",
+     "refId": "B"
+    }
+   ]
   }
  ]
 }

@@ -35,7 +35,7 @@ Caddy route grafana.oostrandpark.com (Authelia forward_auth → anonymous Viewer
 
 | Dashboard | uid | Contents |
 |---|---|---|
-| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller thresholds |
+| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller thresholds, electricity cost today (midnight-anchored panel) |
 | Energie — Verloop | `energy-daily` | price curve + thresholds, rolling-24 h kWh (import/export/PV/battery), SoC, regime, gas m³ |
 | Energie — Besparing | `energy-savings` | cumulative books: net battery saving, discharge value, charge cost, PV value (€ over the selected range), battery cycles + kWh |
 
@@ -69,6 +69,7 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `pv_kwh` | cumulative books: SolarEdge generation (Homey `generated_w`) |
 | `battery_charge_eur` / `battery_discharge_eur` | cumulative books: € booked at the hourly all-in price valid at the moment of charging/delivery |
 | `pv_eur` | cumulative books: PV value at the hourly price (saldering assumption) |
+| `purchase_eur` / `export_eur` | electricity-cost books: import/export kWh priced at the hourly all-in rate — exact P1-counter deltas, gap-immune |
 | `energy_books_since_ts` | epoch the books started (2026-11-04) |
 
 ## Savings bookkeeping (Besparing dashboard, since 2026-11-04)
@@ -82,6 +83,8 @@ The poller keeps cumulative kWh/€ books (`/var/lib/energy-poller/state.json`, 
 5. Stale prices (> 90 min or wrong day) → kWh counters keep running, € counters pause (no wrong-hour pricing enters the books). Gaps > 40 s (restarts/downtime) are skipped, never extrapolated.
 
 "Netto besparing (accu)" = `increase(battery_discharge_eur[$__range]) − increase(battery_charge_eur[$__range])` — cross-check any range against the NextEnergy verbruik page before trusting a policy decision to it.
+
+Electricity-cost books (poller v3): `purchase_eur` and `export_eur` price the P1's own cumulative kWh counter deltas at the hour's all-in rate — exact, gap-immune, and reset-skip (deltas ≥ 100 kWh are treated as counter glitches and never booked). The Live dashboard's "Stroomkosten (vandaag)" panel shows both (`inkoop €/u` and the saldering-style net `inkoop − export €/u`) with its own midnight anchor (`timeFrom now/d`), independent of the dashboard's 6 h range. Saldering nets monthly, so the hourly net line is an approximation of the settlement, while the `inkoop` line is the exact gross purchase.
 
 ## Gotchas
 

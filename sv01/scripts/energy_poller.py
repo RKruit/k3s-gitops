@@ -20,6 +20,11 @@
 # integrated from the 10 s power samples (gaps > 40 s are skipped, never
 # extrapolated); € are booked at the hourly NextEnergy price valid at the
 # moment of charging/delivery (stale prices -> kWh keeps running, € pauses).
+#
+# v3 (2026-11-04): electricity-cost books — purchase_eur / export_eur priced
+# from the P1's own cumulative kWh counter deltas (exact, gap-immune, no
+# integration undercount); the Live dashboard shows today's hourly cost from
+# midnight on ('Stroomkosten (vandaag)').
 import json
 import os
 import sys
@@ -40,9 +45,10 @@ TZ = ZoneInfo("Europe/Amsterdam")
 # bookkeeping
 STATE_DIR = "/var/lib/energy-poller"
 STATE_PATH = os.path.join(STATE_DIR, "state.json")
-MAX_GAP_S = 40            # beyond this, skip integration (never extrapolate)
+MAX_GAP_S = 40            # beyond this, skip power integration (never extrapolate)
 PRICE_STALE_S = 90 * 60   # older price cache -> kWh keeps running, € pauses
 CAPACITY_KWH = 5.28       # nameplate for the cycles metric (see docs)
+METER_JUMP_KWH = 100      # counter delta above this = reset/glitch -> skip that delta
 
 REGIME_ID = {"idle": 0, "hold": 1, "discharge": 2, "charge": 3}
 
@@ -56,20 +62,29 @@ def fetch_json(url, timeout=4):
         return json.loads(r.read().decode())
 
 
+_NUM_KEYS = ("charge_kwh", "discharge_kwh", "pv_kwh", "charge_eur", "discharge_eur",
+             "pv_eur", "purchase_eur", "export_eur",
+             "last_p1_import_kwh", "last_p1_export_kwh")
+
+
 def load_state():
+    """Tolerant loader: unknown/missing keys default to 0 without wiping
+    existing books (schema evolves across poller versions)."""
     try:
         with open(STATE_PATH) as f:
             st = json.load(f)
-        for k in ("charge_kwh", "discharge_kwh", "pv_kwh",
-                  "charge_eur", "discharge_eur", "pv_eur", "ts", "since"):
+        for k in _NUM_KEYS:
+            st.setdefault(k, 0.0)
+        for k in ("ts", "since"):
             if k not in st:
                 raise ValueError(f"missing {k}")
         return st
     except Exception as e:
         now = time.time()
         log(f"state: fresh books ({type(e).__name__}: {e})")
-        return {"ts": now, "since": now, "charge_kwh": 0.0, "discharge_kwh": 0.0,
-                "pv_kwh": 0.0, "charge_eur": 0.0, "discharge_eur": 0.0, "pv_eur": 0.0}
+        st = {k: 0.0 for k in _NUM_KEYS}
+        st.update({"ts": now, "since": now})
+        return st
 
 
 def save_state(st):
@@ -106,10 +121,12 @@ def scrape():
     try:
         j = fetch_json(P1_URL)
         vals["p1"] = float(j["active_power_w"])  # +import / -export
+        vals["imp_kwh"] = float(j["total_power_import_kwh"])
+        vals["exp_kwh"] = float(j["total_power_export_kwh"])
         lines += [
             f"p1_power_w {vals['p1']}",
-            f"p1_import_kwh {float(j['total_power_import_kwh'])}",
-            f"p1_export_kwh {float(j['total_power_export_kwh'])}",
+            f"p1_import_kwh {vals['imp_kwh']}",
+            f"p1_export_kwh {vals['exp_kwh']}",
             f"p1_tariff {float(j.get('active_tariff', 0))}",
             f"p1_gas_m3 {float(j.get('total_gas_m3', 0))}",
         ]
@@ -202,12 +219,31 @@ def push(lines):
 def bookkeep(st, vals, pv, price, now):
     """Integrate the last interval into the cumulative books.
 
-    A gap > MAX_GAP_S (poller restart, host down) skips integration: kWh and
-    € are never extrapolated — only undercounted. Battery AC-port flows are
-    counted as-is (charges at the hour's price); DC panel input into the
-    Zendure bypasses the meter and enters the books as free energy.
-    PV counter = SolarEdge via Homey only (Zendure panel input is accounted
-    inside the battery books as free charge)."""
+    Battery/PV kWh come from power integration: a gap > MAX_GAP_S (poller
+    restart, host down) skips the interval — kWh and € are never extrapolated,
+    only undercounted. Battery AC-port flows are counted as-is (charged at the
+    hour's price); DC panel input into the Zendure bypasses the meter and
+    enters the books as free energy. PV counter = SolarEdge via Homey only
+    (Zendure panel input is accounted inside the battery books as free charge).
+
+    Purchase/export € come from the P1's own cumulative kWh counters — exact,
+    gap-immune deltas priced at the hour's all-in rate (counter resets/glitches
+    are skipped, never booked)."""
+    # --- electricity-cost books (meter deltas; exact, runs even across gaps) ---
+    if price is not None and "imp_kwh" in vals:
+        dp = vals["imp_kwh"] - st.get("last_p1_import_kwh", vals["imp_kwh"])
+        if 0 <= dp < METER_JUMP_KWH:
+            st["purchase_eur"] += dp * price
+    if price is not None and "exp_kwh" in vals:
+        de = vals["exp_kwh"] - st.get("last_p1_export_kwh", vals["exp_kwh"])
+        if 0 <= de < METER_JUMP_KWH:
+            st["export_eur"] += de * price
+    if "imp_kwh" in vals:
+        st["last_p1_import_kwh"] = vals["imp_kwh"]
+    if "exp_kwh" in vals:
+        st["last_p1_export_kwh"] = vals["exp_kwh"]
+
+    # --- battery/PV books (power integration, gap-gated) ---
     dt = now - st["ts"]
     st["ts"] = now
     if dt <= 0 or dt > MAX_GAP_S:
@@ -248,6 +284,8 @@ def main():
                 f"battery_charge_eur {st['charge_eur']:.4f}",
                 f"battery_discharge_eur {st['discharge_eur']:.4f}",
                 f"pv_eur {st['pv_eur']:.4f}",
+                f"purchase_eur {st['purchase_eur']:.4f}",
+                f"export_eur {st['export_eur']:.4f}",
                 f"energy_books_since_ts {int(st['since'])}",
                 f"energy_poller_last_push_ts {int(t0)}",
             ]
