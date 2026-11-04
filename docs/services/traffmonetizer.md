@@ -21,7 +21,7 @@ Countermeasures on sv01: run only inside a deliberately locked container (below)
 ## Wiring / isolation
 
 - **Network**: default bridge, no published ports, no `network_mode: host`. The CLI makes only outbound TCP/UDP connections (device is reachable for the network via their relay; nothing listens on the LAN).
-- **What it can't touch**: `cap_drop: [ALL]`, `read_only: true` (scratch `/tmp` via tmpfs), **no volumes**, no docker socket, no host mounts.
+- **What it can't touch**: `cap_drop: [ALL]`, **no volumes**, no docker socket, no host mounts; scratch `/tmp` via tmpfs. Rootfs is writable (not read-only): the distroless image ships no shell and writes inside its own directory at startup — the exact path can't be mapped, so after testing `read_only` was dropped. The rootfs stays ephemeral (a `--force-recreate` wipes all state) and the container remains capless and mount-less, which is the protection that matters.
 - **Resources**: 256 MB / 0.5 CPU cap; json-file logs capped at 10 MB × 3.
 - **Token**: `traffmonetizer` reads `TRAFFMONETIZER_TOKEN` from `/srv/sv01-secrets/sv01.env` (compose interpolation for the `--token` arg; same pattern as `BESZEL_*`). Outside git. Get the token from the Traffmonetizer dashboard ("Docker" page shows the run command).
 - **Device name**: `--device-name sv01` so the dashboard entry is identifiable.

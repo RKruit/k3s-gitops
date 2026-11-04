@@ -415,8 +415,11 @@ services:
   # --- Traffmonetizer (2026-11-04): bandwidth-sharing CLI (passive income) ---
   # Untrusted vendor (see docs/services/traffmonetizer.md for the decision
   # context incl. the Nov-2026 XCPE report): deliberately hard sandbox —
-  # no caps, read-only rootfs, no volumes, NO published ports, default-bridge
-  # egress only (all outbound TCP/UDP). Token: TRAFFMONETIZER_TOKEN in
+  # no caps, NO volumes, NO published ports, tmpfs scratch dirs, default-bridge
+  # egress only (all outbound TCP/UDP). Rootfs writable: the distroless image
+  # (no shell) writes inside its own dir at startup and the exact path is not
+  # mappable; the container stays fully ephemeral + capless, which is the
+  # protection that matters here. Token: TRAFFMONETIZER_TOKEN in
   # /srv/sv01-secrets/sv01.env (outside git). Device name "sv01" in dashboard.
   # NO daily auto-update (excluded in sv01/scripts/image-update.sh) — updates
   # are manual for this one.
@@ -425,7 +428,6 @@ services:
     container_name: sv01-traffmonetizer
     restart: unless-stopped
     cap_drop: [ALL]
-    read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
     command: ["start", "accept", "--token", "${TRAFFMONETIZER_TOKEN}", "--device-name", "sv01"]
