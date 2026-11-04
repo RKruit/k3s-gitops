@@ -113,7 +113,7 @@
      },
      "expr": "controller_charge_threshold_eur",
      "legendFormat": "laaddrempel",
-     "refId": "A"
+     "refId": "B"
     },
     {
      "datasource": {
@@ -122,7 +122,7 @@
      },
      "expr": "controller_discharge_threshold_eur",
      "legendFormat": "ontlaaddrempel",
-     "refId": "A"
+     "refId": "C"
     }
    ]
   },
@@ -202,7 +202,7 @@
      },
      "expr": "increase(p1_export_kwh[24h])",
      "legendFormat": "net export",
-     "refId": "A"
+     "refId": "B"
     },
     {
      "datasource": {
@@ -211,7 +211,7 @@
      },
      "expr": "avg_over_time(pv_power_w[24h]) * 0.024",
      "legendFormat": "PV \u2248",
-     "refId": "A"
+     "refId": "C"
     },
     {
      "datasource": {
@@ -220,7 +220,7 @@
      },
      "expr": "avg_over_time(battery_charge_w[24h]) * 0.024",
      "legendFormat": "accu in \u2248",
-     "refId": "A"
+     "refId": "D"
     },
     {
      "datasource": {
@@ -229,7 +229,7 @@
      },
      "expr": "avg_over_time(battery_discharge_w[24h]) * 0.024",
      "legendFormat": "accu uit \u2248",
-     "refId": "A"
+     "refId": "E"
     }
    ]
   },

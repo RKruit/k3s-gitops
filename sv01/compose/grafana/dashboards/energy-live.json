@@ -586,7 +586,7 @@
      },
      "expr": "house_load_w",
      "legendFormat": "Huis",
-     "refId": "A"
+     "refId": "B"
     },
     {
      "datasource": {
@@ -595,7 +595,7 @@
      },
      "expr": "pv_power_w",
      "legendFormat": "PV (SolarEdge)",
-     "refId": "A"
+     "refId": "C"
     },
     {
      "datasource": {
@@ -604,7 +604,7 @@
      },
      "expr": "battery_charge_w",
      "legendFormat": "Accu in",
-     "refId": "A"
+     "refId": "D"
     },
     {
      "datasource": {
@@ -613,7 +613,7 @@
      },
      "expr": "battery_discharge_w",
      "legendFormat": "Accu uit",
-     "refId": "A"
+     "refId": "E"
     }
    ]
   },
@@ -765,7 +765,7 @@
      },
      "expr": "controller_charge_threshold_eur",
      "legendFormat": "laaddrempel",
-     "refId": "A"
+     "refId": "B"
     },
     {
      "datasource": {
@@ -774,7 +774,7 @@
      },
      "expr": "controller_discharge_threshold_eur",
      "legendFormat": "ontlaaddrempel",
-     "refId": "A"
+     "refId": "C"
     }
    ]
   },

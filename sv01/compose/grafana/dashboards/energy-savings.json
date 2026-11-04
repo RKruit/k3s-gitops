@@ -644,7 +644,7 @@
      },
      "expr": "increase(battery_discharge_kwh[24h])",
      "legendFormat": "geleverd",
-     "refId": "A"
+     "refId": "B"
     }
    ]
   },
