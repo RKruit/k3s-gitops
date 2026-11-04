@@ -9,6 +9,9 @@ related: [services/traffmonetizer.md, hosts/sv01.md, services/container-upkeep.m
 
 `iproyal/pawns-cli:latest` (official IPRoyal image, container `sv01-pawns`) — second bandwidth-sharing app next to [Traffmonetizer](traffmonetizer.md). Pays ~$0.20/GB for a $5 minimum payout (PayPal/crypto) — better rate than Traffmonetizer's $0.10/GB, and notably it was **not** named in Google's Nov-2026 XCPE supply-chain report. IPRoyal publishes its sourcing terms openly. Headless CLI: no UI on sv01 — stats/payouts live in the [Pawns.app dashboard](https://pawns.app).
 
+!!! danger "Status 2026-11-04: AUTH BLOCKED BY VENDOR — service is paused"
+    The CLI's login is refused server-side with `authenticate user failed (please use SDK or gui app)`, on an account proven clean and valid: dashboard login works, the dashboard API authenticates it fine (`POST /api/v1/users/tokens` → HTTP 200 + JWT; account verified 2022, NL, no 2FA, no product suspensions), CLI flags are exactly what the binary accepts, charset is symbol-free, and `:latest` (0.36.6, Aug 2026) is current. A fresh device-id does not change it — the refusal is account-scoped on their SDK channel. Community precedent: only resolved after contact via `hello@pawns.app` / their Discord. Until then the service sits on a compose `profiles: ["disabled"]` gate (paused = container removed; daily image-update skips it automatically); re-enable = delete the `profiles` line and push.
+
 ## Sandbox (same recipe as traffmonetizer)
 
 Untrusted-vendor software from the same product category, treated accordingly:

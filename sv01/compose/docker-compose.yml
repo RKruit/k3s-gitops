@@ -453,6 +453,10 @@ services:
     image: iproyal/pawns-cli:latest
     container_name: sv01-pawns
     restart: unless-stopped
+    # 2026-11-04: TIJDELIJK UIT (profile disables it) — vendor's SDK login
+    # refuses this verified password-account (creds proven valid via the
+    # dashboard API; see docspage). Re-enable = delete the profiles line.
+    profiles: ["disabled"]
     cap_drop: [ALL]
     labels:
       diun.enable: "true"
