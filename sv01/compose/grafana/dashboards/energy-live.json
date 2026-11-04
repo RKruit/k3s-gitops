@@ -754,7 +754,7 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "nextenergy_price_eur",
+     "expr": "max(last_over_time(nextenergy_price_eur[1h]))",
      "legendFormat": "prijs",
      "refId": "A"
     },
