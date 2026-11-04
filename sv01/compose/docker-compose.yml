@@ -612,9 +612,16 @@ services:
   # the sandbox is the containment.
   # Deviation from the all-ephemeral recipe (like myst): /etc/earnapp
   # (device identity + state) on a named NFS volume — recreating the container
-  # must NOT orphan the dashboard device. Else: no caps, no published ports,
-  # default bridge, tmpfs, limits, logs, diun + autoheal (image ships a
-  # HEALTHCHECK = earnapp status 'Current status: enabled').
+  # must NOT orphan the dashboard device. Else: no caps, default bridge,
+  # no published ports, tmpfs, limits, logs, diun + autoheal
+  # (image ships a HEALTHCHECK = `pgrep -x earnapp` — real daemon check).
+  # 🚨 The image's OWN entrypoint is bypassed; its monitor uses `earnapp
+  # start`, a systemctl-only no-op in this systemd-less container → no daemon
+  # → unhealthy → autoheal restart-loop (~5 min). Our entrypoint (bind-mounted
+  # from ./earnapp/entrypoint.sh) runs the OFFICIAL pair instead:
+  # `earnapp autoupgrade` (bg poller) + `earnapp run` (PID 1 daemon) — the two
+  # official systemd-unit ExecStarts. Verified 2026-11-04: that pair holds
+  # stable TLS connections; `earnapp start` never leaves a daemon here.
   # UUID: sdk-node-<32hex> pre-generated into sv01.env (EARNAPP_UUID);
   # account linking = ONE browser click on https://earnapp.com/r/<uuid>
   # (Robert, AFTER first boot — runbook in the docspage).
@@ -635,8 +642,10 @@ services:
       - /run
     environment:
       EARNAPP_UUID: ${EARNAPP_UUID}
+    entrypoint: ["/bin/bash", "/usr/local/bin/earnapp-safe.sh"]
     volumes:
       - earnapp-data:/etc/earnapp
+      - ./earnapp/entrypoint.sh:/usr/local/bin/earnapp-safe.sh:ro
     deploy:
       resources:
         limits:

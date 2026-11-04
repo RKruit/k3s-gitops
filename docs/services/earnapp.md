@@ -33,6 +33,18 @@ Chosen for auditability, per the class's distrust rules: it is a minimal Ubuntu-
 2. While logged in on [earnapp.com](https://earnapp.com), open `https://earnapp.com/r/<the sdk-node-… value>` in the browser → "Device successfully linked" appears; the device shows under **Easy Profits**.
 3. Sandbox verification equivalent: `sudo docker exec sv01-earnapp earnapp status` should report `Current status: enabled`; the dashboard shows linked + earning.
 
+## 2026-11-04: the daemon never ran — fix = official pair, not the image's monitor
+
+Symptom since first boot: container `Up` but **unhealthy** (its healthcheck is `pgrep -x earnapp`), autoheal restarting it in a ~5 min loop, logs full of `unrecognized service` + monitor-restart churn. Diagnosis: the image's baked entrypoint drives the daemon via `earnapp start`, which under the hood is a **systemd-only** action — without systemctl the spawn is a no-op, while the CLI still claims "active/registered" (that is a state-file claim, `earnapp status` reads the flag from `/etc/earnapp/status`, not the process). Verified not-a-sandbox-effect: a default-caps throwaway of the same image behaves identically.
+
+The official Bright Data install ships **two** systemd units, and running exactly those invocations inside the sandbox works: `earnapp autoupgrade` (version poller) + `earnapp run` (the daemon, foreground). With the pair, stable TLS connections to the vendor appear within ~40 s (previously: a live daemon with **zero** sockets — including single-mode `run` while the enabled-flag was down).
+
+**Fix**: `sv01/compose/earnapp/entrypoint.sh` (bind-mounted `:ro` over the image's entrypoint, declared in the compose service) replicates the image's own install-if-missing + uuid logic, re-applies the enabled state, then runs the official pair. Image-internal `earnapp-install` and the image's `pgrep`-based healthcheck + autoheal + diun all stay as-is. Note: `earnapp start` remains valid here only as the state-flip — it spawns nothing without systemd, so do not "simplify" the entrypoint back to it.
+
+Two non-issues to not chase again:
+- **Legacy SDK domains** `*.eearn.app` (`client-api`, `lds`, `sdk`, apex) are **globally NXDOMAIN** (checked via 1.1.1.1 + Google DoH, 2026-11-04) — the current agent does not reference them in its binary; distribution runs over `cdn-earnapp.b-cdn.net`, which serves current builds. Domain-gone ≠ outage in itself.
+- **`/etc/earnapp/brd_sdk3.log` is encrypted** (Bright Data's own compression/encryption; not gzip/zlib) — the SDK's self-log is not readable for diagnostics on this host; treat `brd_sdk3.log` size/mtime as a liveness signal only.
+
 ## Identity gotcha — first boot minted its own UUID (fixed live)
 
 The entrypoint writes `EARNAPP_UUID` to `/etc/earnapp/uuid` only **after** running the installer, and only when the uuid file is empty/absent. On a fresh volume the installer runs first and **mints its own `sdk-node-…`** — the env UUID silently never applies. Symptom: linking `earnapp.com/r/<env-uuid>` answers *"The device is not found"* while the container happily reports "✔ Registered" — two different identities existed.
