@@ -70,6 +70,7 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `battery_charge_eur` / `battery_discharge_eur` | cumulative books: € booked at the hourly all-in price valid at the moment of charging/delivery |
 | `pv_eur` | cumulative books: PV value at the hourly price (saldering assumption) |
 | `purchase_eur` / `export_eur` | electricity-cost books: import/export kWh priced at the hourly all-in rate — exact P1-counter deltas, gap-immune |
+| `nextenergy_price_hour{aa_order,hour}` | label-based full-day price table for the bars panel — bare `hour` = display label ("1" for 01:00), zero-padded `aa_order` = the sorting twin (VM sorts by label name then value; bare labels alone lexicographically jumble) |
 | `energy_books_since_ts` | epoch the books started (2026-11-04) |
 
 ## Savings bookkeeping (Besparing dashboard, since 2026-11-04)
