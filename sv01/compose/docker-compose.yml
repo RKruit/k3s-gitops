@@ -503,7 +503,9 @@ services:
       - SETGID
     devices:
       - /dev/net/tun:/dev/net/tun
-    command: ["service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
+    # --udp.ports = provider WireGuard listener range (was --wireguard.listen.ports,
+    # deprecated upstream 1.39); must match the published UDP range above
+    command: ["service", "--agreed-terms-and-conditions", "--udp.ports", "61000:61100"]
     labels:
       diun.enable: "true"
     ports:
