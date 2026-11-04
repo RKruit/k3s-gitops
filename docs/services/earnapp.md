@@ -33,6 +33,15 @@ Chosen for auditability, per the class's distrust rules: it is a minimal Ubuntu-
 2. While logged in on [earnapp.com](https://earnapp.com), open `https://earnapp.com/r/<the sdk-node-… value>` in the browser → "Device successfully linked" appears; the device shows under **Easy Profits**.
 3. Sandbox verification equivalent: `sudo docker exec sv01-earnapp earnapp status` should report `Current status: enabled`; the dashboard shows linked + earning.
 
+## Identity gotcha — first boot minted its own UUID (fixed live)
+
+The entrypoint writes `EARNAPP_UUID` to `/etc/earnapp/uuid` only **after** running the installer, and only when the uuid file is empty/absent. On a fresh volume the installer runs first and **mints its own `sdk-node-…`** — the env UUID silently never applies. Symptom: linking `earnapp.com/r/<env-uuid>` answers *"The device is not found"* while the container happily reports "✔ Registered" — two different identities existed.
+
+Fix applied 2026-11-04 (the repeat-proof for any future re-identity):
+1. `docker rm -f sv01-earnapp` — a full remove, NOT just `stop`: stopping detaches the NFS export, so a host-side write lands underneath the next remount and vanishes without error (this happened once — the `registered` file "came back" with the old identity).
+2. Place the wanted value directly on the NAS side: `sudo mount -t nfs4 192.168.1.2:/volume1/k8sv2/earnapp-data /mnt/prep`, write the `sdk-node-…` value into `/mnt/prep/uuid` (no trailing newline), delete `registered`/`status`, `umount`.
+3. `docker compose … up -d --force-recreate earnapp` → verified `file==env`, `showid==env` both YES. The installer **honors an existing uuid file**; re-link then works with the originally intended URL.
+
 ## Same limitation: the exit IP is not isolated
 
 All relayed traffic still exits via the home WAN IP behind OPNsense — container isolation protects sv01 the machine, not the IP. Six share-apps on one connection means the residential IP serves that much more third-party traffic; the trade-off is accepted deliberately.
