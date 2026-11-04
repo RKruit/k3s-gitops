@@ -43,6 +43,7 @@ flowchart LR
         squid -- "public web only" --> net["Internet"]
         hermes -- "NO_PROXY" --> ollama["Ollama (host) :11434"]
         waha["WAHA WhatsApp bridge<br>:3000 loopback, no route"] -- "daily report, outbound" --> net
+        myst["MystNodes dVPN node (income)<br>UI :4449 LAN-only"] -- "WG sessions, udp 61000-61100 WAN-fwd" --> net
     end
     mosq["Mosquitto MQTT :1883<br>host service, apparmor-confined, auth"]
     homey["Homey Pro (192.168.68.188)"] -- "MQTT Client app (homey/#)" --> mosq
@@ -94,6 +95,7 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`WAHA (WhatsApp bridge)`](services/waha.md) | WAHA core bridge (NOWEB engine): loopback-only WhatsApp send API :3000 for the daily homelab report cronjob; NFS session storage, no Caddy route. |
 | [`Traffmonetizer`](services/traffmonetizer.md) | traffmonetizer/cli_v2: bandwidth-sharing CLI (passive income) in a hard sandbox on sv01; no ports, no volumes, no caps, manual image updates only. |
 | [`Pawns.app (IPRoyal)`](services/pawns.md) | iproyal/pawns-cli: IPRoyal Pawns.app bandwidth-sharing CLI (passive income) in a hard sandbox on sv01; no ports, no volumes, no caps, auto-updated daily with diun. |
+| [`MystNodes (Mysterium)`](services/mystnodes.md) | mysteriumnetwork/myst dVPN node for bandwidth earnings on sv01: dedicated network, NET_ADMIN + tun, published WG range UDP 61000-61100 (custom — default collides with a stale forward), UI LAN-only on :4449. |
 | [`Homepage`](services/homepage.md) | gethomepage dashboard on homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma status-page widget. |
 | [`IT-Tools`](services/it-tools.md) | Stateless dev/web toolbox on tools.oostrandpark.com: wiring, history (k3s → compose), Kuma monitor. |
 | [`Authelia`](services/authelia.md) | SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC live for Beszel. |

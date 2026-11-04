@@ -34,6 +34,7 @@ MONITORS = [
     dict(COMMON, type="port", name="PostgreSQL (pg0)", hostname="127.0.0.1", port=5432),
     dict(COMMON, type="port", name="WAHA (WhatsApp bridge)", hostname="127.0.0.1", port=3000),
     dict(COMMON, type="port", name="Mosquitto MQTT", hostname="192.168.1.10", port=1883),
+    dict(COMMON, type="port", name="MystNodes UI (dVPN node)", hostname="192.168.1.10", port=4449),
     # Kuma v2: keyword-matching ONLY runs on type "keyword" — on type "http"
     # the keyword field is serialized but ignored (server/model/monitor.js:688).
     dict(COMMON, type="keyword", name="Homey energy export", url="http://192.168.1.10:8890/energy.json",

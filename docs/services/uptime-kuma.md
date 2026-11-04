@@ -16,9 +16,9 @@ related: [runbooks/kuma-monitor.md, services/beszel.md]
 - Data on NFS (`kuma-data` → `/volume1/k8sv2/kuma-data`). The SQLite DB is at `kuma.db`; **copy `kuma.db` + `kuma.db-wal` + `kuma.db-shm` before reading/backing it up**.
 - Admin creds: `/srv/sv01-secrets/kuma-admin.env` (user `hermes-monitoring`).
 
-## Monitors (as of 2026-10-30)
+## Monitors (as of 2026-11-04)
 
-komodo · todo-app · beszel · docs site · homepage · it-tools · authelia · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel) · waha (WhatsApp bridge, port) · mosquitto (MQTT, port 1883) · homey energy export (keyword-type, :8890 — goes DOWN when the hub is offline) · homey pro hub (ping 192.168.68.188, ethernet)
+komodo · todo-app · beszel · docs site · homepage · it-tools · authelia · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel) · waha (WhatsApp bridge, port) · mosquitto (MQTT, port 1883) · mystnodes (dVPN node UI, port 4449) · homey energy export (keyword-type, :8890 — goes DOWN when the hub is offline) · homey pro hub (ping 192.168.68.188, ethernet)
 
 !!! note
     **sv02 is deliberately not monitored** (Robert's choice). Don't add sv02 monitors without an explicit request.
