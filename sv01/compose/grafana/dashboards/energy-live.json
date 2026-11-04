@@ -862,7 +862,7 @@
   {
    "id": 13,
    "title": "Stroomprijzen (NextEnergy, hele dag)",
-   "type": "barchart",
+   "type": "bargauge",
    "datasource": {
     "type": "prometheus",
     "uid": "victoriametrics"
@@ -878,46 +878,54 @@
      "unit": "currencyEUR",
      "decimals": 2,
      "color": {
-      "mode": "fixed",
-      "fixedColor": "green"
+      "mode": "thresholds"
      },
-     "mappings": [],
      "thresholds": {
       "mode": "absolute",
       "steps": [
        {
         "color": "green",
         "value": null
+       },
+       {
+        "color": "orange",
+        "value": 0.4
+       },
+       {
+        "color": "red",
+        "value": 0.45
        }
       ]
-     }
+     },
+     "min": 0,
+     "mappings": []
     },
     "overrides": []
    },
    "options": {
-    "orientation": "auto",
-    "showValue": "never",
-    "stacking": "none",
-    "groupWidth": 0.7,
-    "barWidth": 0.9,
-    "barRadius": 0,
-    "xField": "hour",
-    "xTickLabelRotation": -45,
-    "xTickLabelSort": "asc",
-    "xTickLabelSpacing": 0,
-    "includeTimeField": false,
+    "orientation": "vertical",
+    "displayMode": "gradient",
+    "namePlacement": "auto",
+    "showUnfilled": true,
+    "sizing": "auto",
+    "minVizWidth": 0,
+    "minVizHeight": 10,
+    "valueOptions": {
+     "values": [],
+     "calcs": [
+      "lastNotNull"
+     ],
+     "limits": {}
+    },
     "legend": {
      "displayMode": "list",
      "placement": "bottom",
-     "showLegend": false,
-     "calcs": []
+     "showLegend": true
     },
     "tooltip": {
      "mode": "single",
      "sort": "none"
-    },
-    "fillOpacity": 80,
-    "lineWidth": 1
+    }
    },
    "targets": [
     {
@@ -927,18 +935,8 @@
      },
      "expr": "nextenergy_price_hour",
      "instant": true,
-     "legendFormat": "{{hour}}",
+     "legendFormat": "{{hour}}:00",
      "refId": "A"
-    }
-   ],
-   "transformations": [
-    {
-     "id": "labelsToFields",
-     "options": {}
-    },
-    {
-     "id": "merge",
-     "options": {}
     }
    ]
   }
