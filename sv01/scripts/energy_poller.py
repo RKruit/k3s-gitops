@@ -200,9 +200,12 @@ def scrape():
                 lines.append(f"nextenergy_price_current_eur {float(hourly[str(cur)])}")
             # label-based full-day price table (bars panel): every hour of today
             # as a receive-time gauge, so future hours (e.g. 23:00) are visible
-            # before they start — no future timestamps needed
+            # before they start — no future timestamps needed.
+            # UNPADDED hour labels ("7", not "07") per Robert; the bargauge
+            # keeps order only if the query answers unpadded hours in a sane
+            # order — verified empirically 04-11-2026 (see commit trail).
             for hstr, price in hourly.items():
-                lines.append(f'nextenergy_price_hour{{hour="{int(hstr):02d}"}} {float(price)}')
+                lines.append(f'nextenergy_price_hour{{hour="{int(hstr)}"}} {float(price)}')
         if pr.get("fetched"):
             lines.append(f"nextenergy_prices_age_s {int(time.time() - float(pr['fetched']))}")
     except Exception as e:
