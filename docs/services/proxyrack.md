@@ -26,6 +26,12 @@ The official image is deliberately thin: its entrypoint **downloads and runs the
 - **Identity/env**: `UUID` (`PROXYRACK_UUID` in `/srv/sv01-secrets/sv01.env` — self-generated 64-hex per the official instructions; losing it orphans the dashboard device), `API_KEY` (`PROXYRACK_API_KEY` — dashboard key; the wrapper self-registers the device at boot with a retry loop), `DEVICE_NAME=sv01`.
 - **Note**: the official image does NOT work on Raspberry Pi/ARM — amd64 only (sv01 is amd64).
 
+## First-boot observations (2026-11-04)
+
+- Registration is self-managed by the wrapper: `POST peer.proxyrack.com/api/device/add` (Api-Key header) retries every minute until the response drops `"status": "error"`, then writes the marker `/app/api.cfg` and stops. Observed: a few errored first attempts, then success within ~2 minutes; the marker file being present = registered.
+- The client ("home" connection, ID `1793791294`) connected successfully at boot. It ALSO logs recurring vendor-endpoint noise: `connect ECONNREFUSED …:80` (121.91.235.x, 149.51.229.148) and `dial tcp 144.202.45.251:443: i/o timeout`. Verified: those endpoints time out exactly the same from the **sv01 host itself** — vendor-side unreachability, not a sandbox egress fault. Robert confirmed the device shows **online in the ProxyRack dashboard** the same day. If online-state is ever in doubt, the dashboard is the source of truth; log chatter alone does not mean the stack is broken.
+- Each boot re-fetches the client artifacts (`script.js` + `PoP_go` binary, from `app-updates.sock.sh`) — see the runtime-fetched code caveat above.
+
 ## Earnings expectations
 
 Demand-gated: ProxyRack's clients decide when to use the connection, so stretches of near-zero usage are normal (peer reviews consistently report this). Realistic band: $1–5/month like the rest of the class; the 0.50 rate only matters on weeks with actual demand.
