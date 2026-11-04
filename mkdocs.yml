@@ -57,6 +57,7 @@ nav:
       - Pawns.app (IPRoyal): services/pawns.md
       - MystNodes (Mysterium): services/mystnodes.md
       - Honeygain: services/honeygain.md
+      - ProxyRack (peer): services/proxyrack.md
       - Homepage: services/homepage.md
       - IT-Tools: services/it-tools.md
       - Authelia: services/authelia.md

@@ -564,6 +564,42 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # --- ProxyRack (2026-11-04): peer program — bandwidth sharing (passive income) ---
+  # Vetted: NOT named in Google's XCPE report; Trustpilot 4.3 with recent
+  # payout-arrival reviews (~3 days); $0.50/GB (highest GB rate of the cash
+  # apps), $5 PayPal min; demand-gated (can sit idle for stretches).
+  # ⚠️ Honest caveat: the official proxyrack/pop image is a WRAPPER that
+  # downloads and runs the actual PoP client from vendor servers at each
+  # boot ("latest client script") — runtime-fetched code by design; the
+  # hard sandbox below is the containment: no caps, no volumes, no ports,
+  # tmpfs scratch, mem/cpu limits, diun + daily auto-update on :latest.
+  # Identity: self-generated 64-hex UUID in sv01.env (PROXYRACK_UUID);
+  # PROXYRACK_API_KEY (dashboard) makes the wrapper self-register the
+  # device in the dashboard at boot (retry loop); DEVICE_NAME = sv01.
+  proxyrack:
+    image: proxyrack/pop:latest
+    container_name: sv01-proxyrack
+    restart: unless-stopped
+    cap_drop: [ALL]
+    labels:
+      diun.enable: "true"
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    environment:
+      UUID: ${PROXYRACK_UUID}
+      API_KEY: ${PROXYRACK_API_KEY}
+      DEVICE_NAME: "sv01"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   caddy-data:
   caddy-config:

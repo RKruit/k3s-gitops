@@ -97,6 +97,7 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`Pawns.app (IPRoyal)`](services/pawns.md) | iproyal/pawns-cli: IPRoyal Pawns.app bandwidth-sharing CLI (passive income) in a hard sandbox on sv01; no ports, no volumes, no caps, auto-updated daily with diun. |
 | [`MystNodes (Mysterium)`](services/mystnodes.md) | mysteriumnetwork/myst dVPN node for bandwidth earnings on sv01: dedicated network, NET_ADMIN + tun, published WG range UDP 61000-61100 (custom — default collides with a stale forward), UI LAN-only on :4449. |
 | [`Honeygain`](services/honeygain.md) | honeygain/honeygain bandwidth-sharing CLI (passive income) in a hard sandbox on sv01; no ports, no volumes, no caps, creds via sv01.env, auto-updated daily. |
+| [`ProxyRack (peer)`](services/proxyrack.md) | proxyrack/pop peer client (passive income bandwidth sharing) in a hard sandbox on sv01; $0.50/GB, demand-gated; no caps, no volumes, no ports, auto-updated daily. |
 | [`Homepage`](services/homepage.md) | gethomepage dashboard on homepage.oostrandpark.com: stateless config in git, status-dots via docker.sock, Kuma status-page widget. |
 | [`IT-Tools`](services/it-tools.md) | Stateless dev/web toolbox on tools.oostrandpark.com: wiring, history (k3s → compose), Kuma monitor. |
 | [`Authelia`](services/authelia.md) | SSO provider on auth.oostrandpark.com: one account behind Caddy forward_auth on every UI route, XFF-based Kuma bypass, OIDC live for Beszel. |
