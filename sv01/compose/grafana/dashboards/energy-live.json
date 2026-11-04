@@ -927,7 +927,7 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "last_over_time(nextenergy_price_eur[1h])",
+     "expr": "max(last_over_time(nextenergy_price_eur[1h]))",
      "legendFormat": "\u20ac/kWh",
      "refId": "A"
     }
