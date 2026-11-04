@@ -13,7 +13,15 @@
 # (stale series simply stop updating). Price hours carry explicit epoch
 # timestamps (ms) via /api/v1/import/prometheus so the hourly curve is
 # stable; everything else is stored at receive time. stdlib only.
+#
+# v2 (2026-11-04): savings bookkeeping — cumulative kWh/€ counters for the
+# battery and PV, persisted across restarts in
+# /var/lib/energy-poller/state.json (systemd StateDirectory). kWh are
+# integrated from the 10 s power samples (gaps > 40 s are skipped, never
+# extrapolated); € are booked at the hourly NextEnergy price valid at the
+# moment of charging/delivery (stale prices -> kWh keeps running, € pauses).
 import json
+import os
 import sys
 import time
 import urllib.request
@@ -29,6 +37,13 @@ VM_PUSH_URL = "http://127.0.0.1:8428/api/v1/import/prometheus"
 INTERVAL_S = 10
 TZ = ZoneInfo("Europe/Amsterdam")
 
+# bookkeeping
+STATE_DIR = "/var/lib/energy-poller"
+STATE_PATH = os.path.join(STATE_DIR, "state.json")
+MAX_GAP_S = 40            # beyond this, skip integration (never extrapolate)
+PRICE_STALE_S = 90 * 60   # older price cache -> kWh keeps running, € pauses
+CAPACITY_KWH = 5.28       # nameplate for the cycles metric (see docs)
+
 REGIME_ID = {"idle": 0, "hold": 1, "discharge": 2, "charge": 3}
 
 
@@ -39,6 +54,48 @@ def log(msg):
 def fetch_json(url, timeout=4):
     with urllib.request.urlopen(url, timeout=timeout) as r:
         return json.loads(r.read().decode())
+
+
+def load_state():
+    try:
+        with open(STATE_PATH) as f:
+            st = json.load(f)
+        for k in ("charge_kwh", "discharge_kwh", "pv_kwh",
+                  "charge_eur", "discharge_eur", "pv_eur", "ts", "since"):
+            if k not in st:
+                raise ValueError(f"missing {k}")
+        return st
+    except Exception as e:
+        now = time.time()
+        log(f"state: fresh books ({type(e).__name__}: {e})")
+        return {"ts": now, "since": now, "charge_kwh": 0.0, "discharge_kwh": 0.0,
+                "pv_kwh": 0.0, "charge_eur": 0.0, "discharge_eur": 0.0, "pv_eur": 0.0}
+
+
+def save_state(st):
+    tmp = STATE_PATH + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(st, f)
+    os.replace(tmp, STATE_PATH)
+
+
+def hour_price(now):
+    """All-in €/kWh valid right now from the controller's price cache.
+
+    None when the cache is for another day or stale (>90 min) — the € books
+    pause rather than price at the wrong hour."""
+    try:
+        with open(PRICES_FILE) as f:
+            pr = json.load(f)
+        today = datetime.now(TZ).strftime("%Y-%m-%d")
+        if pr.get("date") != today:
+            return None
+        if now - float(pr.get("fetched", 0)) > PRICE_STALE_S:
+            return None
+        hourly = pr.get("hourly", {})
+        return float(hourly[str(datetime.now(TZ).hour)])
+    except Exception:
+        return None
 
 
 def scrape():
@@ -107,9 +164,7 @@ def scrape():
 
     # --- derived house load: grid = house + charge - pv - discharge ---
     if pv is not None and "p1" in vals and "gridInputPower" in vals:
-        charge = vals["gridInputPower"]
-        discharge = vals.get("outputHomePower", 0.0)
-        house = vals["p1"] + pv + discharge - charge
+        house = vals["p1"] + pv + vals.get("outputHomePower", 0.0) - vals["gridInputPower"]
         lines.append(f"house_load_w {round(house, 1)}")
 
     # --- NextEnergy hourly prices (hour-start epoch stamps; idempotent re-push) ---
@@ -131,7 +186,7 @@ def scrape():
     except Exception as e:
         log(f"prices: {e}")
 
-    return lines
+    return lines, vals, pv
 
 
 def push(lines):
@@ -144,14 +199,60 @@ def push(lines):
         r.read()
 
 
+def bookkeep(st, vals, pv, price, now):
+    """Integrate the last interval into the cumulative books.
+
+    A gap > MAX_GAP_S (poller restart, host down) skips integration: kWh and
+    € are never extrapolated — only undercounted. Battery AC-port flows are
+    counted as-is (charges at the hour's price); DC panel input into the
+    Zendure bypasses the meter and enters the books as free energy.
+    PV counter = SolarEdge via Homey only (Zendure panel input is accounted
+    inside the battery books as free charge)."""
+    dt = now - st["ts"]
+    st["ts"] = now
+    if dt <= 0 or dt > MAX_GAP_S:
+        if dt > MAX_GAP_S:
+            log(f"books: skipped {dt:.0f} s gap (no extrapolation)")
+        return
+    if "gridInputPower" in vals:
+        d = vals["gridInputPower"] * dt / 3.6e6
+        st["charge_kwh"] += d
+        if price is not None:
+            st["charge_eur"] += d * price
+    if "outputHomePower" in vals:
+        d = vals["outputHomePower"] * dt / 3.6e6
+        st["discharge_kwh"] += d
+        if price is not None:
+            st["discharge_eur"] += d * price
+    if pv is not None:
+        d = pv * dt / 3.6e6
+        st["pv_kwh"] += d
+        if price is not None:
+            # PV value under saldering: every generated kWh offsets a bought kWh
+            st["pv_eur"] += d * price
+
+
 def main():
-    log("energy-poller start")
+    os.makedirs(STATE_DIR, exist_ok=True)
+    st = load_state()
+    log(f"energy-poller start; books since {datetime.fromtimestamp(st['since']):%Y-%m-%d %H:%M}")
     while True:
         t0 = time.time()
         try:
-            lines = scrape()
+            lines, vals, pv = scrape()
+            bookkeep(st, vals, pv, hour_price(t0), t0)
+            lines += [
+                f"battery_charge_kwh {st['charge_kwh']:.4f}",
+                f"battery_discharge_kwh {st['discharge_kwh']:.4f}",
+                f"pv_kwh {st['pv_kwh']:.4f}",
+                f"battery_charge_eur {st['charge_eur']:.4f}",
+                f"battery_discharge_eur {st['discharge_eur']:.4f}",
+                f"pv_eur {st['pv_eur']:.4f}",
+                f"energy_books_since_ts {int(st['since'])}",
+                f"energy_poller_last_push_ts {int(t0)}",
+            ]
             push(lines)
-            push([f"energy_poller_last_push_ts {int(t0)}"])
+            save_state(st)
         except Exception as e:
             log(f"cycle failed: {e}")
         time.sleep(max(1, INTERVAL_S - (time.time() - t0)))

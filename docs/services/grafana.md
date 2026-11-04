@@ -37,6 +37,7 @@ Caddy route grafana.oostrandpark.com (Authelia forward_auth → anonymous Viewer
 |---|---|---|
 | Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller thresholds |
 | Energie — Verloop | `energy-daily` | price curve + thresholds, rolling-24 h kWh (import/export/PV/battery), SoC, regime, gas m³ |
+| Energie — Besparing | `energy-savings` | cumulative books: net battery saving, discharge value, charge cost, PV value (€ over the selected range), battery cycles + kWh |
 
 Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/compose/grafana/dashboards/*.json`, mounted read-only. `allowUiUpdates: true` — UI edits are possible but land in Grafana's own DB, **not** git; export an edit back to git if it must survive a re-provision.
 
@@ -64,6 +65,23 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `nextenergy_price_current_eur` | this hour's price as instant gauge |
 | `nextenergy_prices_age_s` | freshness of the prices cache |
 | `energy_poller_last_push_ts` | poller heartbeat |
+| `battery_charge_kwh` / `battery_discharge_kwh` | cumulative books: kWh into the AC port / delivered to the house (integrated from the 10 s samples, gaps skipped) |
+| `pv_kwh` | cumulative books: SolarEdge generation (Homey `generated_w`) |
+| `battery_charge_eur` / `battery_discharge_eur` | cumulative books: € booked at the hourly all-in price valid at the moment of charging/delivery |
+| `pv_eur` | cumulative books: PV value at the hourly price (saldering assumption) |
+| `energy_books_since_ts` | epoch the books started (2026-11-04) |
+
+## Savings bookkeeping (Besparing dashboard, since 2026-11-04)
+
+The poller keeps cumulative kWh/€ books (`/var/lib/energy-poller/state.json`, systemd `StateDirectory` — survives restarts and rebuilds). Assumptions, deliberately explicit:
+
+1. **Discharge value** = delivered kWh × the hourly all-in price (zero-export regime: the delivered kWh replaces a purchase at that hour's price). Correct counterfactual for arbitrage under saldering.
+2. **Charge cost** = kWh into the AC port × that hour's price. Round-trip losses enter automatically (charged kWh includes them). DC panel input into the Zendure bypasses the meter and is booked as free energy — shows up as saving inside the battery numbers, not the PV panel.
+3. **PV value** = SolarEdge generation (via Homey) × hourly price — valid while saldering lasts; the definition changes when saldering ends (2027). Surplus-AC-charging is booked at the hour price, which *understates* battery savings slightly (that energy would have been exported ≈ same value under saldering).
+4. **Wear is not included.** Rough reference if you want to subtract it: AB-series pack ≈ €433 / ~3 kWh / 6000 cycles ≈ €0.02–0.03 per delivered kWh.
+5. Stale prices (> 90 min or wrong day) → kWh counters keep running, € counters pause (no wrong-hour pricing enters the books). Gaps > 40 s (restarts/downtime) are skipped, never extrapolated.
+
+"Netto besparing (accu)" = `increase(battery_discharge_eur[$__range]) − increase(battery_charge_eur[$__range])` — cross-check any range against the NextEnergy verbruik page before trusting a policy decision to it.
 
 ## Gotchas
 

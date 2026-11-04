@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=rkruit
+StateDirectory=energy-poller
 ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/energy_poller.py
 Restart=always
 RestartSec=5
