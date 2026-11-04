@@ -861,7 +861,7 @@
   },
   {
    "id": 13,
-   "title": "Stroomprijzen (NextEnergy)",
+   "title": "Stroomprijzen (NextEnergy, hele dag)",
    "type": "barchart",
    "datasource": {
     "type": "prometheus",
@@ -873,8 +873,6 @@
     "w": 12,
     "h": 6
    },
-   "timeFrom": "now/d",
-   "interval": "1h",
    "fieldConfig": {
     "defaults": {
      "unit": "currencyEUR",
@@ -903,11 +901,11 @@
     "groupWidth": 0.7,
     "barWidth": 0.9,
     "barRadius": 0,
-    "xField": "Time",
+    "xField": "hour",
     "xTickLabelRotation": -45,
     "xTickLabelSort": "asc",
     "xTickLabelSpacing": 0,
-    "includeTimeField": true,
+    "includeTimeField": false,
     "legend": {
      "displayMode": "list",
      "placement": "bottom",
@@ -927,7 +925,9 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "max(last_over_time(nextenergy_price_eur[1h]))",
+     "expr": "nextenergy_price_hour",
+     "instant": true,
+     "format": "table",
      "legendFormat": "\u20ac/kWh",
      "refId": "A"
     }
