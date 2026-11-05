@@ -9,6 +9,8 @@
 #   zendure-follow controller ..... http://192.168.1.10:8891/status.json
 #   Homey energy exporter ......... http://192.168.1.10:8890/energy.json
 #   NextEnergy prices cache ....... /var/lib/zendure-follow/prices.json
+#                                   (+ prices-tomorrow.json once the app
+#                                    publishes the next day, ±16:00)
 # Sources fail independently: each cycle pushes whatever it could scrape
 # (stale series simply stop updating). Price hours carry explicit epoch
 # timestamps (ms) via /api/v1/import/prometheus so the hourly curve is
@@ -30,7 +32,7 @@ import os
 import sys
 import time
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 P1_URL = "http://192.168.68.173/api/v1/data"
@@ -38,6 +40,7 @@ BATTERY_URL = "http://192.168.68.227/properties/report"
 CONTROLLER_URL = "http://192.168.1.10:8891/status.json"
 HOMEY_URL = "http://192.168.1.10:8890/energy.json"
 PRICES_FILE = "/var/lib/zendure-follow/prices.json"
+TOMORROW_FILE = "/var/lib/zendure-follow/prices-tomorrow.json"
 VM_PUSH_URL = "http://127.0.0.1:8428/api/v1/import/prometheus"
 INTERVAL_S = 10
 TZ = ZoneInfo("Europe/Amsterdam")
@@ -219,6 +222,27 @@ def scrape():
             lines.append(f"nextenergy_prices_age_s {int(time.time() - float(pr['fetched']))}")
     except Exception as e:
         log(f"prices: {e}")
+
+    # --- NextEnergy TOMORROW (clock hours; Grafana "morgen" bars panel) ---
+    # The controller caches tomorrow's published price set from the app-API
+    # (appears daily ±16:00). Same label scheme as the today bars; pushed only
+    # while the file's date is really tomorrow, so a yesterday-evening cache
+    # can never surface on the wrong day (before publication: empty panel).
+    try:
+        with open(TOMORROW_FILE) as f:
+            pr = json.load(f)
+        lines.append(f"nextenergy_prices_tomorrow_age_s "
+                     f"{int(time.time() - float(pr.get('fetched', 0)))}")
+        tom = datetime.now(TZ).date() + timedelta(days=1)
+        hourly_t = pr.get("hourly", {})
+        if pr.get("date") == tom.isoformat() and hourly_t:
+            for hstr, price in hourly_t.items():
+                h = int(hstr)
+                lines.append(
+                    f'nextenergy_price_tomorrow_hour{{aa_order="{h:02d}",hour="{h}"}} '
+                    f"{float(price)}")
+    except Exception as e:
+        log(f"tomorrow: {e}")
 
     return lines, vals, pv
 

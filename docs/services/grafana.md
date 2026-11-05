@@ -17,7 +17,8 @@ energy-poller.service (host, every 10 s)
   ├─ Zendure 2400 AC+ ..... http://192.168.68.227/properties/report
   ├─ controller status .... http://192.168.1.10:8891/status.json
   ├─ Homey exporter ....... http://192.168.1.10:8890/energy.json
-  └─ prices cache ......... /var/lib/zendure-follow/prices.json
+  └─ prices caches ........ /var/lib/zendure-follow/prices.json
+                            + prices-tomorrow.json (published daily ±16:00)
         │ push (Prometheus text, /api/v1/import/prometheus)
         ▼
 victoria-metrics (container, 127.0.0.1:8428, NFS vm-data)
@@ -35,7 +36,7 @@ Caddy route grafana.oostrandpark.com (Authelia forward_auth → anonymous Viewer
 
 | Dashboard | uid | Contents |
 |---|---|---|
-| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller thresholds, electricity cost today (midnight-anchored panel), NextEnergy hourly rates as bar gauge (hour-labeled "1…23", chronological, blue "◄ nu" bar on the current hour, incl. upcoming hours) |
+| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller thresholds, electricity cost today (midnight-anchored panel), NextEnergy hourly rates as bar gauge (hour-labeled "1…23", chronological, blue "◄ nu" bar on the current hour, incl. upcoming hours), plus the same bar gauge for TOMORROW (same hour labels, no current-hour bar; filled only once NextEnergy publishes the next day ±16:00, empty before) |
 | Energie — Verloop | `energy-daily` | price curve + thresholds, rolling-24 h kWh (import/export/PV/battery), SoC, regime, gas m³ |
 | Energie — Besparing | `energy-savings` | cumulative books: net battery saving, discharge value, charge cost, PV value (€ over the selected range), battery cycles + kWh |
 
@@ -71,6 +72,8 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `pv_eur` | cumulative books: PV value at the hourly price (saldering assumption) |
 | `purchase_eur` / `export_eur` | electricity-cost books: import/export kWh priced at the hourly all-in rate — exact P1-counter deltas, gap-immune |
 | `nextenergy_price_hour{aa_order,hour}` | label-based full-day price table for the bars panel — bare `hour` = display label ("1" for 01:00), zero-padded `aa_order` = the sorting twin (VM sorts by label name then value; bare labels alone lexicographically jumble) |
+| `nextenergy_price_tomorrow_hour{aa_order,hour}` | label-based *tomorrow* price table for the morgen bars panel — same scheme as the today bars, no "NU" bar (tomorrow has no current hour); pushed only while the cache's date is really tomorrow, so before the app publishes (±16:00) the series is empty, not stale |
+| `nextenergy_prices_tomorrow_age_s` | freshness of the tomorrow price cache (grows until the app publishes the next day, ±16:00) |
 | `energy_books_since_ts` | epoch the books started (2026-11-04) |
 
 ## Savings bookkeeping (Besparing dashboard, since 2026-11-04)
@@ -92,5 +95,5 @@ Electricity-cost books (poller v3): `purchase_eur` and `export_eur` price the P1
 - **VictoriaMetrics on NFS is a watch item**: VM's docs are lukewarm on network filesystems; NFS won because it's the standing data-home convention and the write rate is tiny (~5 samples/s). If VM ever logs NFS I/O errors, move `vm-data` to a local volume and back up with its snapshot API.
 - `grafana` + `victoria-metrics` float on `:latest` → daily image-update timer applies upgrades (VM storage auto-migrates backward-compatibly).
 - `house_load_w` is an identity-derivation, not a meter — if Homey (PV) is stale, the number is stale too.
-- Price metric `nextenergy_price_eur` carries the *today* cache only; the controller refreshes it hourly (+2 min). Tomorrow's prices appear in the evening plan, not in this series (yet).
+- Price metric `nextenergy_price_eur` carries the *today* cache only; the controller refreshes it hourly (+2 min) with ONE app login followed by three day-queries (yesterday, today, tomorrow). Tomorrow's hourly prices live in their own label series (`nextenergy_price_tomorrow_hour`): the controller caches them to `prices-tomorrow.json` whenever the app already publishes the next day (±16:00) and the poller pushes them date-gated; before publication the morgen panel is simply empty (no-data is normal there, not a fault).
 - SolarEdge is read **via Homey** (inverter app in Homey). Inverter-local Modbus TCP is disabled in the SetApp settings (checked 2026-11-04, no port 1502 on the IoT LAN) — enabling it would only be needed for direct 1–5 s inverter data.

@@ -1,6 +1,6 @@
 {
  "uid": "energy-live",
- "title": "Energie \u2014 Live",
+ "title": "Energie — Live",
  "description": "Realtime energiedashboard: net (P1), huisverbruik, SolarEdge PV, Zendure-accu en NextEnergy-prijs.",
  "tags": [
   "energy",
@@ -845,7 +845,7 @@
       "uid": "victoriametrics"
      },
      "expr": "increase(purchase_eur[1h])",
-     "legendFormat": "inkoop \u20ac/u",
+     "legendFormat": "inkoop €/u",
      "refId": "A"
     },
     {
@@ -854,7 +854,7 @@
       "uid": "victoriametrics"
      },
      "expr": "increase(purchase_eur[1h]) - increase(export_eur[1h])",
-     "legendFormat": "netto \u20ac/u (inkoop \u2212 export)",
+     "legendFormat": "netto €/u (inkoop − export)",
      "refId": "B"
     }
    ]
@@ -916,7 +916,7 @@
        },
        {
         "id": "displayName",
-        "value": "\u25c4 nu"
+        "value": "◄ nu"
        }
       ]
      }
@@ -950,6 +950,79 @@
      "refId": "A"
     }
    ]
+  },
+  {
+   "id": 14,
+   "title": "Stroomprijzen (NextEnergy, morgen)",
+   "type": "bargauge",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 20,
+    "w": 12,
+    "h": 6
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyEUR",
+     "decimals": 2,
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 0.4
+       },
+       {
+        "color": "red",
+        "value": 0.45
+       }
+      ]
+     },
+     "min": 0,
+     "mappings": []
+    },
+    "overrides": []
+   },
+   "options": {
+    "orientation": "vertical",
+    "displayMode": "gradient",
+    "namePlacement": "auto",
+    "showUnfilled": true,
+    "sizing": "auto",
+    "minVizWidth": 0,
+    "minVizHeight": 10,
+    "valueOptions": {
+     "values": [],
+     "calcs": [
+      "lastNotNull"
+     ],
+     "limits": {}
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "nextenergy_price_tomorrow_hour{aa_order!=\"\"}",
+     "instant": true,
+     "legendFormat": "{{hour}}",
+     "refId": "A"
+    }
+   ],
+   "description": "All-in uurprijzen voor morgen (zelfde schema als de vandaag-balken). Gevuld zodra NextEnergy de volgendag publiceert (±16:00, app-API); daarvóór leeg — geen data is normaal. Datum-poort voorkomt verkeerde dag."
   }
  ]
 }

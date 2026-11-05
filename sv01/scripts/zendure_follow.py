@@ -7,8 +7,10 @@ the cheapest hours, discharge to the house (zero export) in the most expensive
 hours, idle in between so energy is preserved for the peaks. PV-surplus charging
 stays in as a free bonus but the strategy never depends on it.
 
-Price source: NextEnergy app-API (personal contract; today + yesterday in one
-login, recipe from zendure_schedule_report.py). DP labels lead the clock by one
+Price source: NextEnergy app-API (personal contract; today, yesterday and —
+once published, ±16:00 — tomorrow in one login; recipe from
+zendure_schedule_report.py). Tomorrow's all-in prices are cached to
+prices-tomorrow.json for the Grafana "morgen" bars panel. DP labels lead the clock by one
 hour -- DP[label] holds the price of CLOCK hour label+1 -- confirmed against
 Robert's billing page 03-11-2026 (mon 06-07 = DP[5] 0,42, 14-15 = DP[13] 0,37).
 So clock hour 0 = yesterday's DP[23] and clock hour h = DP[h-1]. Fallback: the
@@ -265,10 +267,11 @@ def fetch_widget():
     return {}
 
 
-def app_dp(day):
-    """DP-set {label: euro/kWh} for calendar day `day` via the NextEnergy app
-    API (personal contract). Recipe: nextenergy_app.json + secrets file.
-    Returns None on any failure."""
+def _app_session():
+    """OutSystems login-sessie (opener, crf, modver) — één login per cyclus,
+    daarna meerdere dag-queries in dezelfde sessie (vandaag, gisteren voor de
+    midnight-wrap en morgen voor het dashboard). Recipe: nextenergy_app.json +
+    secrets file. Returns None on any failure."""
     if not (os.path.exists(APP_AUTH_FILE) and os.path.exists(APP_CFG_FILE)):
         return None
     try:
@@ -323,16 +326,29 @@ def app_dp(day):
             if c.name == "nr2Users_Customers":
                 m = re.search(r"crf=([^;]+)", urllib.parse.unquote(c.value))
                 crf = m.group(1) if m else ""
+        return opener, crf, modver
+    except Exception:
+        return None
+
+
+def _dp_query(opener, crf, modver, day):
+    """DP-set {label: euro/kWh} voor kalenderdag `day` (labels lopen één uur
+    vóór op de klok — zie dp_to_clock). Returns None on any failure."""
+    try:
+        cfg = json.load(open(APP_CFG_FILE))
+        base = cfg["base_url"]
         body = json.loads(json.dumps(cfg["price_body"]))
         body["versionInfo"]["moduleVersion"] = modver
         body["clientVariables"]["PriceDate"] = day.isoformat()
         body["clientVariables"]["PriceCostLevel"] = cfg["cost_level"]
-        h2 = dict(H)
-        h2["X-CSRFToken"] = crf
-        h2["Referer"] = base + "/Mobile_EnergyNext/MarketPrices"
+        h = {"Content-Type": "application/json; charset=UTF-8",
+             "Accept": "application/json", "OutSystems-locale": "en-US",
+             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/131",
+             "Origin": base, "Referer": base + "/Mobile_EnergyNext/MarketPrices",
+             "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": crf}
         resp = json.loads(opener.open(urllib.request.Request(
             base + cfg["price_path"], data=json.dumps(body).encode(),
-            headers=h2, method="POST"), timeout=25).read())
+            headers=h, method="POST"), timeout=25).read())
         if resp.get("exception"):
             return None
         lst = (resp.get("data", {}).get("DataPoints") or {}).get("List") or []
@@ -341,6 +357,22 @@ def app_dp(day):
         return prices if 20 <= len(prices) <= 24 else None
     except Exception:
         return None
+
+
+def save_tomorrow(prices, fetched):
+    """Morgenprijs-cache (KLOK-uren 0..23) voor het Grafana-morgenpanel. De
+    poller gebruikt 'm alleen wanneer date de échte kalenderdatum van morgen
+    is — een cache van de vorige avond kan zo nooit op de verkeerde dag landen
+    (de app publiceert morgenprijzen pas ±16:00)."""
+    try:
+        os.makedirs(STATUS_DIR, exist_ok=True)
+        with open(os.path.join(STATUS_DIR, "prices-tomorrow.json"), "w") as f:
+            json.dump({"date": (datetime.date.today()
+                                + datetime.timedelta(days=1)).isoformat(),
+                       "hourly": prices, "fetched": fetched,
+                       "source": "app"}, f)
+    except OSError:
+        pass
 
 
 def dp_to_clock(dp_today, dp_prev):
@@ -367,16 +399,26 @@ def widget_to_clock(bars):
 
 def fetch_prices():
     """Actuele prijzen in KLOK-uren {0..23: euro/kWh}, of {} bij falen.
-    Primary: app-API (personal contract; today + yesterday for the midnight
-    wrap). Fallback: public widget with the same DP shift applied."""
+    Primary: app-API (personal contract) — één login per cyclus, daarna
+    DP-queries voor gisteren (midnight-wrap), vandaag en morgen. De
+    morgenprijzen verschijnen pas ±16:00; geen DP-response = geen
+    cache-update (de vorige cache kan sowieso niet op de verkeerde dag
+    landen, zie save_tomorrow). Fallback: public widget with the same DP
+    shift applied."""
     today = datetime.date.today()
-    dp_t = app_dp(today)
-    dp_y = app_dp(today - datetime.timedelta(days=1)) if dp_t else None
-    if dp_t:
-        prices = dp_to_clock(dp_t, dp_y)
-        if prices:
-            state["price_source"] = "app"
-            return prices
+    sess = _app_session()
+    if sess:
+        dp_t = _dp_query(*sess, today)
+        if dp_t:
+            dp_y = _dp_query(*sess, today - datetime.timedelta(days=1))
+            dp_tom = _dp_query(*sess, today + datetime.timedelta(days=1))
+            prices = dp_to_clock(dp_t, dp_y)
+            if prices:
+                state["price_source"] = "app"
+                tom = dp_to_clock(dp_tom, dp_t) if dp_tom else None
+                if tom and len(tom) >= 20:
+                    save_tomorrow(tom, time.time())
+                return prices
     bars = fetch_widget()
     if bars:
         prices = widget_to_clock(bars)
