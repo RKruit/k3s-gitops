@@ -78,13 +78,14 @@ CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
 CHARGE_TARGET = 90  # %: stop grid-charging at this SOC (Robert 02-11-2026 terug naar max 90%; zon mag tot 100%, zie SURPLUS_TARGET)
-# One-day tweak (Robert 05-11-2026): tijdens de 2 ochtend-ontlaaduren van
-# 06-11 (klok 07:00-09:00) CONTINU met de cap ontladen — zero-export-volger
-# uitgeschakeld op Roberts verzoek (de accu zal dan exporteren bij lage
-# huisbelasting; saldering waardeert die ≈ gelijk aan vermijde inkoop).
+# One-day tweak (Robert 05-11-2026): 06-11 CONTINU met de cap ontladen in de
+# 2 ochtend-ontlaaduren (klok 07:00-09:00) én de 5 duurste avonduren
+# (klok 16:00-21:00; 0,50-0,57) — zero-export-volger uitgeschakeld op
+# Roberts verzoek (de accu zal dan exporteren bij lage huisbelasting;
+# saldering waardeert die ≈ gelijk aan vermijde inkoop, dispuut-open).
 # Na de datumpoort blijft dit zoals DISCHARGE_NOT_BEFORE_* gewoon dormant.
 DISCHARGE_FULL_DATE = "2026-11-06"
-DISCHARGE_FULL_HOURS = (7, 8)
+DISCHARGE_FULL_HOURS = (7, 8, 16, 17, 18, 19, 20)
 # One-day tweak (Robert 31-10): today only discharge from 16:00 on — the 15h
 # hour is 1 ct/kWh cheaper than 16h+, so holding the energy one more hour pays.
 # Reverts automatically tomorrow (remove these two lines to make it permanent).
@@ -556,11 +557,11 @@ def compute_target(p1, props, last_written, p_regime, p1_avg=None):
 
     if p_regime == "discharge" and soc > floor_pct:
         # One-day tweak (Robert 05-11, zie DISCHARGE_FULL_*): full-cap
-        # ontladen in de ochtend-ontlaaduren, zonder volgen/hold/nudge.
+        # ontladen in de gekozen ontladuren, zonder volgen/hold/nudge.
         now_dt = datetime.datetime.now().astimezone()
         if (str(now_dt.date()) == DISCHARGE_FULL_DATE
                 and now_dt.hour in DISCHARGE_FULL_HOURS):
-            state["regime"] = "discharge: full 800W (06-11 ochtend)"
+            state["regime"] = "discharge: full 800W (06-11)"
             if lw_out == OUT_CAP and lw_in == 0:
                 return None
             return OUT_CAP, 0
