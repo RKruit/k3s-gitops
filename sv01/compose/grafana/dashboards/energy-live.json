@@ -15,7 +15,7 @@
   "to": "now"
  },
  "schemaVersion": 39,
- "version": 19,
+ "version": 21,
  "annotations": {
   "list": [
    {
@@ -777,8 +777,16 @@
      "refId": "C"
     }
    ],
-   "description": "Vanaf middernacht tot nu: uurprijs all-in + de P30/P70-drempels van de regelaar (vlakke lijnen). Hele dag incl. komende uren: klik het paneel-linkje 'Hele dag' (komende uren zijn op een 6-uur-dashboardtechnisch niet default zichtbaar — Grafana 13 negeert per-paneel 'to').",
-   "timeFrom": "now/d"
+   "description": "Volgt standaard het dashboard-bereik (realtime 6 h). Klik 'Hele dag' in de hoek: middernacht-24:00 incl. de komende uren (Prijs vs P30/P70-drempels). Grafana 13 heeft geen per-paneel end-override; vandaar via de dashboard-url.",
+   "links": [
+    {
+     "title": "Hele dag ▸",
+     "url": "/d/energy-live/energie-live?from=now%2Fd&to=now%2Fd&viewPanel=11&timezone=browser",
+     "targetBlank": false,
+     "keepTime": false,
+     "includeVars": false
+    }
+   ]
   },
   {
    "id": 12,
