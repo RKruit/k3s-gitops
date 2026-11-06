@@ -15,7 +15,7 @@
   "to": "now"
  },
  "schemaVersion": 39,
- "version": 1,
+ "version": 19,
  "annotations": {
   "list": [
    {
@@ -763,7 +763,7 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "controller_charge_threshold_eur",
+     "expr": "last_over_time(controller_charge_threshold_eur[24h])",
      "legendFormat": "laaddrempel",
      "refId": "B"
     },
@@ -772,11 +772,17 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "controller_discharge_threshold_eur",
+     "expr": "last_over_time(controller_discharge_threshold_eur[24h])",
      "legendFormat": "ontlaaddrempel",
      "refId": "C"
     }
-   ]
+   ],
+   "time": {
+    "from": "now/d",
+    "to": "now/d+1d",
+    "hideTimeOverride": false
+   },
+   "description": "Hele dag (middernacht-verankerd): uurprijs all-in + de P30/P70 drempels van de regelaar als vlakke lijnen, komende uren inclusief. De staart na 24:00 leeg zolang er nog geen data van morgen is — normaal."
   },
   {
    "id": 12,
