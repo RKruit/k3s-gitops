@@ -777,12 +777,8 @@
      "refId": "C"
     }
    ],
-   "time": {
-    "from": "now/d",
-    "to": "now/d+1d",
-    "hideTimeOverride": false
-   },
-   "description": "Hele dag (middernacht-verankerd): uurprijs all-in + de P30/P70 drempels van de regelaar als vlakke lijnen, komende uren inclusief. De staart na 24:00 leeg zolang er nog geen data van morgen is — normaal."
+   "description": "Vanaf middernacht tot nu: uurprijs all-in + de P30/P70-drempels van de regelaar (vlakke lijnen). Hele dag incl. komende uren: klik het paneel-linkje 'Hele dag' (komende uren zijn op een 6-uur-dashboardtechnisch niet default zichtbaar — Grafana 13 negeert per-paneel 'to').",
+   "timeFrom": "now/d"
   },
   {
    "id": 12,
