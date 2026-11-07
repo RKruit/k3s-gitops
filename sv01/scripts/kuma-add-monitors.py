@@ -26,6 +26,12 @@ MONITORS = [
     # create AFTER Robert's unbound entry for the hostname (Kuma resolves
     # via unbound; runs only when the script below is executed on purpose)
     dict(COMMON, type="http", name="Grafana UI", url="https://grafana.oostrandpark.com/"),
+    # Frigate: Authelia-gate + eigen login -> anonieme GET / is een 302;
+    # bewijst alleen dat de route up is (detectie-check: docker exec curl
+    # 127.0.0.1:5000/stats — zie docs/services/frigate.md).
+    # Draaien pas ná Robert's unbound-entry voor frigate.oostrandpark.com.
+    dict(COMMON, type="http", name="Frigate UI", url="https://frigate.oostrandpark.com/",
+         accepted_statuscodes=["200-299", "302-302"]),
     dict(COMMON, type="http", name="IT-Tools", url="https://tools.oostrandpark.com/"),
     dict(COMMON, type="http", name="Authelia", url="https://auth.oostrandpark.com/api/health"),
     dict(COMMON, type="http", name="GitHub webhook (hooks)", url="https://hooks.oostrandpark.com/"),

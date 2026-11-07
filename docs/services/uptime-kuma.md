@@ -18,7 +18,7 @@ related: [runbooks/kuma-monitor.md, services/beszel.md]
 
 ## Monitors (as of 2026-11-04)
 
-komodo · todo-app · beszel · docs site · homepage · it-tools · grafana · authelia · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel) · waha (WhatsApp bridge, port) · mosquitto (MQTT, port 1883) · mystnodes (dVPN node UI, port 4449) · homey energy export (keyword-type, :8890 — goes DOWN when the hub is offline) · homey pro hub (ping 192.168.68.188, ethernet)
+komodo · todo-app · beszel · docs site · homepage · it-tools · grafana · authelia · kuma-self · hindsight · ollama · pg0 · gh-webhook (hooks-tunnel) · waha (WhatsApp bridge, port) · mosquitto (MQTT, port 1883) · mystnodes (dVPN node UI, port 4449) · homey energy export (keyword-type, :8890 — goes DOWN when the hub is offline) · homey pro hub (ping 192.168.68.188, ethernet) · frigate UI (302-tolerant: Authelia gate + Frigate's own login, detector-only install)
 
 !!! note
     **sv02 is deliberately not monitored** (Robert's choice). Don't add sv02 monitors without an explicit request.

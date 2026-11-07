@@ -1,0 +1,33 @@
+# Frigate config — sv01 (git-managed source of truth).
+# frigate-config-init copies this into the frigate-config volume at every
+# container recreate; runtime state (frigate.db, .jwt_secret, users) lives
+# in the same volume. Deployed for the Coral USB Accelerator only — NO
+# cameras configured yet: when cameras land, add `cameras:` entries here.
+# Motion-only recording (Robert's standing preference): no top-level
+# `record.retain.days` -> no 24/7 retention; only event recordings kept.
+
+detectors:
+  coral:
+    type: edgetpu
+    device: usb
+
+# --- motion-only recording (Frigate 0.17+ record schema) ---
+record:
+  enabled: true
+  alerts:
+    pre_capture: 5
+    post_capture: 5
+    retain:
+      mode: motion
+      days: 14
+  detections:
+    pre_capture: 5
+    post_capture: 5
+    retain:
+      mode: motion
+      days: 7
+
+snapshots:
+  enabled: true
+  retain:
+    default: 14

@@ -36,6 +36,7 @@ tls {
 | homepage.oostrandpark.com | `homepage:3000` | same docker network |
 | tools.oostrandpark.com | `it-tools:80` | same docker network (stateless) |
 | grafana.oostrandpark.com | `grafana:3000` | energy dashboards ([Grafana](grafana.md)) |
+| frigate.oostrandpark.com | `frigate:8971` | NVR (Coral EdgeTPU, no cameras yet); Frigate's own login behind the gate ([Frigate](frigate.md)) |
 | auth.oostrandpark.com | `authelia:9091` | Authelia SSO portal — deliberately NO forward_auth (the login page must not require itself) |
 | sv02.oostrandpark.com | *(separate Caddy instance on sv02, `tls internal`)* | different host, different PKI |
 

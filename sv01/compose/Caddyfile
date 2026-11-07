@@ -93,6 +93,16 @@ grafana.oostrandpark.com {
 	reverse_proxy grafana:3000
 }
 
+# Frigate (2026-11-07): NVR rond de Coral USB-stick — nog geen camera's.
+# 8971 = Frigate's authenticated port (eigen login achter de Authelia-muur).
+frigate.oostrandpark.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	import authelia
+	reverse_proxy frigate:8971
+}
+
 # Authelia SSO-portal zelf (2026-10-28): GEEN forward_auth (anders login-loop).
 auth.oostrandpark.com {
 	tls {

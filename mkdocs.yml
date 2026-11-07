@@ -62,6 +62,7 @@ nav:
       - Homepage: services/homepage.md
       - IT-Tools: services/it-tools.md
       - Grafana: services/grafana.md
+      - Frigate (Coral NVR): services/frigate.md
       - Authelia: services/authelia.md
       - Container-upkeep: services/container-upkeep.md
       - Mosquitto (MQTT): services/mosquitto.md
