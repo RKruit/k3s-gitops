@@ -6,6 +6,10 @@
 # Motion-only recording (Robert's standing preference): no top-level
 # `record.retain.days` -> no 24/7 retention; only event recordings kept.
 
+# 0.18 schema: mqtt + cameras are REQUIRED fields even when unused/empty.
+mqtt: {}
+cameras: {}
+
 detectors:
   coral:
     type: edgetpu
