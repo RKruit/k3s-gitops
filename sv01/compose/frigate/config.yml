@@ -7,7 +7,10 @@
 # `record.retain.days` -> no 24/7 retention; only event recordings kept.
 
 # 0.18 schema: mqtt + cameras are REQUIRED fields even when unused/empty.
-mqtt: {}
+# mqtt.enabled defaults to TRUE with empty host -> "Invalid host" error spam;
+# explicit disable is the correct no-broker form (verified in config/mqtt.py).
+mqtt:
+  enabled: false
 cameras: {}
 
 detectors:
