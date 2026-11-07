@@ -31,6 +31,10 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 HID = '66e57ca24da8fc528fb04f47'
 HUB = 'http://192.168.68.188'  # ethernet (live 02-11-2026); wifi standby .128
+# heal uses an ABSOLUTE path: the service PATH lacks ~/.npm-global/bin where
+# the CLI lives — a bare 'homey' raised FileNotFoundError and (uncaught) KILLED
+# the tick loop overnight 06-11 (crash-loop for ~16 h: stale 520 W on the PV)
+HOMEY_CLI = '/home/rkruit/.npm-global/bin/homey'
 SCF = '/home/rkruit/.athom-cli/settings.json'
 OUT = '/srv/homey-metrics/energy.json'
 BIND = ('192.168.1.10', 8890)
@@ -93,42 +97,64 @@ def write_json(obj):
 
 
 LAST = {'error': 'starting up'}
+LAST_NOTE = '__none__'
+
+
+def log(msg):
+    print(time.strftime('%H:%M:%S'), msg, flush=True)
 
 
 def tick():
-    global LAST
+    global LAST, LAST_NOTE
     sess = read_session()
     last_heal = 0
     while True:
         ok = False
+        note = ''
         if sess:
             st, body = hub_get('/api/manager/energy/live', sess)
             if st == 200:
                 try:
-                    flat = flatten(json.loads(body))
-                    LAST = flat
+                    LAST = flatten(json.loads(body))
                     ok = True
-                except Exception:
-                    pass
+                except Exception as e:
+                    note = 'HTTP 200 but unparseable: %s' % e
             elif st == 401:
                 sess = None
+                note = 'HTTP 401: hub session expired/invalid'
+            elif st == 0:
+                note = 'hub unreachable: %s' % body[:120]
+            else:
+                note = 'HTTP %s: %s' % (st, body[:120])
+
         if not ok:
-            err = 'hub unreachable or session expired'
+            # one journal line per NEW cause, not per interval
+            if note and note != LAST_NOTE:
+                log('down: %s' % note)
+                LAST_NOTE = note
+
             if time.time() - last_heal > HEAL_COOLDOWN:
-                # one CLI command lets the CLI re-auth + refresh the cache
-                try:
-                    subprocess.run(
-                        ['homey', 'api', 'raw', '--path', '/api/manager/system/ping'],
-                        capture_output=True, timeout=60)
-                except Exception:
-                    pass
                 last_heal = time.time()
-                sess = read_session()
+                try:
+                    healed = subprocess.run(  # one CLI command -> re-auth + cache refresh
+                        [HOMEY_CLI, 'api', 'raw', '--path',
+                         '/api/manager/system/ping'], capture_output=True, timeout=60)
+                    tail = (healed.stdout + healed.stderr).decode('utf8', 'ignore')
+                    tail = tail.strip()[:150]
+                    sess = read_session()
+                    log('heal: exit=%s out=%r -> token %s' % (
+                        healed.returncode, tail, 'refreshed' if sess else 'MISSING'))
+                except Exception as e:
+                    log('heal: CLI failed: %s' % e)
+            err = 'hub unreachable or session expired'
             cur = time.strftime('%Y-%m-%dT%H:%M:%S%z')
             out = dict(LAST) if LAST.get('source') == 'homey' and 'error' not in LAST else {}
             out.update({'source': 'homey', 'updated': cur, 'stale': bool(out), 'error': err})
             write_json(out)
         else:
+            if LAST_NOTE != '__none__':
+                log('recovered after: %s' % LAST_NOTE)
+                LAST_NOTE = '__none__'
             write_json(LAST)
         time.sleep(INTERVAL)
 

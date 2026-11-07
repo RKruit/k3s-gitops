@@ -177,6 +177,11 @@ def scrape():
     pv = None
     try:
         j = fetch_json(HOMEY_URL)
+        if j.get("error") or j.get("stale"):
+            # exporter lost its hub session and is serving a frozen snapshot:
+            # do NOT push it — a frozen PV value (520 W all night) lies worse
+            # than a gap; also keeps the kWh/€ books clean
+            raise RuntimeError("homey exporter stale: %s" % (j.get("error") or "?"))
         pv = float(j.get("generated_w", 0))
         lines.append(f"pv_power_w {pv}")
     except Exception as e:
