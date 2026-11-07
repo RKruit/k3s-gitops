@@ -96,8 +96,8 @@ def write_json(obj):
         pass
 
 
-LAST = {'error': 'starting up'}
-LAST_NOTE = '__none__'
+LAST: dict[str, object] = {'error': 'starting up'}
+LAST_NOTE: object = '__none__'
 
 
 def log(msg):
@@ -149,13 +149,19 @@ def tick():
             err = 'hub unreachable or session expired'
             cur = time.strftime('%Y-%m-%dT%H:%M:%S%z')
             out = dict(LAST) if LAST.get('source') == 'homey' and 'error' not in LAST else {}
-            out.update({'source': 'homey', 'updated': cur, 'stale': bool(out), 'error': err})
+            out.update({'source': 'homey', 'updated': cur, 'stale': True, 'error': err})
             write_json(out)
         else:
             if LAST_NOTE != '__none__':
                 log('recovered after: %s' % LAST_NOTE)
                 LAST_NOTE = '__none__'
-            write_json(LAST)
+            # uniform flags on EVERY write: stale/error keys must always be
+            # present so keyword monitors + the poller's stale-gate cannot be
+            # fooled by key-absence (healthy = '"stale":false' + '"error":null')
+            out = dict(LAST)
+            out.setdefault('stale', False)
+            out['error'] = None
+            write_json(out)
         time.sleep(INTERVAL)
 
 

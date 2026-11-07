@@ -44,6 +44,12 @@ MONITORS = [
          keyword="consumed_w"),
     dict(COMMON, type="keyword", name="Zendure regelaar", url="http://192.168.1.10:8891/status.json",
          retryInterval=30, keyword='"last_error":""'),
+    # stale-drift watch: the exporter v4 writes '"stale":false' on EVERY body
+    # (healthy: stale:false+error:null; any failure shape: stale:true) — a
+    # keyword monitor on it catches a hub-session freeze (2026-11-07 520 W PV
+    # lesson) that the body-level 'consumed_w' monitor cannot see
+    dict(COMMON, type="keyword", name="Homey energy stale", url="http://192.168.1.10:8890/energy.json",
+         keyword='"stale":false'),
     dict(COMMON, type="ping", name="Homey Pro (hub)", hostname="192.168.68.188"),  # ethernet
 ]
 
