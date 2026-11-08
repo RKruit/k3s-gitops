@@ -35,7 +35,7 @@ import urllib.request
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-P1_URL = "http://192.168.68.173/api/v1/data"
+P1_URL = "http://192.168.68.221/api/v1/data"
 BATTERY_URL = "http://192.168.68.229/properties/report"
 CONTROLLER_URL = "http://192.168.1.10:8891/status.json"
 HOMEY_URL = "http://192.168.1.10:8890/energy.json"

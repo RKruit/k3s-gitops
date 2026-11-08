@@ -48,7 +48,7 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 # --- tuning -----------------------------------------------------------------
-P1_URL = "http://192.168.68.173/api/v1/data"
+P1_URL = "http://192.168.68.221/api/v1/data"  # .221 sinds 08-11-2026 (P1 verhuisd na Deco-uitval; .173 was het oude adres)
 BAT_URL = "http://192.168.68.229"  # .229 sinds 08-11-2026 (DHCP-na-Deco-uitval; .227 was de boot-IP; reserveer addresses in de Deco!)
 SN = "HEC4NLNBP107471"
 WIDGET_URL = "https://mijn.nextenergy.nl/Website_CW/MarketPrices"
