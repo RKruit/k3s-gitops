@@ -14,7 +14,7 @@ Deployed 2026-11-04. History + dashboards for home energy: grid (P1), Zendure ba
 ```
 energy-poller.service (host, every 10 s)
   ├─ P1 dongle ............ http://192.168.68.173/api/v1/data
-  ├─ Zendure 2400 AC+ ..... http://192.168.68.227/properties/report
+  ├─ Zendure 2400 AC+ ..... http://192.168.68.229/properties/report (.227 was de eerste boot-IP; verhuisd na de Deco-uitval van 08-11-2026)
   ├─ controller status .... http://192.168.1.10:8891/status.json
   ├─ Homey exporter ....... http://192.168.1.10:8890/energy.json
   └─ prices caches ........ /var/lib/zendure-follow/prices.json
