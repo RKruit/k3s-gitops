@@ -40,6 +40,10 @@ BATTERY_URL = "http://192.168.68.229/properties/report"
 CONTROLLER_URL = "http://192.168.1.10:8891/status.json"
 HOMEY_URL = "http://192.168.1.10:8890/energy.json"
 PRICES_FILE = "/var/lib/zendure-follow/prices.json"
+
+# dedupe-note for the homey stale-gate (log on transition or ≥5 min, not per cycle)
+HOMEY_NOTE = ""
+HOMEY_NOTE_TS = 0.0
 TOMORROW_FILE = "/var/lib/zendure-follow/prices-tomorrow.json"
 VM_PUSH_URL = "http://127.0.0.1:8428/api/v1/import/prometheus"
 INTERVAL_S = 10
@@ -117,6 +121,7 @@ def hour_price(now):
 
 
 def scrape():
+    global HOMEY_NOTE, HOMEY_NOTE_TS
     lines = []
     vals = {}
 
@@ -184,8 +189,14 @@ def scrape():
             raise RuntimeError("homey exporter stale: %s" % (j.get("error") or "?"))
         pv = float(j.get("generated_w", 0))
         lines.append(f"pv_power_w {pv}")
+        HOMEY_NOTE = ""
     except Exception as e:
-        log(f"homey: {e}")
+        # dedupe: stale-gate note would repeat every 10 s cycle otherwise
+        note = f"homey: {e}"
+        if note != HOMEY_NOTE or time.time() - HOMEY_NOTE_TS > 300:
+            HOMEY_NOTE = note
+            HOMEY_NOTE_TS = time.time()
+            log(note)
 
     # --- derived house load: grid = house + charge - pv - discharge ---
     if pv is not None and "p1" in vals and "gridInputPower" in vals:
