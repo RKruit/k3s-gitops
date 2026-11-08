@@ -79,7 +79,7 @@ STATUS_PORT = 8891
 CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
-CHARGE_TARGET = 90  # %: stop grid-charging at this SOC (Robert 02-11-2026 terug naar max 90%; zon mag tot 100%, zie SURPLUS_TARGET)
+CHARGE_TARGET = 100  # %: stop grid-charging at this SOC (Robert 08-11-2026 'Laadt tot 100%' — zondag 100-ct-piek bij maandagnacht van 40; eerder patroon: bij grote spreiding tijdelijk 100, daarna 'max 90%' terugroepen)
 # One-day tweak (Robert 05-11-2026): 06-11 CONTINU met de cap ontladen in de
 # 2 ochtend-ontlaaduren (klok 07:00-09:00) én de 5 duurste avonduren
 # (klok 16:00-21:00; 0,50-0,57) — zero-export-volger uitgeschakeld op
