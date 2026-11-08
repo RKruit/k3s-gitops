@@ -49,7 +49,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 # --- tuning -----------------------------------------------------------------
 P1_URL = "http://192.168.68.173/api/v1/data"
-BAT_URL = "http://192.168.68.227"
+BAT_URL = "http://192.168.68.229"  # .229 sinds 08-11-2026 (DHCP-na-Deco-uitval; .227 was de boot-IP; reserveer addresses in de Deco!)
 SN = "HEC4NLNBP107471"
 WIDGET_URL = "https://mijn.nextenergy.nl/Website_CW/MarketPrices"
 APP_AUTH_FILE = "/srv/sv01-secrets/nextenergy.env"
