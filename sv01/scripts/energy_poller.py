@@ -4,7 +4,7 @@
 # Host-native systemd service (energy-poller.service) that polls the live
 # energy sources every 10 s and pushes a Prometheus-text metric batch to
 # VictoriaMetrics (compose 'victoria-metrics', 127.0.0.1:8428):
-#   P1 dongle (HomeWizard) ........ http://192.168.68.173/api/v1/data
+#   P1 dongle (HomeWizard) ........ http://192.168.68.221/api/v1/data (.221 sinds 08-11-2026)
 #   Zendure 2400 AC+ (zenSDK) ..... http://192.168.68.229/properties/report (.229 sinds 08-11-2026)
 #   zendure-follow controller ..... http://192.168.1.10:8891/status.json
 #   Homey energy exporter ......... http://192.168.1.10:8890/energy.json
