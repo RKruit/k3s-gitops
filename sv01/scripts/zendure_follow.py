@@ -86,8 +86,11 @@ CHARGE_TARGET = 100  # %: stop grid-charging at this SOC (Robert 08-11-2026 'Laa
 # Roberts verzoek (de accu zal dan exporteren bij lage huisbelasting;
 # saldering waardeert die ≈ gelijk aan vermijde inkoop, dispuut-open).
 # Na de datumpoort blijft dit zoals DISCHARGE_NOT_BEFORE_* gewoon dormant.
-DISCHARGE_FULL_DATE = "2026-11-06"
-DISCHARGE_FULL_HOURS = (7, 8, 16, 17, 18, 19, 20)
+# Robert 09-11-2026: 'ontlaad accu naar 0% indien nodig' → piekvenster
+# 16:00-22:00 vol vermogen (leeg ~20:30); uur 21 als marge zodat het nachtladen
+# (23:00) een lege accu aantreft. Vervalt automatisch met de datum.
+DISCHARGE_FULL_DATE = "2026-11-09"
+DISCHARGE_FULL_HOURS = (16, 17, 18, 19, 20, 21)
 # One-day tweak (Robert 31-10): today only discharge from 16:00 on — the 15h
 # hour is 1 ct/kWh cheaper than 16h+, so holding the energy one more hour pays.
 # Reverts automatically tomorrow (remove these two lines to make it permanent).
@@ -566,7 +569,7 @@ def compute_target(p1, props, last_written, p_regime, p1_avg=None):
         now_dt = datetime.datetime.now().astimezone()
         if (str(now_dt.date()) == DISCHARGE_FULL_DATE
                 and now_dt.hour in DISCHARGE_FULL_HOURS):
-            state["regime"] = "discharge: full 800W (06-11)"
+            state["regime"] = "discharge: full 800W (09-11)"
             if lw_out == OUT_CAP and lw_in == 0:
                 return None
             return OUT_CAP, 0
