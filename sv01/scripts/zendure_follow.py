@@ -80,17 +80,11 @@ CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
 CHARGE_TARGET = 100  # %: stop grid-charging at this SOC (Robert 08-11-2026 'Laadt tot 100%' — zondag 100-ct-piek bij maandagnacht van 40; eerder patroon: bij grote spreiding tijdelijk 100, daarna 'max 90%' terugroepen)
-# One-day tweak (Robert 05-11-2026): 06-11 CONTINU met de cap ontladen in de
-# 2 ochtend-ontlaaduren (klok 07:00-09:00) én de 5 duurste avonduren
-# (klok 16:00-21:00; 0,50-0,57) — zero-export-volger uitgeschakeld op
-# Roberts verzoek (de accu zal dan exporteren bij lage huisbelasting;
-# saldering waardeert die ≈ gelijk aan vermijde inkoop, dispuut-open).
-# Na de datumpoort blijft dit zoals DISCHARGE_NOT_BEFORE_* gewoon dormant.
-# Robert 09-11-2026: 'ontlaad accu naar 0% indien nodig' → piekvenster
-# 16:00-22:00 vol vermogen (leeg ~20:30); uur 21 als marge zodat het nachtladen
-# (23:00) een lege accu aantreft. Vervalt automatisch met de datum.
-DISCHARGE_FULL_DATE = "2026-11-09"
-DISCHARGE_FULL_HOURS = (16, 17, 18, 19, 20, 21)
+# One-day override pattern (DISCHARGE_FULL_* / DISCHARGE_NOT_BEFORE_*): zie
+# skill zendure-solarflow. De 09-11-2026 full-cap override ('ontlaad naar 0%')
+# werd diezelfde avond opgeheven op Roberts instructie 'accu niet maximaal
+# ontladen, alleen wat nodig is' — constants + compute_target-gate verwijderd;
+# de normale zero-export-volger is weer de baas.
 # One-day tweak (Robert 31-10): today only discharge from 16:00 on — the 15h
 # hour is 1 ct/kWh cheaper than 16h+, so holding the energy one more hour pays.
 # Reverts automatically tomorrow (remove these two lines to make it permanent).
@@ -564,15 +558,6 @@ def compute_target(p1, props, last_written, p_regime, p1_avg=None):
         return 0, IN_CAP
 
     if p_regime == "discharge" and soc > floor_pct:
-        # One-day tweak (Robert 05-11, zie DISCHARGE_FULL_*): full-cap
-        # ontladen in de gekozen ontladuren, zonder volgen/hold/nudge.
-        now_dt = datetime.datetime.now().astimezone()
-        if (str(now_dt.date()) == DISCHARGE_FULL_DATE
-                and now_dt.hour in DISCHARGE_FULL_HOURS):
-            state["regime"] = "discharge: full 800W (09-11)"
-            if lw_out == OUT_CAP and lw_in == 0:
-                return None
-            return OUT_CAP, 0
         if surplus_charge:
             tgt_c = surplus_target(props, p1_avg)
             if lw_in == tgt_c and lw_out == 0:
