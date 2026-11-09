@@ -112,6 +112,19 @@ PWD = creds.get("KUMA_ADMIN_PASSWORD", "")
 if not PWD:
     sys.exit("geen wachtwoord in kuma-admin.env")
 
+# WAHA session monitor (2026-11-09): keyword check on GET /api/sessions with
+# X-Api-Key header. Session bodies always carry 'status' (WORKING/STARTING/
+# FAILED), so keyword 'WORKING' goes DOWN once the session drops — the port
+# monitor on :3000 stays green while the session is FAILED (incident 04→09-11:
+# 5 days of silently missed daily reports). interval 60 + maxretries 2:
+# a ~20 s wrapper-selfheal restart blip must not alarm.
+WAHA_SESSION = dict(COMMON, type="keyword", name="WAHA (WhatsApp sessie)",
+                    url="http://127.0.0.1:3000/api/sessions",
+                    headers=json.dumps(
+                        {"X-Api-Key": read_env_file("/srv/sv01-secrets/waha.env").get("WAHA_API_KEY", "")}),
+                    keyword="WORKING", maxretries=2)
+MONITORS.append(WAHA_SESSION)
+
 sio = socketio.Client()
 
 
