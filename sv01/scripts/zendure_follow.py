@@ -4,9 +4,9 @@
 Strategy (Robert, 31-10-2026): NO dependence on solar; arbitrage on NextEnergy
 all-in hourly prices; salderingsregeling still applies. Charge from the grid in
 the cheapest hours, discharge to the house (zero export) in the most expensive
-hours, idle in between so energy is preserved for the peaks. PV-surplus charging
-is OFF since 06-11-2026 (Robert: stop met opladen van overschot; surplus flows
-to the grid under saldering; price-based grid charging unchanged).
+hours, idle in between so energy is preserved for the peaks. PV-surplus charging is ON again since 09-11-2026 (Robert: "laad wel op bij zon
+overschot" — off 06→09-11 per "stop met opladen van overschot"); SURPLUS_TARGET
+100% stands ("zon mag tot 100%"), price-based grid charging unchanged.
 
 Price source: NextEnergy app-API (personal contract; today, yesterday and —
 once published, ±16:00 — tomorrow in one login; recipe from
@@ -24,8 +24,8 @@ Control laws (verified 31-10-2026):
   price=charge  (SOC < CHARGE_TARGET)  -> 0 / IN_CAP (grid charge, full speed)
   price=discharge (SOC > device floor) -> zero-export following: outputLimit =
       measured feed + GAIN*(import - MARGIN), hold band 0..HOLD_HI, export past
-      -EXPORT_NUDGE shaves 15 W; charge-on-surplus OFF sinds 06-11-2026
-  price=idle / flat / no prices        -> 0/0 (PV-surplus flows to the grid)
+      -EXPORT_NUDGE shaves 15 W; charge-on-surplus ON again sinds 09-11-2026
+  price=idle / flat / no prices        -> 0/0 (+ surplus gate may charge)
 Failsafe: P1 unreadable > FAIL_GRACE s -> 0/0; SIGTERM -> 0/0; caps 800 W
 (Robert keeps the socket limit until the dedicated group exists); SOC limits
 stay device-managed. With saldering, exporting never beats avoided import, so
@@ -64,7 +64,7 @@ SURPLUS_ENTER = -150     # W rolling-mean required to start charging
 SURPLUS_RELEASE = -10    # W rolling-mean where charging stops again
 SURPLUS_WINDOW = 180     # s rolling window (mean over it drives enter/release/target)
 SURPLUS_TARGET = 100     # %: surplus charging may fill up to this SoC (Robert 02-11-2026: zon mag tot 100% laden)
-SURPLUS_CHARGE_ENABLED = False  # Robert 06-11-2026: stop met opladen van PV-overschot; op True zetten om weer in te schakelen
+SURPLUS_CHARGE_ENABLED = True  # her-aan 09-11-2026 (Robert: 'Laad wel op bij zon overschot'); uit 06→09-11-2026 (bevel 06-11)
 EXPORT_NUDGE = 10  # W: export beyond this inside the hold band -> shave 15 W off
 OUT_CAP = 800      # W: max discharge (socket/group limit; Robert keeps 800 W)
 IN_CAP = 800       # W: max charge
