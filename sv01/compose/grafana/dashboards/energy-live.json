@@ -11,11 +11,11 @@
  "graphTooltip": 1,
  "refresh": "10s",
  "time": {
-  "from": "now-6h",
-  "to": "now"
+  "from": "now/d",
+  "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 25,
+ "version": 26,
  "annotations": {
   "list": [
    {
@@ -457,6 +457,7 @@
     "w": 24,
     "h": 12
    },
+   "timeFrom": "now-6h",
    "fieldConfig": {
     "defaults": {
      "custom": {
@@ -635,7 +636,6 @@
     "w": 12,
     "h": 6
    },
-   "timeFrom": "now/d",
    "fieldConfig": {
     "defaults": {
      "custom": {
@@ -710,7 +710,7 @@
      "refId": "C"
     }
    ],
-   "description": "Vastgezet op 'vandaag': middernacht → nu (panel.timeFrom now/d — de enige per-paneel tijd-knop die deze Grafana-build honoreert; de avonduren verschijnen als ze passeren). Volledige 24 u incl. komende uren: klik 'Hele dag ▸' (middernacht-24:00, prijs vs P30/P70-drempels).",
+   "description": "Volgt het dashboard: standaard de hele dag (middernacht-24:00, komende uren inbegrepen). Verander je de tijd-picker, dan volgt het panel die range; de link 'Hele dag ▸' zet de dagweergave altijd terug.",
    "links": [
     {
      "title": "Hele dag ▸",
