@@ -86,7 +86,7 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 Per uur 00-24 van vandaag de goedkoopste warmtebron. Model (constanten staan
 in de queries en kunnen daar aangepast):
 
-- Stroom: `€/kWh warmte = uurprijs ÷ COP(T)`, `COP = max(1,8; 3,2 + 0,10·T_buiten)` — lucht-water-warmtepomp-benadering van Robert gekozen via overleg.
+- Stroom: `€/kWh warmte = uurprijs ÷ COP(T)`, `COP = max(1,5; 2,2 + 0,10·T_buiten)` — anker 2,2 bij 0 °C: radiatoren met hoge watertemperatuur (Robert, 10-11-2026; eerdere 3,2-aanname gaf een te optimistische streep). Drempel vandaag: stroom wint bij uurprijs < 0,218 × COP.
 - Gas: `€/kWh warmte = gastarief ÷ (9,77 kWh/m³ × 0,95 rendement cv-ketel)` = 0,1024 × €/m³ (gastarief geldt per kalenderdag; NextEnergy zet het om ±06:00).
 - Warmtevraag-index: `0,09 kW per °C onder 20 °C` — schaalt de €/u-kolommen, verandert níét de gas-vs-stroomdrempel (die is per-kWh).
 - Keuze-serie: `1 - clamp_max(floor(stroom€/u ÷ gas€/u), 1)` = 1 = stroom. MetricsQL heeft geen `bool`-modifier — deze vallende-vorm is de stapelvervanger (geverifieerd 10-11-2026).
