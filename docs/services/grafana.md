@@ -17,6 +17,7 @@ energy-poller.service (host, every 10 s)
   ├─ Zendure 2400 AC+ ..... http://192.168.68.229/properties/report (.227 was de eerste boot-IP; verhuisd na de Deco-uitval van 08-11-2026)
   ├─ controller status .... http://192.168.1.10:8891/status.json
   ├─ Homey exporter ....... http://192.168.1.10:8890/energy.json
+  ├─ weer-verwachting ..... ipinfo (coördinaten, dag-cache) + Open-Meteo (uurtemps, ≤30 min cache)
   └─ prices caches ........ /var/lib/zendure-follow/prices.json
                             + prices-tomorrow.json (published daily ±16:00)
         │ push (Prometheus text, /api/v1/import/prometheus)
@@ -38,6 +39,7 @@ Caddy route grafana.oostrandpark.com (Authelia forward_auth → anonymous Viewer
 |---|---|---|
 | Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller P30/P70 thresholds (panel follows the dashboard range; panel-link "Hele dag ▸" opens the same panel midnight→24:00 incl. upcoming hours via `?from=now/d&to=now/d&viewPanel=11` — Grafana 13.2.5 ignores ALL per-panel time-end config: `panel.time{from,to}`, target `relativeTimeRange`, variables in panel time are no-ops, and legacy `panel.timeFrom` works but always pins the end to "now"; `to=now/d` rounds UP to 24:00, `from=now/d` floors to midnight), electricity cost today (midnight-anchored panel), NextEnergy hourly rates as bar gauge (hour-labeled "1…23", chronological, blue "◄ nu" bar on the current hour, incl. upcoming hours), plus the same bar gauge for TOMORROW (same hour labels, no current-hour bar; filled only once NextEnergy publishes the next day ±16:00, empty before) |
 | Energie — Verloop | `energy-daily` | price curve + thresholds, rolling-24 h kWh (import/export/PV/battery), SoC, regime, gas m³ |
+| Verwarming | `verwarming` | 24-uurs "Voorspelling" (dag-geankerd, now/d→now/d): verwarmingskosten €/u voor gas vs warmtepomp-stroom, suggestie-staven (1 = op stroom, 0 = op gas) en Open-Meteo-temperatuurverwachting |
 | Energie — Besparing | `energy-savings` | cumulative books: net battery saving, discharge value, charge cost, PV value (€ over the selected range), battery cycles + kWh |
 
 Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/compose/grafana/dashboards/*.json`, mounted read-only. `allowUiUpdates: true` — UI edits are possible but land in Grafana's own DB, **not** git; export an edit back to git if it must survive a re-provision.
@@ -74,7 +76,21 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `nextenergy_price_hour{aa_order,hour}` | label-based full-day price table for the bars panel — bare `hour` = display label ("1" for 01:00), zero-padded `aa_order` = the sorting twin (VM sorts by label name then value; bare labels alone lexicographically jumble) |
 | `nextenergy_price_tomorrow_hour{aa_order,hour}` | label-based *tomorrow* price table for the morgen bars panel — same scheme as the today bars, no "NU" bar (tomorrow has no current hour); pushed only while the cache's date is really tomorrow, so before the app publishes (±16:00) the series is empty, not stale |
 | `nextenergy_prices_tomorrow_age_s` | freshness of the tomorrow price cache (grows until the app publishes the next day, ±16:00) |
+| `nextenergy_gas_price_eur` | persoonlijk all-in gastarief (€/m³) — de controller neemt `CurrentGasPrice` uit de app-price-response mee in `prices.json` (ook in `prices-tomorrow.json`); receive-time sample + 24 uur-geankerde ankers zodat `last_over_time(...[1h])` de hele dag dicht zit (receive-time alleen laat gaten in vergane slots) |
+| `forecast_temp_c` | Open-Meteo uurverwachting voor vandaag (uur-geankerde ts, zelfde patroon als de prijscurve); poller v4, refresh ≤ 30 min, coördinaten via ipinfo (FTTH-locatie, dag-cache in `/var/lib/energy-poller/weather.json`) |
+| `forecast_weather_age_s` | leeftijd van de weer-cache (stagneert bij Open-Meteo/ipinfo-fout; poller back-offt 10 min en serveert dan de cache van vandaag) |
 | `energy_books_since_ts` | epoch the books started (2026-11-04) |
+
+## Verwarming "Voorspelling" (dashboard `verwarming`, sinds 2026-11-10)
+
+Per uur 00-24 van vandaag de goedkoopste warmtebron. Model (constanten staan
+in de queries en kunnen daar aangepast):
+
+- Stroom: `€/kWh warmte = uurprijs ÷ COP(T)`, `COP = max(1,8; 3,2 + 0,10·T_buiten)` — lucht-water-warmtepomp-benadering van Robert gekozen via overleg.
+- Gas: `€/kWh warmte = gastarief ÷ (9,77 kWh/m³ × 0,95 rendement cv-ketel)` = 0,1024 × €/m³ (gastarief geldt per kalenderdag; NextEnergy zet het om ±06:00).
+- Warmtevraag-index: `0,09 kW per °C onder 20 °C` — schaalt de €/u-kolommen, verandert níét de gas-vs-stroomdrempel (die is per-kWh).
+- Keuze-serie: `1 - clamp_max(floor(stroom€/u ÷ gas€/u), 1)` = 1 = stroom. MetricsQL heeft geen `bool`-modifier — deze vallende-vorm is de stapelvervanger (geverifieerd 10-11-2026).
+- Suggestieserie is elementgewijs: temp/prijs/gas zijn alle uur-geankerd `[1h]`-last_over_time → full-slot op élke grafana-step (300-1800 s). Één randartefact: het slot op exact 24:00 is leeg (uur 0-23 bestaan, geen uur-24-sample) — cosmetisch aan de rechterrand.
 
 ## Savings bookkeeping (Besparing dashboard, since 2026-11-04)
 

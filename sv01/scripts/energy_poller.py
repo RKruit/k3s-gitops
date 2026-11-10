@@ -27,6 +27,11 @@
 # from the P1's own cumulative kWh counter deltas (exact, gap-immune, no
 # integration undercount); the Live dashboard shows today's hourly cost from
 # midnight on ('Stroomkosten (vandaag)').
+#
+# v4 (2026-11-10): NextEnergy gas rate (nextenergy_gas_price_eur, from the
+# controller's app price response) + Open-Meteo hourly temperature forecast
+# (forecast_temp_c, hour-anchored like the hourly prices) for the Verwarming
+# dashboard (gas-tegen-warmtepomp per uur).
 import json
 import os
 import sys
@@ -52,6 +57,11 @@ TZ = ZoneInfo("Europe/Amsterdam")
 # bookkeeping
 STATE_DIR = "/var/lib/energy-poller"
 STATE_PATH = os.path.join(STATE_DIR, "state.json")
+WEATHER_FILE = os.path.join(STATE_DIR, "weather.json")
+WEATHER_REFRESH_S = 30 * 60      # hourly forecast refetch, at most every 30 min
+WEATHER_RETRY_S = 10 * 60        # after a failed fetch, back off 10 min
+WEATHER_COORD_TTL_S = 24 * 3600  # re-resolve ipinfo coordinates once a day
+IPINFO_URL = "https://ipinfo.io/json"
 MAX_GAP_S = 40            # beyond this, skip power integration (never extrapolate)
 PRICE_STALE_S = 90 * 60   # older price cache -> kWh keeps running, € pauses
 CAPACITY_KWH = 5.28       # nameplate for the cycles metric (see docs)
@@ -118,6 +128,72 @@ def hour_price(now):
         return float(hourly[str(datetime.now(TZ).hour)])
     except Exception:
         return None
+
+
+WEATHER_NOTE = ""
+WEATHER_FAIL_TS = 0.0
+
+
+def refresh_weather():
+    """Hourly temperature forecast for TODAY (Open-Meteo), coordinates via
+    ipinfo geo-location (FTTH-provider location, ±5 km). Cached in the
+    StateDirectory, refreshed at most every WEATHER_REFRESH_S; returns the
+    cache dict or {} on failure. Weather failing is independent: the rest of
+    the batch keeps pushing."""
+    global WEATHER_NOTE, WEATHER_FAIL_TS
+    now = time.time()
+    cache = {}
+    try:
+        with open(WEATHER_FILE) as f:
+            cache = json.load(f)
+    except Exception:
+        pass
+    today = datetime.now(TZ).strftime("%Y-%m-%d")
+    if (cache.get("date") == today and cache.get("hourly")
+            and now - float(cache.get("fetched", 0)) < WEATHER_REFRESH_S):
+        return cache
+    # failed fetches back off; until then re-serve today's (stale) cache
+    if now - WEATHER_FAIL_TS < WEATHER_RETRY_S:
+        return cache if cache.get("date") == today and cache.get("hourly") else {}
+    try:
+        lat, lon = cache.get("lat"), cache.get("lon")
+        coords_fetched = float(cache.get("coords_fetched", 0))
+        if not lat or now - coords_fetched > WEATHER_COORD_TTL_S:
+            loc = (fetch_json(IPINFO_URL, timeout=8).get("loc") or "")
+            lat, lon = [s.strip() for s in loc.split(",")[:2]]
+            if not lat or not lon:
+                raise ValueError(f"ipinfo loc: {loc!r}")
+            coords_fetched = now
+        url = (f"https://api.open-meteo.com/v1/forecast?latitude={lat}"
+               f"&longitude={lon}&hourly=temperature_2m"
+               f"&timezone=Europe%2FAmsterdam&forecast_days=2")
+        meteo = (fetch_json(url, timeout=10) or {}).get("hourly") or {}
+        times, temps = meteo.get("time") or [], meteo.get("temperature_2m") or []
+        hourly = {}
+        for hiso, t in zip(times, temps):
+            if t is None or not str(hiso).startswith(today):
+                continue
+            hourly[int(hiso[11:13])] = round(float(t), 1)
+        if len(hourly) < 24:
+            raise ValueError(f"open-meteo: {len(hourly)}/24 uur voor {today}")
+        cache = {"date": today, "fetched": now, "lat": lat, "lon": lon,
+                 "coords_fetched": coords_fetched,
+                 "hourly": {str(h): v for h, v in sorted(hourly.items())}}
+        tmp = WEATHER_FILE + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(cache, f)
+        os.replace(tmp, WEATHER_FILE)
+        if WEATHER_NOTE:
+            log("weather: recovered")
+        WEATHER_NOTE, WEATHER_FAIL_TS = "", 0.0
+        return cache
+    except Exception as e:
+        note = f"weather: {e}"
+        if note != WEATHER_NOTE:
+            WEATHER_NOTE = note
+            log(note)
+        WEATHER_FAIL_TS = now
+        return cache if cache.get("date") == today and cache.get("hourly") else {}
 
 
 def scrape():
@@ -208,6 +284,7 @@ def scrape():
         with open(PRICES_FILE) as f:
             pr = json.load(f)
         day, hourly = pr.get("date"), pr.get("hourly", {})
+        today_str = datetime.now(TZ).strftime("%Y-%m-%d")
         if day and hourly:
             base = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
             for hstr, price in hourly.items():
@@ -236,6 +313,18 @@ def scrape():
                     lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
         if pr.get("fetched"):
             lines.append(f"nextenergy_prices_age_s {int(time.time() - float(pr['fetched']))}")
+        # persoonlijk all-in gastarief (€/m³, dag-based) — the controller
+        # copies it from the app's price response. Receive-time gauge PLUS
+        # 24 hour-anchored anchors (same value, same ts pattern as
+        # forecast_temp_c): the anchors make last_over_time(...[1h]) dense
+        # over the whole Verwarming chart-day (receive-time samples alone
+        # only start at the first push, which leaves holes in past slots).
+        if pr.get("gas_eur") is not None and day == today_str:
+            gas_eur = float(pr["gas_eur"])
+            lines.append(f"nextenergy_gas_price_eur {gas_eur}")
+            gbase = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
+            for h in range(24):
+                lines.append(f"nextenergy_gas_price_eur {gas_eur} {int((gbase + h * 3600) * 1000)}")
     except Exception as e:
         log(f"prices: {e}")
 
@@ -259,6 +348,19 @@ def scrape():
                     f"{float(price)}")
     except Exception as e:
         log(f"tomorrow: {e}")
+
+    # --- Temperatuurvoorspelling (Open-Meteo; hour-anchored like the prices) ---
+    w = refresh_weather()
+    if w:
+        try:
+            base = datetime.strptime(w["date"], "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
+            for hstr, temp in sorted(w["hourly"].items(), key=lambda kv: int(kv[0])):
+                ts_ms = int((base + int(hstr) * 3600) * 1000)
+                lines.append(f"forecast_temp_c {float(temp)} {ts_ms}")
+            lines.append(f"forecast_weather_age_s "
+                         f"{int(time.time() - float(w['fetched']))}")
+        except Exception as e:
+            log(f"weather push: {e}")
 
     return lines, vals, pv
 

@@ -339,8 +339,10 @@ def _app_session():
 
 
 def _dp_query(opener, crf, modver, day):
-    """DP-set {label: euro/kWh} voor kalenderdag `day` (labels lopen één uur
-    vóór op de klok — zie dp_to_clock). Returns None on any failure."""
+    """DP-set {label: euro/kWh} + persoonlijk gastarief (€/m³) voor
+    kalenderdag `day` (labels lopen één uur vóór op de klok — zie
+    dp_to_clock). Returns (prices, gas) of None on any failure; gas is None
+    when the app didn't publish a gas rate for that date (gas is dag-gebaseerd)."""
     try:
         cfg = json.load(open(APP_CFG_FILE))
         base = cfg["base_url"]
@@ -361,12 +363,18 @@ def _dp_query(opener, crf, modver, day):
         lst = (resp.get("data", {}).get("DataPoints") or {}).get("List") or []
         prices = {int(it["Label"]): float(it["Value"]) for it in lst
                   if it.get("Value") is not None}
-        return prices if 20 <= len(prices) <= 24 else None
+        if len(prices) < 20 or len(prices) > 24:
+            return None
+        try:
+            gas = float(resp["data"]["CurrentGasPrice"])
+        except (KeyError, TypeError, ValueError):
+            gas = None  # geen gastarief gepubliceerd voor deze PriceDate
+        return prices, gas
     except Exception:
         return None
 
 
-def save_tomorrow(prices, fetched):
+def save_tomorrow(prices, gas, fetched):
     """Morgenprijs-cache (KLOK-uren 0..23) voor het Grafana-morgenpanel. De
     poller gebruikt 'm alleen wanneer date de échte kalenderdatum van morgen
     is — een cache van de vorige avond kan zo nooit op de verkeerde dag landen
@@ -376,7 +384,7 @@ def save_tomorrow(prices, fetched):
         with open(os.path.join(STATUS_DIR, "prices-tomorrow.json"), "w") as f:
             json.dump({"date": (datetime.date.today()
                                 + datetime.timedelta(days=1)).isoformat(),
-                       "hourly": prices, "fetched": fetched,
+                       "hourly": prices, "gas_eur": gas, "fetched": fetched,
                        "source": "app"}, f)
     except OSError:
         pass
@@ -406,9 +414,10 @@ def widget_to_clock(bars):
 
 def fetch_prices():
     """Actuele prijzen in KLOK-uren {0..23: euro/kWh}, of {} bij falen.
-    Primary: app-API (personal contract) — één login per cyclus, daarna
-    DP-queries voor gisteren (midnight-wrap), vandaag en morgen. De
-    morgenprijzen verschijnen pas ±16:00; geen DP-response = geen
+    Returns (prices, gas): gas = persoonlijk all-in gastarief (€/m³) voor
+    vandaag, of None. Primary: app-API (personal contract) — één login per
+    cyclus, daarna DP-queries voor gisteren (midnight-wrap), vandaag en
+    morgen. De morgenprijzen verschijnen pas ±16:00; geen DP-response = geen
     cache-update (de vorige cache kan sowieso niet op de verkeerde dag
     landen, zie save_tomorrow). Fallback: public widget with the same DP
     shift applied."""
@@ -419,28 +428,32 @@ def fetch_prices():
         if dp_t:
             dp_y = _dp_query(*sess, today - datetime.timedelta(days=1))
             dp_tom = _dp_query(*sess, today + datetime.timedelta(days=1))
-            prices = dp_to_clock(dp_t, dp_y)
+            prices = dp_to_clock(dp_t[0], dp_y[0] if dp_y else None)
+            gas = dp_t[1]
             if prices:
                 state["price_source"] = "app"
-                tom = dp_to_clock(dp_tom, dp_t) if dp_tom else None
+                tom, gas_tom = None, None
+                if dp_tom:
+                    tom = dp_to_clock(dp_tom[0], dp_t[0])
+                    gas_tom = dp_tom[1]
                 if tom and len(tom) >= 20:
-                    save_tomorrow(tom, time.time())
-                return prices
+                    save_tomorrow(tom, gas_tom, time.time())
+                return prices, gas
     bars = fetch_widget()
     if bars:
         prices = widget_to_clock(bars)
         if prices:
             state["price_source"] = "widget"
-            return prices
-    return {}
+            return prices, None
+    return {}, None
 
 
-def save_prices(prices, fetched):
+def save_prices(prices, gas, fetched):
     try:
         os.makedirs(STATUS_DIR, exist_ok=True)
         with open(os.path.join(STATUS_DIR, "prices.json"), "w") as f:
             json.dump({"date": datetime.date.today().isoformat(),
-                       "hourly": prices, "fetched": fetched}, f)
+                       "hourly": prices, "gas_eur": gas, "fetched": fetched}, f)
     except OSError:
         pass
 
@@ -448,11 +461,11 @@ def save_prices(prices, fetched):
 def price_thread():
     while not stop.is_set():
         try:
-            prices = fetch_prices()
+            prices, gas = fetch_prices()
             if prices:
                 state["prices_today"] = prices
                 state["prices_fetched_at"] = time.time()
-                save_prices(prices, state["prices_fetched_at"])
+                save_prices(prices, gas, state["prices_fetched_at"])
                 if str(state["last_error"]).startswith("prices:"):
                     state["last_error"] = ""
         except Exception as e:
