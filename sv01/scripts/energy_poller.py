@@ -30,8 +30,8 @@
 #
 # v4 (2026-11-10): NextEnergy gas rate (nextenergy_gas_price_eur, from the
 # controller's app price response) + Open-Meteo hourly temperature forecast
-# (forecast_temp_c, hour-anchored like the hourly prices) for the Verwarming
-# dashboard (gas-tegen-warmtepomp per uur).
+# (forecast_temp_c, hour-anchored like the hourly prices; vaste locatie
+# Lelystad Airport) for the Verwarming dashboard (gas-tegen-warmtepomp per uur).
 import json
 import os
 import sys
@@ -60,8 +60,9 @@ STATE_PATH = os.path.join(STATE_DIR, "state.json")
 WEATHER_FILE = os.path.join(STATE_DIR, "weather.json")
 WEATHER_REFRESH_S = 30 * 60      # hourly forecast refetch, at most every 30 min
 WEATHER_RETRY_S = 10 * 60        # after a failed fetch, back off 10 min
-WEATHER_COORD_TTL_S = 24 * 3600  # re-resolve ipinfo coordinates once a day
-IPINFO_URL = "https://ipinfo.io/json"
+# vaste locatie: Lelystad Airport / KNMI-obs EHLE (Robert, 10-11-2026)
+WEATHER_LAT = "52.4608"
+WEATHER_LON = "5.5297"
 MAX_GAP_S = 40            # beyond this, skip power integration (never extrapolate)
 PRICE_STALE_S = 90 * 60   # older price cache -> kWh keeps running, € pauses
 CAPACITY_KWH = 5.28       # nameplate for the cycles metric (see docs)
@@ -135,8 +136,9 @@ WEATHER_FAIL_TS = 0.0
 
 
 def refresh_weather():
-    """Hourly temperature forecast for TODAY (Open-Meteo), coordinates via
-    ipinfo geo-location (FTTH-provider location, ±5 km). Cached in the
+    """Hourly temperature forecast for TODAY (Open-Meteo), fixed location
+    Lelystad Airport (Robert, 10-11-2026 — dichtst bij de KNMI-obs EHLE i.p.v.
+    de ipinfo-FTTH-locatie). Cached in the
     StateDirectory, refreshed at most every WEATHER_REFRESH_S; returns the
     cache dict or {} on failure. Weather failing is independent: the rest of
     the batch keeps pushing."""
@@ -155,15 +157,8 @@ def refresh_weather():
     # failed fetches back off; until then re-serve today's (stale) cache
     if now - WEATHER_FAIL_TS < WEATHER_RETRY_S:
         return cache if cache.get("date") == today and cache.get("hourly") else {}
+    lat, lon = WEATHER_LAT, WEATHER_LON
     try:
-        lat, lon = cache.get("lat"), cache.get("lon")
-        coords_fetched = float(cache.get("coords_fetched", 0))
-        if not lat or now - coords_fetched > WEATHER_COORD_TTL_S:
-            loc = (fetch_json(IPINFO_URL, timeout=8).get("loc") or "")
-            lat, lon = [s.strip() for s in loc.split(",")[:2]]
-            if not lat or not lon:
-                raise ValueError(f"ipinfo loc: {loc!r}")
-            coords_fetched = now
         url = (f"https://api.open-meteo.com/v1/forecast?latitude={lat}"
                f"&longitude={lon}&hourly=temperature_2m"
                f"&timezone=Europe%2FAmsterdam&forecast_days=2")
@@ -177,7 +172,6 @@ def refresh_weather():
         if len(hourly) < 24:
             raise ValueError(f"open-meteo: {len(hourly)}/24 uur voor {today}")
         cache = {"date": today, "fetched": now, "lat": lat, "lon": lon,
-                 "coords_fetched": coords_fetched,
                  "hourly": {str(h): v for h, v in sorted(hourly.items())}}
         tmp = WEATHER_FILE + ".tmp"
         with open(tmp, "w") as f:

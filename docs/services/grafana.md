@@ -17,7 +17,7 @@ energy-poller.service (host, every 10 s)
   ├─ Zendure 2400 AC+ ..... http://192.168.68.229/properties/report (.227 was de eerste boot-IP; verhuisd na de Deco-uitval van 08-11-2026)
   ├─ controller status .... http://192.168.1.10:8891/status.json
   ├─ Homey exporter ....... http://192.168.1.10:8890/energy.json
-  ├─ weer-verwachting ..... ipinfo (coördinaten, dag-cache) + Open-Meteo (uurtemps, ≤30 min cache)
+  ├─ weer-verwachting ..... Open-Meteo (uurtemps, ≤30 min cache), vaste locatie Lelystad Airport (52,4608/5,5297)
   └─ prices caches ........ /var/lib/zendure-follow/prices.json
                             + prices-tomorrow.json (published daily ±16:00)
         │ push (Prometheus text, /api/v1/import/prometheus)
@@ -77,7 +77,7 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `nextenergy_price_tomorrow_hour{aa_order,hour}` | label-based *tomorrow* price table for the morgen bars panel — same scheme as the today bars, no "NU" bar (tomorrow has no current hour); pushed only while the cache's date is really tomorrow, so before the app publishes (±16:00) the series is empty, not stale |
 | `nextenergy_prices_tomorrow_age_s` | freshness of the tomorrow price cache (grows until the app publishes the next day, ±16:00) |
 | `nextenergy_gas_price_eur` | persoonlijk all-in gastarief (€/m³) — de controller neemt `CurrentGasPrice` uit de app-price-response mee in `prices.json` (ook in `prices-tomorrow.json`); receive-time sample + 24 uur-geankerde ankers zodat `last_over_time(...[1h])` de hele dag dicht zit (receive-time alleen laat gaten in vergane slots) |
-| `forecast_temp_c` | Open-Meteo uurverwachting voor vandaag (uur-geankerde ts, zelfde patroon als de prijscurve); poller v4, refresh ≤ 30 min, coördinaten via ipinfo (FTTH-locatie, dag-cache in `/var/lib/energy-poller/weather.json`) |
+| `forecast_temp_c` | Open-Meteo uurverwachting voor vandaag (uur-geankerde ts, zelfde patroon als de prijscurve); poller v4, refresh ≤ 30 min, vaste locatie **Lelystad Airport / KNMI-obs EHLE** (52,4608 / 5,5297 — Robert 10-11-2026, i.p.v. ipinfo-FTTH); cache in `/var/lib/energy-poller/weather.json` |
 | `forecast_weather_age_s` | leeftijd van de weer-cache (stagneert bij Open-Meteo/ipinfo-fout; poller back-offt 10 min en serveert dan de cache van vandaag) |
 | `energy_books_since_ts` | epoch the books started (2026-11-04) |
 
