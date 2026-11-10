@@ -15,7 +15,7 @@
   "to": "now"
  },
  "schemaVersion": 39,
- "version": 24,
+ "version": 25,
  "annotations": {
   "list": [
    {
@@ -635,6 +635,7 @@
     "w": 12,
     "h": 6
    },
+   "timeFrom": "now/d",
    "fieldConfig": {
     "defaults": {
      "custom": {
@@ -709,7 +710,7 @@
      "refId": "C"
     }
    ],
-   "description": "Volgt standaard het dashboard-bereik (realtime 6 h). Klik 'Hele dag' in de hoek: middernacht-24:00 incl. de komende uren (Prijs vs P30/P70-drempels). Grafana 13 heeft geen per-paneel end-override; vandaar via de dashboard-url.",
+   "description": "Vastgezet op 'vandaag': middernacht → nu (panel.timeFrom now/d — de enige per-paneel tijd-knop die deze Grafana-build honoreert; de avonduren verschijnen als ze passeren). Volledige 24 u incl. komende uren: klik 'Hele dag ▸' (middernacht-24:00, prijs vs P30/P70-drempels).",
    "links": [
     {
      "title": "Hele dag ▸",
