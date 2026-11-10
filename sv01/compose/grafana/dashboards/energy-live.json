@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 27,
+ "version": 28,
  "annotations": {
   "list": [
    {
@@ -874,6 +874,98 @@
     }
    ],
    "description": "All-in uurprijzen voor morgen (zelfde schema als de vandaag-balken). Gevuld zodra NextEnergy de volgendag publiceert (±16:00, app-API); daarvóór leeg — geen data is normaal. Datum-poort voorkomt verkeerde dag."
+  },
+  {
+   "id": 15,
+   "title": "◄ nu (huidige uurbalk)",
+   "description": "De blauwe '◄ nu'-staaf: all-in prijs van het lopende uur (nextenergy_price_current_eur, 10-s live-meting; instant:false omdat het dagbereik eindigt op 24:00 in de toekomst). Hersteld 13-11-2026 nadat het hele-dag balkenpanel weg was (dubbel).",
+   "type": "bargauge",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 28,
+    "w": 24,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "currencyEUR",
+     "decimals": 2,
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 0.4
+       },
+       {
+        "color": "red",
+        "value": 0.45
+       }
+      ]
+     },
+     "overrides": [
+      {
+       "matcher": {
+        "id": "byName",
+        "options": "NU"
+       },
+       "properties": [
+        {
+         "id": "color",
+         "value": {
+          "mode": "fixed",
+          "fixedColor": "blue"
+         }
+        },
+        {
+         "id": "displayName",
+         "value": "◄ nu"
+        }
+       ]
+      }
+     ]
+    },
+    "overrides": []
+   },
+   "options": {
+    "orientation": "vertical",
+    "displayMode": "gradient",
+    "namePlacement": "auto",
+    "showUnfilled": true,
+    "sizing": "auto",
+    "minVizWidth": 0,
+    "minVizHeight": 10,
+    "valueOptions": {
+     "values": [],
+     "calcs": [
+      "lastNotNull"
+     ],
+     "limits": {}
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "nextenergy_price_current_eur",
+     "instant": false,
+     "legendFormat": "NU",
+     "refId": "A"
+    }
+   ]
   }
  ]
 }
