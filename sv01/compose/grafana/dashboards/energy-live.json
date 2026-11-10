@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 26,
+ "version": 27,
  "annotations": {
   "list": [
    {
@@ -803,98 +803,6 @@
    ]
   },
   {
-   "id": 13,
-   "title": "Stroomprijzen (NextEnergy, hele dag)",
-   "type": "bargauge",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "victoriametrics"
-   },
-   "gridPos": {
-    "x": 12,
-    "y": 22,
-    "w": 12,
-    "h": 6
-   },
-   "fieldConfig": {
-    "defaults": {
-     "unit": "currencyEUR",
-     "decimals": 2,
-     "color": {
-      "mode": "thresholds"
-     },
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "green",
-        "value": null
-       },
-       {
-        "color": "orange",
-        "value": 0.4
-       },
-       {
-        "color": "red",
-        "value": 0.45
-       }
-      ]
-     },
-     "min": 0,
-     "mappings": []
-    },
-    "overrides": [
-     {
-      "matcher": {
-       "id": "byName",
-       "options": "NU"
-      },
-      "properties": [
-       {
-        "id": "color",
-        "value": {
-         "mode": "fixed",
-         "fixedColor": "blue"
-        }
-       },
-       {
-        "id": "displayName",
-        "value": "◄ nu"
-       }
-      ]
-     }
-    ]
-   },
-   "options": {
-    "orientation": "vertical",
-    "displayMode": "gradient",
-    "namePlacement": "auto",
-    "showUnfilled": true,
-    "sizing": "auto",
-    "minVizWidth": 0,
-    "minVizHeight": 10,
-    "valueOptions": {
-     "values": [],
-     "calcs": [
-      "lastNotNull"
-     ],
-     "limits": {}
-    }
-   },
-   "targets": [
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "victoriametrics"
-     },
-     "expr": "nextenergy_price_hour{aa_order!=\"\"}",
-     "instant": true,
-     "legendFormat": "{{hour}}",
-     "refId": "A"
-    }
-   ]
-  },
-  {
    "id": 14,
    "title": "Stroomprijzen (NextEnergy, morgen)",
    "type": "bargauge",
@@ -903,8 +811,8 @@
     "uid": "victoriametrics"
    },
    "gridPos": {
-    "x": 0,
-    "y": 28,
+    "x": 12,
+    "y": 22,
     "w": 12,
     "h": 6
    },
@@ -960,7 +868,7 @@
       "uid": "victoriametrics"
      },
      "expr": "nextenergy_price_tomorrow_hour{aa_order!=\"\"}",
-     "instant": true,
+     "instant": false,
      "legendFormat": "{{hour}}",
      "refId": "A"
     }
