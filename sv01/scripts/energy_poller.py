@@ -36,6 +36,7 @@ import json
 import os
 import sys
 import time
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -51,6 +52,7 @@ HOMEY_NOTE = ""
 HOMEY_NOTE_TS = 0.0
 TOMORROW_FILE = "/var/lib/zendure-follow/prices-tomorrow.json"
 VM_PUSH_URL = "http://127.0.0.1:8428/api/v1/import/prometheus"
+VM_DELETE_URL = "http://127.0.0.1:8428/api/v1/admin/tsdb/delete_series"
 INTERVAL_S = 10
 TZ = ZoneInfo("Europe/Amsterdam")
 
@@ -78,6 +80,25 @@ def log(msg):
 def fetch_json(url, timeout=4):
     with urllib.request.urlopen(url, timeout=timeout) as r:
         return json.loads(r.read().decode())
+
+
+def vm_delete_series(match):
+    """VictoriaMetrics whole-series delete (VM cannot delete a single time
+    window). Returns True on success. A marked deletion makes VM DROP samples
+    re-imported for the same series name until the deletion is processed —
+    callers re-anchor right away (next cycle is idempotent either way)."""
+    try:
+        q = urllib.parse.urlencode({"match[]": match})
+        with urllib.request.urlopen(f"{VM_DELETE_URL}?{q}", timeout=5) as r:
+            r.read()
+        return True
+    except Exception as e:
+        log(f"vm delete {match}: {e}")
+        return False
+
+
+WEATHER_PUSHED_GEN = 0.0   # weather cache generation (fetched ts) already anchored
+GAS_PUSHED_EUR = None      # gastarief generation already anchored
 
 
 _NUM_KEYS = ("charge_kwh", "discharge_kwh", "pv_kwh", "charge_eur", "discharge_eur",
@@ -191,7 +212,7 @@ def refresh_weather():
 
 
 def scrape():
-    global HOMEY_NOTE, HOMEY_NOTE_TS
+    global HOMEY_NOTE, HOMEY_NOTE_TS, GAS_PUSHED_EUR, WEATHER_PUSHED_GEN
     lines = []
     vals = {}
 
@@ -313,8 +334,16 @@ def scrape():
         # forecast_temp_c): the anchors make last_over_time(...[1h]) dense
         # over the whole Verwarming chart-day (receive-time samples alone
         # only start at the first push, which leaves holes in past slots).
+        # GOTCHA: at a duplicate timestamp VM's last_over_time resolves the
+        # tie to the OLDEST sample — a changed value would freeze the old one
+        # in the chart forever. So on ANY value change the whole series is
+        # deleted (VM can't delete a window, boeken-repair pattern) and
+        # re-anchored from scratch in this same push.
         if pr.get("gas_eur") is not None and day == today_str:
             gas_eur = float(pr["gas_eur"])
+            if gas_eur != GAS_PUSHED_EUR and vm_delete_series("nextenergy_gas_price_eur"):
+                log(f"gas rate anchored fresh: {gas_eur}")
+                GAS_PUSHED_EUR = gas_eur
             lines.append(f"nextenergy_gas_price_eur {gas_eur}")
             gbase = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
             for h in range(24):
@@ -344,9 +373,17 @@ def scrape():
         log(f"tomorrow: {e}")
 
     # --- Temperatuurvoorspelling (Open-Meteo; hour-anchored like the prices) ---
+    # Same duplicate-tie gotcha as the gas rate: VM keeps old+new samples at
+    # the same hour-anchor and window functions resolve ties to the OLDEST —
+    # so on a fresh forecast generation the whole series is deleted first,
+    # then re-anchored with the new values.
     w = refresh_weather()
     if w:
         try:
+            gen = float(w["fetched"])
+            if gen != WEATHER_PUSHED_GEN and vm_delete_series("forecast_temp_c"):
+                log("forecast re-anchored")
+                WEATHER_PUSHED_GEN = gen
             base = datetime.strptime(w["date"], "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
             for hstr, temp in sorted(w["hourly"].items(), key=lambda kv: int(kv[0])):
                 ts_ms = int((base + int(hstr) * 3600) * 1000)
