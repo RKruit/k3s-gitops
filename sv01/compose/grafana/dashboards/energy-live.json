@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 28,
+ "version": 29,
  "annotations": {
   "list": [
    {
@@ -895,46 +895,9 @@
      "unit": "currencyEUR",
      "decimals": 2,
      "color": {
-      "mode": "thresholds"
-     },
-     "thresholds": {
-      "mode": "absolute",
-      "steps": [
-       {
-        "color": "green",
-        "value": null
-       },
-       {
-        "color": "orange",
-        "value": 0.4
-       },
-       {
-        "color": "red",
-        "value": 0.45
-       }
-      ]
-     },
-     "overrides": [
-      {
-       "matcher": {
-        "id": "byName",
-        "options": "NU"
-       },
-       "properties": [
-        {
-         "id": "color",
-         "value": {
-          "mode": "fixed",
-          "fixedColor": "blue"
-         }
-        },
-        {
-         "id": "displayName",
-         "value": "◄ nu"
-        }
-       ]
-      }
-     ]
+      "mode": "fixed",
+      "fixedColor": "blue"
+     }
     },
     "overrides": []
    },
@@ -962,7 +925,7 @@
      },
      "expr": "nextenergy_price_current_eur",
      "instant": false,
-     "legendFormat": "NU",
+     "legendFormat": "◄ nu",
      "refId": "A"
     }
    ]
