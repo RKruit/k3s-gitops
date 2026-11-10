@@ -91,6 +91,7 @@ in de queries en kunnen daar aangepast):
 - Warmtevraag-index: `0,09 kW per °C onder 20 °C` — schaalt de €/u-kolommen, verandert níét de gas-vs-stroomdrempel (die is per-kWh).
 - Keuze-serie: `1 - clamp_max(floor(stroom€/u ÷ gas€/u), 1)` = 1 = stroom. MetricsQL heeft geen `bool`-modifier — deze vallende-vorm is de stapelvervanger (geverifieerd 10-11-2026).
 - Suggestieserie is elementgewijs: temp/prijs/gas zijn alle uur-geankerd `[1h]`-last_over_time → full-slot op élke grafana-step (300-1800 s). Één randartefact: het slot op exact 24:00 is leeg (uur 0-23 bestaan, geen uur-24-sample) — cosmetisch aan de rechterrand.
+- **Duplicate-tie gotcha (10-11-2026)**: bij gelijke timestamps kiest VM's `last_over_time` de OUDSTE sample — een her-gepushte ankerwaarde met een gewijzigde waarde (weather-refresh, gaswissel 06:00) zou dus nóóit doorzetten. Fix in poller v4.1: bij waardeverandering eerst het héle series via `delete_series` verwijderen, dan opnieuw ankeren (boeken-pattern); opnieuw ingevoerde samples kunnen kort vóór de daadwerkelijke cleanup worden gedropt — overgangsvenstertje uiteindelijk-consistent. Manual import-probes via het import-API gaven 204 maar duikelen soms niet zichtbaar op in queries (rollup-result-cache) — verifieer altijd via de poller-cyclus zelf.
 
 ## Savings bookkeeping (Besparing dashboard, since 2026-11-04)
 
