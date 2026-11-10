@@ -37,7 +37,7 @@ Caddy route grafana.oostrandpark.com (Authelia forward_auth → anonymous Viewer
 
 | Dashboard | uid | Contents |
 |---|---|---|
-| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge, price), power-flow chart, SoC 24 h, price curve + controller P30/P70 thresholds (panel follows the dashboard range; panel-link "Hele dag ▸" opens the same panel midnight→24:00 incl. upcoming hours via `?from=now/d&to=now/d&viewPanel=11` — Grafana 13.2.5 ignores ALL per-panel time-end config: `panel.time{from,to}`, target `relativeTimeRange`, variables in panel time are no-ops, and legacy `panel.timeFrom` works but always pins the end to "now"; `to=now/d` rounds UP to 24:00, `from=now/d` floors to midnight), electricity cost today (midnight-anchored panel), NextEnergy hourly rates as bar gauge (hour-labeled "1…23", chronological, blue "◄ nu" bar on the current hour, incl. upcoming hours), plus the same bar gauge for TOMORROW (same hour labels, no current-hour bar; filled only once NextEnergy publishes the next day ±16:00, empty before) |
+| Energie — Live | `energy-live` | realtime stats (grid, house, PV, SoC, charge/discharge), power-flow chart, SoC 24 h, price curve + controller P30/P70 thresholds (panel follows the dashboard range; panel-link "Hele dag ▸" opens the same panel midnight→24:00 incl. upcoming hours via `?from=now/d&to=now/d&viewPanel=11` — Grafana 13.2.5 ignores ALL per-panel time-end config: `panel.time{from,to}`, target `relativeTimeRange`, variables in panel time are no-ops, and legacy `panel.timeFrom` works but always pins the end to "now"; `to=now/d` rounds UP to 24:00, `from=now/d` floors to midnight), electricity cost today (midnight-anchored panel), NextEnergy hourly rates as bar gauge (hour-labeled "1…23", chronological, blue "◄ nu" bar on the current hour, incl. upcoming hours), plus the same bar gauge for TOMORROW (same hour labels, no current-hour bar; filled only once NextEnergy publishes the next day ±16:00, empty before) |
 | Energie — Verloop | `energy-daily` | price curve + thresholds, rolling-24 h kWh (import/export/PV/battery), SoC, regime, gas m³ |
 | Verwarming | `verwarming` | 24-uurs "Voorspelling" (dag-geankerd, now/d→now/d): verwarmingskosten €/u voor gas vs warmtepomp-stroom, suggestie-staven (1 = op stroom, 0 = op gas) en Open-Meteo-temperatuurverwachting |
 | Energie — Besparing | `energy-savings` | cumulative books: net battery saving, discharge value, charge cost, PV value (€ over the selected range), battery cycles + kWh |
@@ -65,7 +65,7 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `pv_power_w` | SolarEdge inverter via Homey (`generated_w`) |
 | `house_load_w` | **derived**: `p1 + pv + discharge − charge` |
 | `nextenergy_price_eur{day,hour}` | hourly all-in curve, hour-anchored timestamps (today) |
-| `nextenergy_price_current_eur` | this hour's price as instant gauge |
+| `nextenergy_price_current_eur` | this hour's price — poller still pushes it, dashboard panel removed 10-11-2026 (price already visible via the bars panels) |
 | `nextenergy_prices_age_s` | freshness of the prices cache |
 | `energy_poller_last_push_ts` | poller heartbeat |
 | `battery_charge_kwh` / `battery_discharge_kwh` | cumulative books: kWh into the AC port / delivered to the house (integrated from the 10 s samples, gaps skipped) |
