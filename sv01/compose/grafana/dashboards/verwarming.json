@@ -66,7 +66,8 @@
      },
      "unit": "currencyEUR",
      "decimals": 2,
-     "min": 0
+     "min": 0,
+     "max": 0.5
     },
     "overrides": [
      {
@@ -118,6 +119,14 @@
        {
         "id": "custom.showPoints",
         "value": "auto"
+       },
+       {
+        "id": "min",
+        "value": -10
+       },
+       {
+        "id": "max",
+        "value": 15
        }
       ]
      }
@@ -172,7 +181,7 @@
      "refId": "D"
     }
    ],
-   "description": "24 uur, dag-geankerd (00:00-24:00). Staven = stroom-uur (goedkopere bron per uur); bij setpoint ≤ buitentemp geen staaf (geen verwarming). Aanpassen: COP-anker (2,2), stooklijst (15 + 3×blok, grenzen 25200/79200 s), vraagfactor (0,05 kW/K) en 9,2815 = 9,77 kWh/m³ × 0,95."
+   "description": "24 uur, dag-geankerd (00:00-24:00). Kosten-as vast op 0-0,50 €; staven (suggestie, waarde 1) lopen gekapst tegen de bovenrand = stroom-uur. Aanpassen: COP-anker (2,2), stooklijst (15 + 3×blok, grenzen 25200/79200 s), vraagfactor (0,05 kW/K) en 9,2815 = 9,77 kWh/m³ × 0,95."
   }
  ],
  "refresh": "1m",
@@ -191,5 +200,5 @@
  "timezone": "browser",
  "title": "Verwarming",
  "uid": "verwarming",
- "version": 3
+ "version": 4
 }
