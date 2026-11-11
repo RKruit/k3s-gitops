@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 31,
+ "version": 32,
  "annotations": {
   "list": [
    {
@@ -945,6 +945,88 @@
      "expr": "increase(p1_gas_m3[1h])",
      "legendFormat": "gas m³/u",
      "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "title": "Stroomverbruik (vandaag)",
+   "description": "P1-tellers: verbruik per uur (increase over glindent 1-h venster, dezelfde definitie als het Stroomkosten-panel zijn €-lines). Vast vanaf middernacht (timeFrom now/d), onafhankelijk van de timepicker. Teruglevering = aparte teller; plat nul als er vandaag niet wordt teruggeleverd.",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 28,
+    "w": 12,
+    "h": 6
+   },
+   "timeFrom": "now/d",
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "axisPlacement": "auto",
+      "axisColorMode": "text",
+      "drawStyle": "line",
+      "lineInterpolation": "stepAfter",
+      "lineWidth": 2,
+      "fillOpacity": 30,
+      "gradientMode": "none",
+      "pointSize": 1,
+      "showPoints": "never",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "scaleDistribution": {
+       "type": "linear"
+      },
+      "hideFrom": {
+       "legend": false,
+       "tooltip": false,
+       "viz": false
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "spanNulls": true
+     },
+     "unit": "kwh",
+     "decimals": 2
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "increase(p1_import_kwh[1h])",
+     "legendFormat": "inkoop kWh/u",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "increase(p1_export_kwh[1h])",
+     "legendFormat": "teruglevering kWh/u",
+     "refId": "B"
     }
    ]
   }
