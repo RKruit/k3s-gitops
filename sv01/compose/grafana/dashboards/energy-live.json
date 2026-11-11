@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 34,
+ "version": 35,
  "annotations": {
   "list": [
    {
@@ -823,7 +823,7 @@
   },
   {
    "id": 14,
-   "title": "Stroomprijzen (NextEnergy, morgen)",
+   "title": "Stroomprijzen (NextEnergy, vandaag)",
    "type": "bargauge",
    "datasource": {
     "type": "prometheus",
@@ -892,7 +892,7 @@
      "refId": "A"
     }
    ],
-   "description": "All-in uurprijzen voor morgen (zelfde schema als de vandaag-balken). Gevuld zodra NextEnergy de volgendag publiceert (±16:00, app-API); daarvóór leeg — geen data is normaal. Datum-poort voorkomt verkeerde dag."
+   "description": "Toont de laatst GEPUBLICEERDE prijzendag: tot ±16:00 zijn dat de tarieven van vandaag (de poller stopt met pushen om middernacht en de balken blijven op de vandaag-waarden staan), daarna — zodra NextEnergy de nieuwe dag publiceert — schuiven de balken over naar die komende dag. Heette oorspronkelijk 'morgen'; hernoemd naar 'vandaag' door Robert 13-11-2026."
   },
   {
    "id": 16,
