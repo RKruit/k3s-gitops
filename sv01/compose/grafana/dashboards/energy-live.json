@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 32,
+ "version": 33,
  "annotations": {
   "list": [
    {
@@ -958,8 +958,8 @@
     "uid": "victoriametrics"
    },
    "gridPos": {
-    "x": 12,
-    "y": 28,
+    "x": 0,
+    "y": 34,
     "w": 12,
     "h": 6
    },
