@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 33,
+ "version": 34,
  "annotations": {
   "list": [
    {
@@ -799,8 +799,27 @@
      "expr": "increase(purchase_eur[1h]) - increase(export_eur[1h])",
      "legendFormat": "netto €/u (inkoop − export)",
      "refId": "B"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "purchase_eur - purchase_eur @ start()",
+     "legendFormat": "€ inkoop totaal (middernacht→nu)",
+     "refId": "C"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "purchase_eur - export_eur - (purchase_eur @ start() - export_eur @ start())",
+     "legendFormat": "€ netto totaal (middernacht→nu)",
+     "refId": "D"
     }
-   ]
+   ],
+   "description": "Twee soorten lijnen, alles in € op één as:\n• TEMPO (per uur, glijdend uurvenster over exacte P1-counter-boekingen × de all-in uurprijs van dat moment): 'inkoop €/u' = wat je per uur koopt; 'netto €/u (inkoop − export)' = de saldering-lezing met teruglever-credit eraf.  Na een piek blijft het tempo ±1 uur hoog uitlopen, het venster is uurbreed.\n• TOTAAL (stijgend, sinds middernacht vastgepind op de tellerwaarde van 00:00 via VM's @ start()): 'inkoop totaal' eindigt op de dagkosten tot nu; 'netto totaal' = daar de teruglever-credit af. Rond middernacht bij beide €0.\nVast op de dag (timeFrom now/d), onafhankelijk van de timepicker."
   },
   {
    "id": 14,
