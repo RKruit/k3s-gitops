@@ -79,7 +79,7 @@ STATUS_PORT = 8891
 CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
-CHARGE_TARGET = 100  # %: stop grid-charging at this SOC (Robert 08-11-2026 'Laadt tot 100%' — zondag 100-ct-piek bij maandagnacht van 40; eerder patroon: bij grote spreiding tijdelijk 100, daarna 'max 90%' terugroepen)
+CHARGE_TARGET = 90  # %: stop grid-charging at this SOC (Robert 11-11-2026 'Laad max 90%' — terugroepen van de tijdelijke 100%; het terugkerende patroon: bij grote spreiding tijdelijk 100, daarna terug naar 90)
 # One-day override pattern (DISCHARGE_FULL_* / DISCHARGE_NOT_BEFORE_*): zie
 # skill zendure-solarflow. De 09-11-2026 full-cap override ('ontlaad naar 0%')
 # werd diezelfde avond opgeheven op Roberts instructie 'accu niet maximaal
