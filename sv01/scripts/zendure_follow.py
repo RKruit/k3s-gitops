@@ -99,6 +99,14 @@ DISCHARGE_THR_STEPS = (
     ("2026-11-11", 0, 0.59),
     ("2026-11-11", 19, 0.48),
 )
+# One-day CHARGE-threshold override (Robert 11-11-2026 ~22:00 'de laadrempel
+# staat wat hoog voor de rest van de dag; kijk ook naar morgen'): vanavond
+# niet bijladen om 23:00 (0,39) — morgen 12-11 is goedkoper (nacht 0,35-0,39,
+# midag 13-15u 0,33-0,34), de normale P30-wet pakt die vensters zelf vanaf
+# 00:00. Spiegel van DISCHARGE_THR_STEPS; vervalt automatisch met de datum.
+CHARGE_THR_STEPS = (
+    ("2026-11-11", 22, 0.38),
+)
 PRICE_STALE = 5400 # s: prices older than this -> treat as unknown (idle, safe)
 STATUS_DIR = "/var/lib/zendure-follow"
 
@@ -496,6 +504,9 @@ def price_regime(now_dt):
     state["price_now"] = prices[now_dt.hour]
     vals = sorted(prices.values())
     c_thr = quantile(vals, CHARGE_PCT)
+    for _td, _th, _cthr in CHARGE_THR_STEPS:
+        if str(now_dt.date()) == _td and now_dt.hour >= _th:
+            c_thr = _cthr  # one-day charge-threshold override (Robert)
     d_thr = quantile(vals, DISCHARGE_PCT)
     for _td, _th, _tthr in DISCHARGE_THR_STEPS:
         if str(now_dt.date()) == _td and now_dt.hour >= _th:
