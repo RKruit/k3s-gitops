@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 35,
+ "version": 36,
  "annotations": {
   "list": [
    {
@@ -858,11 +858,29 @@
         "value": 0.45
        }
       ]
-     },
-     "min": 0,
-     "mappings": []
+     }
     },
-    "overrides": []
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "NU"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       },
+       {
+        "id": "displayName",
+        "value": "◄ nu"
+       }
+      ]
+     }
+    ]
    },
    "options": {
     "orientation": "vertical",
@@ -886,13 +904,13 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "nextenergy_price_tomorrow_hour{aa_order!=\"\"}",
+     "expr": "nextenergy_price_hour{aa_order!=\"\"}",
      "instant": false,
      "legendFormat": "{{hour}}",
      "refId": "A"
     }
    ],
-   "description": "Toont de laatst GEPUBLICEERDE prijzendag: tot ±16:00 zijn dat de tarieven van vandaag (de poller stopt met pushen om middernacht en de balken blijven op de vandaag-waarden staan), daarna — zodra NextEnergy de nieuwe dag publiceert — schuiven de balken over naar die komende dag. Heette oorspronkelijk 'morgen'; hernoemd naar 'vandaag' door Robert 13-11-2026."
+   "description": "Balken = de tarieven van de dag die op dit moment geldt (vandaag; elke 10 s ververst, uurlabels 0-23 plus de blauwe '◄ nu'-balk van het lopende uur). Bron = de vandaag-tabel die de poller continu pusht, dus het panel raakt niet leeg. Om middernacht wisselen de balken automatisch naar de nieuwe dag. Hernoemd naar 'vandaag' door Robert 13-11-2026 (was 'morgen')."
   },
   {
    "id": 16,
