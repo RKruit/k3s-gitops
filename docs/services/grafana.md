@@ -109,6 +109,8 @@ Electricity-cost books (poller v3): `purchase_eur` and `export_eur` price the P1
 
 ## Gotchas
 
+- **vm_delete_series must POST** (fixed 13-11-2026): VM's `/api/v1/admin/tsdb/delete_series` rejects urllib's implicit GET with 405 — the poller's re-anchor path (gas rate, forecast generation) then loops every tick, `last_over_time` ties freeze the forecast at the midnight generation (duplicate-tie rule: oldest wins) and the Verwarming temperature line goes stale. Fix: send the `match[]` filter as a POST body (`application/x-www-form-urlencoded`); verified by the "forecast re-anchored" / "gas rate anchored fresh" journal lines right after the restart.
+
 - **VictoriaMetrics on NFS is a watch item**: VM's docs are lukewarm on network filesystems; NFS won because it's the standing data-home convention and the write rate is tiny (~5 samples/s). If VM ever logs NFS I/O errors, move `vm-data` to a local volume and back up with its snapshot API.
 - `grafana` + `victoria-metrics` float on `:latest` → daily image-update timer applies upgrades (VM storage auto-migrates backward-compatibly).
 - `house_load_w` is an identity-derivation, not a meter — if Homey (PV) is stale, the number is stale too.
