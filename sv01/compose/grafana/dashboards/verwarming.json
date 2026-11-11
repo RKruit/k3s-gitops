@@ -182,6 +182,105 @@
     }
    ],
    "description": "24 uur, dag-geankerd (00:00-24:00). Kosten-as vast op 0-0,50 €; staven (suggestie, waarde 1) lopen gekapst tegen de bovenrand = stroom-uur. Aanpassen: COP-anker (2,2), stooklijst (15 + 3×blok, grenzen 25200/79200 s), vraagfactor (0,05 kW/K) en 9,2815 = 9,77 kWh/m³ × 0,95."
+  },
+  {
+   "id": 2,
+   "title": "Prijs (24u) + regelaar-drempels",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 16,
+    "w": 24,
+    "h": 6
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "axisPlacement": "auto",
+      "axisColorMode": "text",
+      "drawStyle": "line",
+      "lineInterpolation": "stepAfter",
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "gradientMode": "none",
+      "pointSize": 1,
+      "showPoints": "never",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "scaleDistribution": {
+       "type": "linear"
+      },
+      "hideFrom": {
+       "legend": false,
+       "tooltip": false,
+       "viz": false
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "spanNulls": true
+     },
+     "unit": "currencyEUR",
+     "decimals": 2
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "max(last_over_time(nextenergy_price_eur[1h]))",
+     "legendFormat": "prijs",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "last_over_time(controller_charge_threshold_eur[24h])",
+     "legendFormat": "laaddrempel",
+     "refId": "B"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "last_over_time(controller_discharge_threshold_eur[24h])",
+     "legendFormat": "ontlaaddrempel",
+     "refId": "C"
+    }
+   ],
+   "description": "Kopie van het Energie-Live panel 'Prijs (24u) + regelaar-drempels' (13-11-2026). Volgt het dashboardbereik — standaard dus de hele dag (middernacht→24:00, komende uren inbegrepen) — de uurprijs (all-in) naast de P30/P70-laad-/ontlaaddrempels van de Zendure-regelaar. 'Hele dag ▸' zet de dagweergave terug na een eigen picker-instelling.",
+   "links": [
+    {
+     "title": "Hele dag ▸",
+     "url": "/d/verwarming/verwarming?from=now%2Fd&to=now%2Fd&viewPanel=2&timezone=browser",
+     "targetBlank": false,
+     "keepTime": false,
+     "includeVars": false
+    }
+   ]
   }
  ],
  "refresh": "1m",
@@ -200,5 +299,5 @@
  "timezone": "browser",
  "title": "Verwarming",
  "uid": "verwarming",
- "version": 4
+ "version": 5
 }
