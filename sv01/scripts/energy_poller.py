@@ -88,8 +88,16 @@ def vm_delete_series(match):
     re-imported for the same series name until the deletion is processed —
     callers re-anchor right away (next cycle is idempotent either way)."""
     try:
-        q = urllib.parse.urlencode({"match[]": match})
-        with urllib.request.urlopen(f"{VM_DELETE_URL}?{q}", timeout=5) as r:
+        # NB: VM verwacht hier POST — een GET (urllib-default) geeft 405
+        # (13-11-2026: de 405-loop sinds middernacht bevroor de forecast-
+        # re-anchors op de middernacht-generatie door de duplicate-tie-regel).
+        req = urllib.request.Request(
+            VM_DELETE_URL,
+            data=urllib.parse.urlencode({"match[]": match}).encode(),
+            method="POST",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as r:
             r.read()
         return True
     except Exception as e:
