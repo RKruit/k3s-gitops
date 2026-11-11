@@ -322,10 +322,17 @@ def scrape():
             # that hour is deliberately not pushed, so bars stay 24 total.
             for hstr, price in hourly.items():
                 h = int(hstr)
-                if h == datetime.now(TZ).hour:
-                    lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="NU"}} {float(price)}')
-                else:
-                    lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
+                lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
+            # '◄ nu' marker for the bars panel: STABLE label-set (aa_order="24"
+            # sorts after "23", hour="NU" never rotates), pushed every tick, so
+            # the panel can select it with aa_order="24" without resurrecting
+            # the day's dead label-sets. 13-11-2026: the old rotating
+            # aa_order="NN"/hour="NU" row birthed ghost '◄ nu' bars under the
+            # whole-day range; the numbered row of the current hour is now
+            # pushed too, so all 24 hour-bars stay dense.
+            cur_h = datetime.now(TZ).hour
+            if str(cur_h) in hourly:
+                lines.append(f'nextenergy_price_hour{{aa_order="24",hour="NU"}} {float(hourly[str(cur_h)])}')
         if pr.get("fetched"):
             lines.append(f"nextenergy_prices_age_s {int(time.time() - float(pr['fetched']))}")
         # persoonlijk all-in gastarief (€/m³, dag-based) — the controller
