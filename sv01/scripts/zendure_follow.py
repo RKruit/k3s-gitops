@@ -90,12 +90,12 @@ CHARGE_TARGET = 100  # %: stop grid-charging at this SOC (Robert 08-11-2026 'Laa
 # Reverts automatically tomorrow (remove these two lines to make it permanent).
 DISCHARGE_NOT_BEFORE_DATE = "2026-10-31"
 DISCHARGE_NOT_BEFORE_HOUR = 16
-# One-day threshold override (Robert 11-11-2026 'ontlaadrempel vandaag 60 ct'):
-# alleen vandaag firet de ontladrempel op 0,60 €/kWh i.p.v. de P70-kwantielfloor
-# (0,57) — uur 20 (0,56) valt dan uit het venster; 16-19 (0,62-0,67) erin.
-# Verval automatisch met de datum (poort in price_regime).
+# One-day threshold override (Robert 11-11-2026, 2e ronde 'maak de drempel 59
+# cent'): alleen vandaag firet de ontladrempel op 0,59 €/kWh i.p.v. de
+# P70-kwantielfloor (0,57) — uur 20 (0,56) valt uit het venster; 16-19
+# (0,62-0,67) erin. Verval automatisch met de datum (poort in price_regime).
 DISCHARGE_THR_DATE = "2026-11-11"
-DISCHARGE_THR_OVR = 0.60
+DISCHARGE_THR_OVR = 0.59
 PRICE_STALE = 5400 # s: prices older than this -> treat as unknown (idle, safe)
 STATUS_DIR = "/var/lib/zendure-follow"
 
