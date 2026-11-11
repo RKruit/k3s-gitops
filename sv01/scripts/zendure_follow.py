@@ -90,12 +90,15 @@ CHARGE_TARGET = 100  # %: stop grid-charging at this SOC (Robert 08-11-2026 'Laa
 # Reverts automatically tomorrow (remove these two lines to make it permanent).
 DISCHARGE_NOT_BEFORE_DATE = "2026-10-31"
 DISCHARGE_NOT_BEFORE_HOUR = 16
-# One-day threshold override (Robert 11-11-2026, 2e ronde 'maak de drempel 59
-# cent'): alleen vandaag firet de ontladrempel op 0,59 €/kWh i.p.v. de
-# P70-kwantielfloor (0,57) — uur 20 (0,56) valt uit het venster; 16-19
-# (0,62-0,67) erin. Verval automatisch met de datum (poort in price_regime).
-DISCHARGE_THR_DATE = "2026-11-11"
-DISCHARGE_THR_OVR = 0.59
+# One-day threshold overrides (Robert 11-11-2026): (datum, van_uur, drempel),
+# laatste match wint; vervallen automatisch met de datum. Fases vandaag:
+# tot 19:00 drempel 0,59 (uur 20 valt dan uit), vanaf 19:00 0,48 — Robert:
+# 'accu leegmaken' → venstert door in de goedkopere avonduren (20: 0,56,
+# 21: 0,49) tot de device-vloer; uur 22 (0,44) valt buiten, 23 laadt.
+DISCHARGE_THR_STEPS = (
+    ("2026-11-11", 0, 0.59),
+    ("2026-11-11", 19, 0.48),
+)
 PRICE_STALE = 5400 # s: prices older than this -> treat as unknown (idle, safe)
 STATUS_DIR = "/var/lib/zendure-follow"
 
@@ -494,8 +497,9 @@ def price_regime(now_dt):
     vals = sorted(prices.values())
     c_thr = quantile(vals, CHARGE_PCT)
     d_thr = quantile(vals, DISCHARGE_PCT)
-    if str(now_dt.date()) == DISCHARGE_THR_DATE:
-        d_thr = DISCHARGE_THR_OVR  # one-day override (Robert: 60 ct)
+    for _td, _th, _tthr in DISCHARGE_THR_STEPS:
+        if str(now_dt.date()) == _td and now_dt.hour >= _th:
+            d_thr = _tthr  # one-day override (Robert)
     state["price_charge_thr"] = c_thr
     state["price_discharge_thr"] = d_thr
     if d_thr - c_thr < MIN_SPREAD:
