@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 30,
+ "version": 31,
  "annotations": {
   "list": [
    {
@@ -874,6 +874,79 @@
     }
    ],
    "description": "All-in uurprijzen voor morgen (zelfde schema als de vandaag-balken). Gevuld zodra NextEnergy de volgendag publiceert (±16:00, app-API); daarvóór leeg — geen data is normaal. Datum-poort voorkomt verkeerde dag."
+  },
+  {
+   "id": 16,
+   "title": "Gasverbruik (vandaag)",
+   "description": "P1-gasteller: verbruik m³ per uur (increase over glidend 1-h venster, zoals het Verloop-dashboard zijn 24-h-totaal berekent; teller komt elke ~20 min binnen, attributie = moment van rapportage). Vast vanaf middernacht (timeFrom now/d), dus onafhankelijk van de timepicker.",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 28,
+    "w": 12,
+    "h": 6
+   },
+   "timeFrom": "now/d",
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "axisPlacement": "auto",
+      "axisColorMode": "text",
+      "drawStyle": "line",
+      "lineInterpolation": "stepAfter",
+      "lineWidth": 2,
+      "fillOpacity": 30,
+      "gradientMode": "none",
+      "pointSize": 1,
+      "showPoints": "never",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "scaleDistribution": {
+       "type": "linear"
+      },
+      "hideFrom": {
+       "legend": false,
+       "tooltip": false,
+       "viz": false
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "spanNulls": true
+     },
+     "unit": "m3",
+     "decimals": 2
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "increase(p1_gas_m3[1h])",
+     "legendFormat": "gas m³/u",
+     "refId": "A"
+    }
+   ]
   }
  ]
 }
