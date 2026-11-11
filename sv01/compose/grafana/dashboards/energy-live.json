@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 38,
+ "version": 39,
  "annotations": {
   "list": [
    {
@@ -863,8 +863,8 @@
     "overrides": [
      {
       "matcher": {
-       "id": "byFrameRefID",
-       "options": "B"
+       "id": "byName",
+       "options": "NU"
       },
       "properties": [
        {
@@ -873,6 +873,10 @@
          "mode": "fixed",
          "fixedColor": "blue"
         }
+       },
+       {
+        "id": "displayName",
+        "value": "◄ nu"
        }
       ]
      }
@@ -900,22 +904,12 @@
       "type": "prometheus",
       "uid": "victoriametrics"
      },
-     "expr": "nextenergy_price_hour{aa_order!=\"\",hour!=\"NU\"}",
-     "instant": false,
+     "expr": "nextenergy_price_hour{aa_order!=\"\"}",
      "legendFormat": "{{hour}}",
      "refId": "A"
-    },
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "victoriametrics"
-     },
-     "expr": "nextenergy_price_hour{aa_order=\"24\",hour=\"NU\"}",
-     "legendFormat": "◄ nu",
-     "refId": "B"
     }
    ],
-   "description": "Balken = de tarieven van de dag die op dit moment geldt (vandaag), uurlabels 0-23, elke 10 s ververst; de blauwe balk rechts is de '◄ nu'-marker met de prijs van het lopende uur (stabiele poller-rij aa_order=24, wisselt niet van label, dus geen ghost-staven). Om middernacht wisselen de balken automatisch naar de nieuwe dag. Hernoemd naar 'vandaag' door Robert 13-11-2026 (was 'morgen')."
+   "description": "Balken = de tarieven van de dag die op dit moment geldt (vandaag), elke 10 s ververst; de blauwe '◄ nu'-balk staat IN de sleuf van het lopende uur en schuift elk uur mee (de poller ruimt de oude NU-rij per uur op, dus soms blijft de oude blauwe staaf ~1 min zichtbaar — bekend gedrag). Om middernacht wisselen de balken automagisch naar de nieuwe dag. Hernoemd naar 'vandaag' door Robert 13-11-2026 (was 'morgen')."
   },
   {
    "id": 16,

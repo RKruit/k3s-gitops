@@ -328,19 +328,21 @@ def scrape():
             # bargauge can highlight it with a STATIC byName override (blue).
             # aa_order keeps it in its slot; the old hour-numbered series for
             # that hour is deliberately not pushed, so bars stay 24 total.
+            cur_h = datetime.now(TZ).hour
             for hstr, price in hourly.items():
                 h = int(hstr)
-                lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
-            # '◄ nu' marker for the bars panel: STABLE label-set (aa_order="24"
-            # sorts after "23", hour="NU" never rotates), pushed every tick, so
-            # the panel can select it with aa_order="24" without resurrecting
-            # the day's dead label-sets. 13-11-2026: the old rotating
-            # aa_order="NN"/hour="NU" row birthed ghost '◄ nu' bars under the
-            # whole-day range; the numbered row of the current hour is now
-            # pushed too, so all 24 hour-bars stay dense.
-            cur_h = datetime.now(TZ).hour
-            if str(cur_h) in hourly:
-                lines.append(f'nextenergy_price_hour{{aa_order="24",hour="NU"}} {float(hourly[str(cur_h)])}')
+                if h == cur_h:
+                    # '◄ nu' marker IN de chrono-sleuf van het lopende uur
+                    # (aa_order roteert mee; de dode NU-reeksen van eerdere
+                    # uren worden hieronder per tick opgeruimd zodat er onder
+                    # het dagbereik geen ghost-staven blijven staan).
+                    lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="NU"}} {float(price)}')
+                else:
+                    lines.append(f'nextenergy_price_hour{{aa_order="{h:02d}",hour="{h}"}} {float(price)}')
+            # cleanup: alle hour="NU"-staven met een andere aa_order weg
+            # (VM-delete is sinds 13-11 ASYNC: kort kan de oude staaf nog ~
+            # minuten zichtbaar zijn — bekend gedrag, geen fout).
+            vm_delete_series(f'nextenergy_price_hour{{aa_order!~"{cur_h:02d}",hour="NU"}}')
         if pr.get("fetched"):
             lines.append(f"nextenergy_prices_age_s {int(time.time() - float(pr['fetched']))}")
         # persoonlijk all-in gastarief (€/m³, dag-based) — the controller
