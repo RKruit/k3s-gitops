@@ -284,7 +284,7 @@
   },
   {
    "id": 3,
-   "title": "Gasverbruik (11-11)",
+   "title": "Gasverbruik (12-11)",
    "description": "Verbruik m³/u van gisteren op de klok-as 00:00→24:00 — de volledige voltooide dag, altijd gevuld (de tellerlijn is 1 dag opgeschoven: increase over het glidende uurvenster, offset 1d; zelfde definitie als 'Gasverbruik (vandaag)' op Energie-Live). De titel noemt de datum en wordt elke nacht 00:05 door cron 'Gas gisteren dagverschuiving' meegezet.",
    "type": "timeseries",
    "datasource": {
@@ -371,5 +371,5 @@
  "timezone": "browser",
  "title": "Verwarming",
  "uid": "verwarming",
- "version": 13
+ "version": 14
 }
