@@ -193,7 +193,7 @@
    },
    "gridPos": {
     "x": 0,
-    "y": 16,
+    "y": 22,
     "w": 24,
     "h": 12
    },
@@ -293,7 +293,7 @@
    },
    "gridPos": {
     "x": 0,
-    "y": 28,
+    "y": 16,
     "w": 24,
     "h": 6
    },
@@ -371,5 +371,5 @@
  "timezone": "browser",
  "title": "Verwarming",
  "uid": "verwarming",
- "version": 11
+ "version": 12
 }
