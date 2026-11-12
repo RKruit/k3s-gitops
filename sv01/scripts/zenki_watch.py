@@ -38,9 +38,9 @@ def get(url, timeout=6):
 def flow_state(p):
     gi, oh = p.get("gridInputPower") or 0, p.get("outputHomePower") or 0
     if gi > 50:
-        return "charge-{}W".format(int(gi)) if gi > 500 else "charge"
+        return "charge"
     if oh > 50:
-        return "discharge-{}W".format(int(oh)) if oh > 500 else "discharge"
+        return "discharge"
     return "idle"
 
 
@@ -61,6 +61,7 @@ def log(kind, msg):
 
 
 prev_sig, hb_at, last_warn = None, 0.0, 0.0
+last_gi, last_oh = 0, 0
 while True:
     loop = time.time()
     p = get(BAT_URL)
@@ -70,6 +71,8 @@ while True:
             log("WARN", "battery report unreadable")
     else:
         props = p.get("properties", {})
+        last_gi = props.get("gridInputPower") or 0
+        last_oh = props.get("outputHomePower") or 0
         cur = {k: props.get(k) for k in KEYS}
         cur["flow"] = flow_state(props)
         st = get(STATUS_URL) or {}
@@ -93,9 +96,9 @@ while True:
             hb_at = loop
         elif loop - hb_at >= HB_S:
             hw = (get(P1_URL) or {}).get("active_power_w")
-            log("HB", "soc={} {} P1={:+.0f}W smartMode={} acMode={} minSoc={} | {} | writes={}".format(
+            log("HB", "soc={} {} gi={}W oh={}W P1={:+.0f}W smartMode={} acMode={} minSoc={} | {} | writes={}".format(
                 prev_sig.get("electricLevel"), prev_sig.get("flow"),
-                hw if hw is not None else -9999.0,
+                last_gi, last_oh, hw if hw is not None else -9999.0,
                 prev_sig.get("smartMode"), prev_sig.get("acMode"), prev_sig.get("minSoc"),
                 law_line(st), writes))
             hb_at = loop
