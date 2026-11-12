@@ -90,11 +90,11 @@
   "list": []
  },
  "time": {
-  "from": "1794351600000",
-  "to": "1794438000000"
+  "from": "2026-11-11T00:00:00+01:00",
+  "to": "2026-11-12T00:00:00+01:00"
  },
  "timezone": "browser",
  "title": "Gasverbruik gisteren",
  "uid": "gas-gisteren",
- "version": 4
+ "version": 5
 }
