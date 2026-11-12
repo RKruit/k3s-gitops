@@ -281,78 +281,6 @@
      "includeVars": false
     }
    ]
-  },
-  {
-   "id": 3,
-   "title": "Gasverbruik (gisteren)",
-   "description": "Verbruik m³/u van GISTEREN, de volledige voltooide dag (24 uur, altijd gevuld): de tellerlijn is 1 dag opgeschoven (increase over het glidende uurvenster, offset 1d), dus de x-as loopt 00:00→24:00 en toont op elk uur de gas-trek van dat uur gisteren. Zelfde definitie als 'Gasverbruik (vandaag)' op Energie-Live. Onder dagbereik now/d→now/d; het panel raakt niet leeg, gisteren is immers voltooid.",
-   "type": "timeseries",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "victoriametrics"
-   },
-   "gridPos": {
-    "x": 0,
-    "y": 28,
-    "w": 24,
-    "h": 6
-   },
-   "fieldConfig": {
-    "defaults": {
-     "custom": {
-      "axisPlacement": "auto",
-      "axisColorMode": "text",
-      "drawStyle": "line",
-      "lineInterpolation": "stepAfter",
-      "lineWidth": 2,
-      "fillOpacity": 8,
-      "gradientMode": "none",
-      "pointSize": 1,
-      "showPoints": "never",
-      "stacking": {
-       "mode": "none",
-       "group": "A"
-      },
-      "scaleDistribution": {
-       "type": "linear"
-      },
-      "hideFrom": {
-       "legend": false,
-       "tooltip": false,
-       "viz": false
-      },
-      "thresholdsStyle": {
-       "mode": "off"
-      },
-      "spanNulls": true
-     },
-     "unit": "m3",
-     "decimals": 2
-    },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   },
-   "targets": [
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "victoriametrics"
-     },
-     "expr": "increase(p1_gas_m3[1h] offset 1d)",
-     "legendFormat": "gas m³/u (gisteren)",
-     "refId": "A"
-    }
-   ]
   }
  ],
  "refresh": "1m",
@@ -371,5 +299,5 @@
  "timezone": "browser",
  "title": "Verwarming",
  "uid": "verwarming",
- "version": 9
+ "version": 8
 }
