@@ -281,79 +281,6 @@
      "includeVars": false
     }
    ]
-  },
-  {
-   "id": 3,
-   "title": "Gasverbruik (gisteren)",
-   "description": "Hourly gas usage of YESTERDAY, plotted on today's whole-day axis (dashboard now/d→now/d; the query shifts one day back with `offset 1d`, so axis hour h = yesterday hour h). Yesterday is complete, so all 24 slots have data. Same P1 counter and style as the energy-live panel 'Gasverbruik (vandaag)'.",
-   "type": "timeseries",
-   "datasource": {
-    "type": "prometheus",
-    "uid": "victoriametrics"
-   },
-   "gridPos": {
-    "x": 0,
-    "y": 28,
-    "w": 24,
-    "h": 8
-   },
-   "timeFrom": "now/d",
-   "fieldConfig": {
-    "defaults": {
-     "custom": {
-      "axisPlacement": "auto",
-      "axisColorMode": "text",
-      "drawStyle": "line",
-      "lineInterpolation": "stepAfter",
-      "lineWidth": 2,
-      "fillOpacity": 30,
-      "gradientMode": "none",
-      "pointSize": 1,
-      "showPoints": "never",
-      "stacking": {
-       "mode": "none",
-       "group": "A"
-      },
-      "scaleDistribution": {
-       "type": "linear"
-      },
-      "hideFrom": {
-       "legend": false,
-       "tooltip": false,
-       "viz": false
-      },
-      "thresholdsStyle": {
-       "mode": "off"
-      },
-      "spanNulls": true
-     },
-     "unit": "m3",
-     "decimals": 2
-    },
-    "overrides": []
-   },
-   "options": {
-    "legend": {
-     "displayMode": "list",
-     "placement": "bottom",
-     "showLegend": true
-    },
-    "tooltip": {
-     "mode": "multi",
-     "sort": "desc"
-    }
-   },
-   "targets": [
-    {
-     "datasource": {
-      "type": "prometheus",
-      "uid": "victoriametrics"
-     },
-     "expr": "increase(p1_gas_m3[1h] offset 1d)",
-     "legendFormat": "gas m³/u",
-     "refId": "A"
-    }
-   ]
   }
  ],
  "refresh": "1m",
@@ -372,5 +299,5 @@
  "timezone": "browser",
  "title": "Verwarming",
  "uid": "verwarming",
- "version": 7
+ "version": 8
 }
