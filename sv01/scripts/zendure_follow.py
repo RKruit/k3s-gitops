@@ -75,6 +75,10 @@ WRITE_MIN = 5      # W: skip writes while |target - last_written| <= this
 WRITE_GAP = 1.5    # s: minimum time between writes
 LOOP = 1.0         # s: P1 poll interval
 FAIL_GRACE = 10.0  # s without a valid P1 read -> steer to 0/0
+DRIFT_REASSERT_GAP = 20    # s minimum between drift-reassert writes
+DRIFT_STICK_CLEAR = 300    # s the reasserted limit must hold to clear the burst counter
+DRIFT_BURST_LIMIT = 3      # consecutive quick re-drifts -> pause + alarm (foreign writer)
+FOREIGN_ERR = "foreign writer: limit keeps being reverted"  # -> Kuma #20 DOWN
 STATUS_PORT = 8891
 CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
@@ -263,6 +267,65 @@ def verify_or_retry(props_report):
         print(f"RETRY({p['tries']}) {props} -> {resp}", flush=True)
     except Exception as e:
         state["last_error"] = f"retry write: {e}"
+
+
+# --- drift self-heal --------------------------------------------------------
+# Silent device-/cloud-side rewrites of the engaged limit (seen 12-11-2026:
+# charge @800 written 12:00:01, flow verified bevestigd ~12:00:15, later
+# inputLimit=0 in the report while the write counter never moved — same
+# family as the 2x minSoc auto-revert). The law only rewrites on a target
+# CHANGE, so a drifted limit would stay broken all day; drift_check re-sends
+# our own intended limit when the report deviates. A reverter that keeps it
+# up ~every 15-20 s (plan mode) trips the burst counter: pause + alarm.
+def drift_check(observe, props):
+    """Re-assert the engaged limit when the device report silently disagrees."""
+    if observe:
+        return
+    st = state.setdefault("drift", {"seen": 0, "last_at": 0.0, "bursts": 0, "reasserts": 0})
+    lw = state["last_written"]
+    if lw["outputLimit"] is None:
+        return
+    in_w = lw["inputLimit"] or 0
+    out_w = lw["outputLimit"] or 0
+    if in_w == 0 and out_w == 0:
+        return  # resting: 0/0 is intended, hands off in rest
+    want = "charge" if in_w > 0 else "discharge"
+    key = "inputLimit" if want == "charge" else "outputLimit"
+    want_val = int(lw[key] or 0)
+    report_val = props.get(key)
+    if report_val is None:
+        return
+    now = time.time()
+    if int(report_val or 0) == want_val:
+        st["seen"] = 0
+        if st["bursts"] and now - st["last_at"] >= DRIFT_STICK_CLEAR:
+            st["bursts"] = 0  # reassert held long enough
+        if state.get("last_error") == FOREIGN_ERR:
+            state["last_error"] = ""  # limit holds again, alarm off
+        return
+    st["seen"] += 1
+    if st["seen"] < 2:
+        return  # require 2 consecutive samples (report refresh noise)
+    if now - st["last_at"] < DRIFT_REASSERT_GAP:
+        return
+    if st["bursts"] >= DRIFT_BURST_LIMIT:
+        if state.get("last_error") != FOREIGN_ERR:
+            print(f"FOREIGN WRITER: {key} keeps reverting to {report_val} "
+                  f"(intended {want_val}); reassert paused", flush=True)
+            state["last_error"] = FOREIGN_ERR  # Kuma #20 goes DOWN on this
+        return
+    if props.get("acMode") != AC_MODE[want] or props.get("smartMode") == 0:
+        state["direction"] = None  # force the full direction post on reassert
+    try:
+        st["reasserts"] += 1
+        st["last_at"] = now
+        st["bursts"] += 1
+        st["seen"] = 0
+        print(f"DRIFT {key}={report_val} (intended {want_val}, "
+              f"#{st['reasserts']}, burst {st['bursts']}) -> reassert", flush=True)
+        write(lw["outputLimit"], lw["inputLimit"])
+    except Exception as e:
+        state["last_error"] = f"reassert write: {e}"
 
 
 def quantile(sorted_vals, frac):
@@ -664,6 +727,7 @@ def main_loop(observe):
                 state["direction"] = "charge" if ac == 1 else ("discharge" if ac == 2 else None)
             if state["direction"] and props.get("smartMode") == 0:
                 state["direction"] = None  # device rebooted/flipped the RAM flag; re-ensure next write
+            drift_check(observe, props)
             fresh = last_p1 is not None and (time.time() - last_ok) <= FAIL_GRACE
             cutoff = time.time() - SURPLUS_WINDOW
             fresh_hist = [(t, v) for (t, v) in state["p1_hist"] if t >= cutoff]
