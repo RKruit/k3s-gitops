@@ -1,0 +1,15 @@
+# /etc/systemd/system/zenki-watch.service
+[Unit]
+Description=Zendure ZENKI watch (read-only report logger vs sv01 observe-law)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rkruit
+ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/zenki_watch.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
