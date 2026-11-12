@@ -281,6 +281,78 @@
      "includeVars": false
     }
    ]
+  },
+  {
+   "id": 3,
+   "title": "Gasverbruik (11-11)",
+   "description": "Verbruik m³/u van gisteren op de klok-as 00:00→24:00 — de volledige voltooide dag, altijd gevuld (de tellerlijn is 1 dag opgeschoven: increase over het glidende uurvenster, offset 1d; zelfde definitie als 'Gasverbruik (vandaag)' op Energie-Live). De titel noemt de datum en wordt elke nacht 00:05 door cron 'Gas gisteren dagverschuiving' meegezet.",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 28,
+    "w": 24,
+    "h": 6
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "axisPlacement": "auto",
+      "axisColorMode": "text",
+      "drawStyle": "line",
+      "lineInterpolation": "stepAfter",
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "gradientMode": "none",
+      "pointSize": 1,
+      "showPoints": "never",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "scaleDistribution": {
+       "type": "linear"
+      },
+      "hideFrom": {
+       "legend": false,
+       "tooltip": false,
+       "viz": false
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "spanNulls": true
+     },
+     "unit": "m3",
+     "decimals": 2
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "expr": "increase(p1_gas_m3[1h] offset 1d)",
+     "legendFormat": "gas m³/u (gisteren)",
+     "refId": "A"
+    }
+   ]
   }
  ],
  "refresh": "1m",
@@ -299,5 +371,5 @@
  "timezone": "browser",
  "title": "Verwarming",
  "uid": "verwarming",
- "version": 10
+ "version": 11
 }
