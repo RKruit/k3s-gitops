@@ -722,58 +722,63 @@ services:
   # sqlite, users, .jwt_secret) persist in hetzelfde volume. Media op NFS.
   # Geen published ports: alleen Caddy-route frigate.oostrandpark.com
   # (Authelia-gated) -> frigate:8971 (authenticated port).
-  frigate-config-init:
-    image: busybox:1.37
-    container_name: sv01-frigate-config-init
-    restart: "no"
-    volumes:
-      - ./frigate/config.yml:/src/config.yml:ro
-      - frigate-config:/dst
-    command: ["sh", "-c", "cp /src/config.yml /dst/config.yml"]
-    labels:
-      komodo.skip:
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  frigate:
-    image: ghcr.io/blakeblackshear/frigate:stable
-    container_name: sv01-frigate
-    restart: unless-stopped
-    privileged: true
-    stop_grace_period: 30s
-    shm_size: "512mb"
-    depends_on:
-      frigate-config-init:
-        condition: service_completed_successfully
-    labels:
-      diun.enable: "true"
-    environment:
-      TZ: Europe/Amsterdam
-    tmpfs:
-      - /tmp/cache:size=1g
-    ulimits:
-      nofile:
-        soft: 65535
-        hard: 65535
-    volumes:
-      - frigate-config:/config
-      - frigate-media:/media/frigate
-      - /dev/bus/usb:/dev/bus/usb
-      - /sys/bus/usb:/sys/bus/usb:ro
-      - /etc/localtime:/etc/localtime:ro
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: "2.0"
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # TEMP DISABLE 2026-11-13 (Robert: "stop frigate for now"): beide services
+  # uitgezet; volumes (frigate-config/frigate-media op NFS), de Caddy-route,
+  # config.yml en docs blijven ONGEREAKT. Re-enable = comments hieronder
+  # verwijderen (git revert) -> sync-unit recreëert init+app; daarna de
+  # Kuma-monitor "Frigate UI" hervatten (resumeMonitor).
+  # frigate-config-init:
+  #   image: busybox:1.37
+  #   container_name: sv01-frigate-config-init
+  #   restart: "no"
+  #   volumes:
+  #     - ./frigate/config.yml:/src/config.yml:ro
+  #     - frigate-config:/dst
+  #   command: ["sh", "-c", "cp /src/config.yml /dst/config.yml"]
+  #   labels:
+  #     komodo.skip:
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #
+  # frigate:
+  #   image: ghcr.io/blakeblackshear/frigate:stable
+  #   container_name: sv01-frigate
+  #   restart: unless-stopped
+  #   privileged: true
+  #   stop_grace_period: 30s
+  #   shm_size: "512mb"
+  #   depends_on:
+  #     frigate-config-init:
+  #       condition: service_completed_successfully
+  #   labels:
+  #     diun.enable: "true"
+  #   environment:
+  #     TZ: Europe/Amsterdam
+  #   tmpfs:
+  #     - /tmp/cache:size=1g
+  #   ulimits:
+  #     nofile:
+  #       soft: 65535
+  #       hard: 65535
+  #   volumes:
+  #     - frigate-config:/config
+  #     - frigate-media:/media/frigate
+  #     - /dev/bus/usb:/dev/bus/usb
+  #     - /sys/bus/usb:/sys/bus/usb:ro
+  #     - /etc/localtime:/etc/localtime:ro
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 4G
+  #         cpus: "2.0"
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
 
 volumes:
   # grafana + VM data — NFS per convention (fresh subdirs created 777
