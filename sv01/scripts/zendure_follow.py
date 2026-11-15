@@ -136,6 +136,7 @@ state = {
     "last_p1": None,
     "p1_age_s": None,
     "soc": None,
+    "floor_since": None,
     "regime": None,
     "target": {"outputLimit": None, "inputLimit": None},
     "last_written": {"outputLimit": None, "inputLimit": None},
@@ -770,7 +771,18 @@ def main_loop(observe):
 
         try:
             props = read_bat()
-            state["soc"] = props.get("electricLevel")
+            prev_soc = state["soc"]
+            soc_val = props.get("electricLevel")
+            state["soc"] = soc_val
+            # vloer-gebeurtenis zichtbaar: bij de bodem is het drempelpaar al
+            # herrekend (de rang-keuze rekent per cyclus met de live SoC) —
+            # dit veld toont WANNNEER dat begon (triage/overzicht).
+            floor_pct = (props.get("minSoc") or 0) / 10.0
+            if soc_val is not None and floor_pct:
+                if soc_val <= floor_pct and (prev_soc is None or prev_soc > floor_pct):
+                    state["floor_since"] = datetime.datetime.now().astimezone().strftime("%H:%M:%S")
+                elif soc_val > floor_pct:
+                    state["floor_since"] = None
             if str(state["last_error"]).startswith("BAT:"):
                 state["last_error"] = ""  # battery reachable again
             verify_or_retry(props)
