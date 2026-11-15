@@ -117,14 +117,24 @@ def counter_at(metric, ts):
 
 
 def day_prices(day, t_base):
-    """{hour: all-in €} uit de dag-geankerde prijsserie van dag `day`."""
+    """{hour: all-in €} van dag `day` uit de dag-geankerde prijsserie.
+
+    NB uur-0: vóór de 15-11-2026 dp-mappingfix schreef de poller het
+    {D,hour=00}-anchor met de VORIGE-dag-midnacht-waarde; de juiste waarde
+    voor klok-0 van D staat in het {D+1, hour=00}-anchor (de morgen-push van
+    dag D schreef daar DP[23]-van-D = klok-0 van D). Voor dagen voor de fix
+    wordt uur-0 daar vandaan gehaald; na de fix is het {D,00}-anchor zelf
+    de juiste waarde (de poller her-ankert bij de mappingfix)."""
     res = q_range("max(last_over_time(nextenergy_price_eur[1h]))",
-                  t_base + 1800, t_base + 86100, 3600)
+                  t_base + 1800, t_base + 86400 + 1800, 3600)
     hours = {}
     for series in res:
         for ts, val in series["values"]:
-            h = int((ts - t_base - 1800) // 3600)
-            if 0 <= h <= 23:
+            h = int((ts - t_base) // 3600)
+            if h == 24:
+                if day < "2026-11-16":   # {D+1, 00} = klok-0 van D (pre-fix reconstructie)
+                    hours[0] = float(val)
+            elif 0 <= h <= 23:
                 hours[h] = float(val)
     return hours if len(hours) >= 20 else None
 

@@ -487,12 +487,17 @@ def save_tomorrow(prices, gas, fetched):
 
 
 def dp_to_clock(dp_today, dp_prev):
-    """DP labels -> clock hours: clock hour 0 = DP[23] of yesterday,
-    clock hour h (1..23) = DP[h-1] of today (labels lead the clock by 1)."""
+    """DP labels -> clock hours. De DP-set van dag D dekt de hele kalenderdag
+    in een GEROTEERDE labeling: klok h (1..23) = DP[h-1], en klok 0 (de
+    middernacht-h) = DP[23] van DIEZELFDE dag (niet van de vorige — de oude
+    'klok-0 = DP[23] van D-1'-regel was een leesfout van de 03-11-eindcheck;
+    15-11-2026 bewezen met de spot-toeslag-band: sd 0,006, oude regel +7 ct
+    onmogelijk, wrap-regel +0,2 ct; bevestigd door Robert's app-lezing 16-11:
+    00:00-01:00 = 0,30 = DP[23] van de 16-11-set)."""
     if not dp_today:
         return None
     prices = {}
-    p0 = (dp_prev or {}).get(23)
+    p0 = dp_today.get(23)
     if p0 is not None:
         prices[0] = p0
     for h in range(1, 24):
@@ -503,9 +508,12 @@ def dp_to_clock(dp_today, dp_prev):
 
 
 def widget_to_clock(bars):
-    """Widget bars are DP-labelled too -> clock 1..23; their clock hour 0 is
-    unknown (tomorrow's first hour sits in DP[23]) -> treated as unknown."""
-    return {h + 1: v for h, v in bars.items() if 0 <= h <= 22} or None
+    """Widget bars are DP-labelled too -> clock h+1 for labels 0..22; label 23
+    is de geroteerde middernacht-h (klok 0 van dezelfde dag, zie dp_to_clock)."""
+    prices = {h + 1: v for h, v in bars.items() if 0 <= h <= 22}
+    if 23 in bars:
+        prices[0] = bars[23]
+    return prices or None
 
 
 def fetch_prices():

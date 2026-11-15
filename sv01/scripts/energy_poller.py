@@ -62,6 +62,7 @@ PRICES_FILE = "/var/lib/zendure-follow/prices.json"
 HOMEY_NOTE = ""
 HOMEY_NOTE_TS = 0.0
 TOMORROW_FILE = "/var/lib/zendure-follow/prices-tomorrow.json"
+PRICE_ANCHORED = None     # (day, hourly-tuple) van de vandaag-prijs-ankers die al gepusht zijn
 # morgendag-ankers (15-11-2026): de prijspanelen (3 kopieën) tonen na de
 # publicatie (±16:00) de komende dag. Drempels = P30/P70 over de gepubliceerde
 # set, met de pct-constanten uit de LIVE wet (in-sync met de regelaar en het
@@ -263,7 +264,7 @@ def refresh_weather():
 
 
 def scrape():
-    global HOMEY_NOTE, HOMEY_NOTE_TS, GAS_PUSHED_EUR, WEATHER_PUSHED_GEN, TOM_ANCHORED
+    global HOMEY_NOTE, HOMEY_NOTE_TS, GAS_PUSHED_EUR, WEATHER_PUSHED_GEN, TOM_ANCHORED, PRICE_ANCHORED
     lines = []
     vals = {}
 
@@ -352,6 +353,21 @@ def scrape():
         day, hourly = pr.get("date"), pr.get("hourly", {})
         today_str = datetime.now(TZ).strftime("%Y-%m-%d")
         if day and hourly:
+            # generatie-guard vóór de anchors (15-11-2026, dp-mappingfix):
+            # dezelfde dag + gewijzigde waarden (mappingfix/revisie) én de
+            # middernacht-rollover (de morgen-push van gisteren schreef het
+            # {D+1,00}-anchor al met de OUDE uur-0-waarde) → dag-scoped
+            # delete + re-anchor, anders vriezen die ankers op de oude
+            # waarde (duplicate-tie: oudste sample wint).
+            gen = (day, tuple(sorted((int(h), float(p)) for h, p in hourly.items())))
+            if PRICE_ANCHORED is not None:
+                if PRICE_ANCHORED[0] == day and PRICE_ANCHORED[1] != gen[1]:
+                    vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
+                    log(f"price anchors re-anchored ({day})")
+                elif PRICE_ANCHORED[0] != day:
+                    vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
+                    log(f"new day: anchors re-anchored fresh ({day})")
+            PRICE_ANCHORED = gen
             base = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
             for hstr, price in hourly.items():
                 h = int(hstr)
