@@ -296,6 +296,9 @@ def main():
                    - counter_at("p1_export_kwh", tb))
         exp_eur = (counter_at("export_eur", te)
                    - counter_at("export_eur", tb))
+        if not exp_kwh or exp_kwh < 0 or exp_kwh > 50:
+            # 0/meter-reset/counter-start-artefact: geen zinvolle daggrens
+            exp_kwh, exp_eur = 0.0, 0.0
         hw = hourly_means("battery_charge_w", day, tb)
         dw = hourly_means("battery_discharge_w", day, tb)
         charge_h = [h for h in range(24) if hw.get(h, 0) > 100]
