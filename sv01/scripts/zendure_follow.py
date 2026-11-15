@@ -66,8 +66,8 @@ SURPLUS_WINDOW = 180     # s rolling window (mean over it drives enter/release/t
 SURPLUS_TARGET = 100     # %: surplus charging may fill up to this SoC (Robert 02-11-2026: zon mag tot 100% laden)
 SURPLUS_CHARGE_ENABLED = True  # her-aan 09-11-2026 (Robert: 'Laad wel op bij zon overschot'); uit 06→09-11-2026 (bevel 06-11)
 EXPORT_NUDGE = 10  # W: export beyond this inside the hold band -> shave 15 W off
-OUT_CAP = 800      # W: max discharge (socket/group limit; Robert keeps 800 W)
-IN_CAP = 800       # W: max charge
+OUT_CAP = 2400     # W: max discharge — device-max (`inverseMaxPower` in het rapport is 2400; Robert 15-11-2026: '2400 W per uur op én af, in 2 uur weer vol'); was 800 (bewust conservatief tot Robert anders vroeg)
+IN_CAP = 2400      # W: max charge — device-max (`chargeMaxLimit` = 2400 in het rapport; Robert 15-11-2026); 10→90% SoC ≈ 4,2 kWh ≈ 1,9-2,2 h bij 2,4 kW
 AC_MODE = {"charge": 1, "discharge": 2}   # zenSDK direction flag; verified vs reference
 REST_AFTER = 120   # s of both-zero before handing smartMode back (device low-power)
 GAIN = 0.5         # fraction of grid error applied per step (stable: 0<GAIN<1)
