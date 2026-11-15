@@ -360,13 +360,18 @@ def scrape():
             # delete + re-anchor, anders vriezen die ankers op de oude
             # waarde (duplicate-tie: oudste sample wint).
             gen = (day, tuple(sorted((int(h), float(p)) for h, p in hourly.items())))
-            if PRICE_ANCHORED is not None:
-                if PRICE_ANCHORED[0] == day and PRICE_ANCHORED[1] != gen[1]:
-                    vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
-                    log(f"price anchors re-anchored ({day})")
-                elif PRICE_ANCHORED[0] != day:
-                    vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
-                    log(f"new day: anchors re-anchored fresh ({day})")
+            if PRICE_ANCHORED is None:
+                # eerste anchor na herstart: altijd delete + re-anchor (zoals
+                # GAS_PUSHED_EUR) — VM kan oudere waarden bij dezelfde ts
+                # hebben en de duplicate-tie zou die anders bevriezen
+                vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
+                log(f"price anchors re-anchored after restart ({day})")
+            elif PRICE_ANCHORED[0] == day and PRICE_ANCHORED[1] != gen[1]:
+                vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
+                log(f"price anchors re-anchored ({day})")
+            elif PRICE_ANCHORED[0] != day:
+                vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
+                log(f"new day: anchors re-anchored fresh ({day})")
             PRICE_ANCHORED = gen
             base = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
             for hstr, price in hourly.items():
@@ -471,10 +476,11 @@ def scrape():
                            tuple(sorted((int(h), float(p))
                                         for h, p in hourly_t.items())),
                            c_cut, d_thr)
-                    if TOM_ANCHORED != gen:
-                        # generatie-wissel: publicatie, prijsrevisie of
-                        # constant-wijziging — eerst serieheel deleten
-                        # (duplicate-tie), dan zelfde cycle opnieuw ankeren.
+                    if TOM_ANCHORED != gen or TOM_ANCHORED is None:
+                        # generatie-wissel: publicatie, prijsrevisie, mappingfix
+                        # óf eerste anchor na herstart — eerst serieheel
+                        # deleten (duplicate-tie), dan zelfde cycle opnieuw
+                        # ankeren.
                         vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
                         vm_delete_series("controller_charge_threshold_tomorrow_eur")
                         vm_delete_series("controller_discharge_threshold_tomorrow_eur")
