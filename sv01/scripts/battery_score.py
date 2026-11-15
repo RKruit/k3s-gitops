@@ -22,6 +22,7 @@ idempotent (herrekent uitsluitend afgeronde dagen). Stdlib only,
 alleen-lezen t.o.v. het apparaat.
 """
 import json
+import math
 import os
 import re
 import statistics
@@ -66,20 +67,24 @@ def midnight(day):
 
 
 def consts():
-    """Quantile-frac + doel uit de LIJVE wet (in-sync-regel)."""
+    """Quantile-frac + doel + fysica uit de LIJVE wet (in-sync-regel)."""
     try:
         src = open(CONTROLLER_SCRIPT).read()
         c = re.search(r"^CHARGE_PCT\s*=\s*([\d.]+)", src, re.M)
         d = re.search(r"^DISCHARGE_PCT\s*=\s*([\d.]+)", src, re.M)
         t = re.search(r"^CHARGE_TARGET\s*=\s*(\d+)", src, re.M)
         s = re.search(r"^MIN_SPREAD\s*=\s*([\d.]+)", src, re.M)
+        p = re.search(r"^PACK_KWH\s*=\s*([\d.]+)", src, re.M)
+        e = re.search(r"^CHARGE_EFF\s*=\s*([\d.]+)", src, re.M)
         if c and d:
             return (float(c.group(1)), float(d.group(1)),
                     int(t.group(1)) if t else 90,
-                    float(s.group(1)) if s else 0.03)
+                    float(s.group(1)) if s else 0.03,
+                    float(p.group(1)) if p else 5.46,
+                    float(e.group(1)) if e else 0.92)
     except OSError:
         pass
-    return 0.30, 0.70, 90, 0.03
+    return 0.30, 0.70, 90, 0.03, 5.46, 0.92
 
 
 def quantile(vals, frac):
@@ -141,8 +146,13 @@ def soc_hourly(day, t_base):
 
 
 def simulate(prices, house, soc_start_pct, charge_pct, discharge_pct,
-             charge_target, min_spread, cap):
-    """Het plan één dag naspelen (stateless per uur, SoC-walk erdoorheen)."""
+             charge_target, min_spread, cap, rank_rule=False, cap_w=2400.0):
+    """Het plan één dag naspelen (stateless per uur, SoC-walk erdoorheen).
+
+    rank_rule=False: de pre-16-11-wet (laden bij prijs ≤ P30-quantile);
+    rank_rule=True: de 15-11-2026-rangkeuze — laden in de k goedkoopste
+    resterende uren die het doel van de lopende SoC nog halen (zelfde formule
+    als price_regime in zendure_follow.py)."""
     vals = sorted(prices.values())
     c_thr = quantile(vals, charge_pct)
     d_thr = quantile(vals, discharge_pct)
@@ -157,8 +167,22 @@ def simulate(prices, house, soc_start_pct, charge_pct, discharge_pct,
         p = prices.get(h)
         if p is None:
             continue
-        if p <= c_thr and soc < charge_target:
-            kwh_g = min(2.4, (charge_target - soc) / 100.0 * cap / ETA_C)
+        charged = False
+        if rank_rule:
+            if soc < charge_target:
+                remaining = range(h, 24)
+                pph = cap_w / 1000.0 * ETA_C / cap * 100.0
+                k = min(int(math.ceil(max(0.0, charge_target - soc) / pph)),
+                        len(remaining))
+                ordered = sorted(remaining,
+                                 key=lambda x: (prices.get(x, 99.0), x))[:k]
+                if h in ordered:
+                    charged = True
+        elif p <= c_thr and soc < charge_target:
+            charged = True
+        if charged:
+            kwh_g = min(cap_w / 1000.0,
+                        (charge_target - soc) / 100.0 * cap / ETA_C)
             out["charge_kwh"] += kwh_g
             out["charge_eur"] += kwh_g * p
             soc += kwh_g * ETA_C / cap * 100.0
@@ -194,7 +218,7 @@ def range_str(hours):
 
 
 def main():
-    c_pct, d_pct, charge_target, min_spread = consts()
+    c_pct, d_pct, charge_target, min_spread, pack_law, eff_law = consts()
     now_day = datetime.datetime.now(TZ).strftime("%Y-%m-%d")
     d0 = datetime.date.fromisoformat(DAY0)
     days = []
@@ -249,7 +273,7 @@ def main():
                     est.append(energy * ETA_C / (dsoc / 100.0))
             elif dsoc < -1.5 and energy > 0.4:
                 est.append(energy / (ETA_D * abs(dsoc) / 100.0))
-    cap = min(max(statistics.median(est), 4.5), 7.0) if est else CAP_DEFAULT
+    cap = min(max(statistics.median(est), 4.5), 7.0) if est else pack_law
 
     soc = soc_at(midnight(days[0]) - 3600) or 50.0
     rows = {}
@@ -273,7 +297,9 @@ def main():
         disc_h = [h for h in range(24) if dw.get(h, 0) > 100]
         house = hourly_means("house_load_w", day, tb)
         ref = simulate(prices, house, soc, c_pct, d_pct, charge_target,
-                       min_spread, cap)
+                       min_spread, pack_law,
+                       rank_rule=(day >= "2026-11-16"),
+                       cap_w=(2400.0 if day >= "2026-11-15" else 800.0))
         soc = ref["soc_end"]
         rows[day] = {
             "ok": True,
@@ -331,10 +357,11 @@ def main():
         return ("€%+.2f" % x).replace(".", ",")
 
     print("🔋 Accu-scorecard — app-sturing vs. het prijsdrempel-plan")
-    print(f"plan: laden ≤ P30 ({c_pct:.0%}) tot {charge_target}% @ 2400 W · ontladen ≥ P70 "
-          f"({d_pct:.0%}) zero-export · vloer {FLOOR_PCT:.0f}% · flat-gate {min_spread} ct")
-    print(f"physisch: cap {cap:.2f} kWh (gebootstrapd: {len(est)} segmenten), "
-          f"η laden {ETA_C}, η ontladen {ETA_D}")
+    print(f"plan (nu): laden rang-keuze tot {charge_target}% @ 2400 W · ontladen ≥ P70 "
+          f"({d_pct:.0%}) zero-export · vloer 10% · flat-gate {min_spread} ct "
+          f"(≤ 14-11 gesimuleerd op de toenmalige P30-wet @ 800 W)")
+    print(f"physisch: wet PACK_KWH {pack_law:.2f} kWh · bootstrap-cap {cap:.2f} kWh "
+          f"({len(est)} segmenten)", "· η laden", ETA_C, "· η ontladen", ETA_D)
     print()
     print("dag         fase        |  werk:  laad €  ontlaad €  net |  ref:  netto   |   Δ     |  gedrag")
     for day in sorted(rows):

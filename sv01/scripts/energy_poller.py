@@ -42,6 +42,7 @@
 # (forecast_temp_c, hour-anchored like the hourly prices; vaste locatie
 # Lelystad Airport) for the Verwarming dashboard (gas-tegen-warmtepomp per uur).
 import json
+import math
 import os
 import re
 import sys
@@ -163,16 +164,21 @@ def save_state(st):
 
 
 def threshold_consts():
-    """(CHARGE_PCT, DISCHARGE_PCT) live uit zendure_follow.py, zodat de
-    morgen-drempels exact de wet volgen die de regelaar (en het avondplan)
-    draait; defaults bij leesfout."""
-    consts = (0.30, 0.70)
+    """(CHARGE_PCT, DISCHARGE_PCT, PACK_KWH, CHARGE_EFF, CHARGE_TARGET) live
+    uit zendure_follow.py, zodat morgen-lijnen exact de wet volgen die de
+    regelaar (en het avondplan) draait; defaults bij leesfout."""
+    consts = (0.30, 0.70, 5.46, 0.92, 90)
     try:
         src = open(CONTROLLER_SCRIPT).read()
         c = re.search(r"^CHARGE_PCT\s*=\s*([\d.]+)", src, re.M)
         d = re.search(r"^DISCHARGE_PCT\s*=\s*([\d.]+)", src, re.M)
-        if c and d:
-            consts = (float(c.group(1)), float(d.group(1)))
+        p = re.search(r"^PACK_KWH\s*=\s*([\d.]+)", src, re.M)
+        e = re.search(r"^CHARGE_EFF\s*=\s*([\d.]+)", src, re.M)
+        t = re.search(r"^CHARGE_TARGET\s*=\s*(\d+)", src, re.M)
+        if c and d and p:
+            consts = (float(c.group(1)), float(d.group(1)), float(p.group(1)),
+                      float(e.group(1)) if e else 0.92,
+                      int(t.group(1)) if t else 90)
     except OSError:
         pass
     return consts
@@ -433,15 +439,22 @@ def scrape():
                 vals_t = sorted(float(v) for v in hourly_t.values())
                 if len(vals_t) >= 20:
                     n = len(vals_t)
-                    c_pct, d_pct = threshold_consts()
+                    c_pct, d_pct, pack_kwh, eff_c, target_soc = threshold_consts()
                     c_thr = vals_t[min(max(int(round(c_pct * n)), 1), n) - 1]
                     d_thr = vals_t[min(max(int(round(d_pct * n)), 1), n) - 1]
+                    # rang-keuze voor het laden (15-11-2026, 'pak de laagste
+                    # bij het laden'): de k goedkoopste uren halen het doel
+                    # vanaf de device-vloer (10%); de cut in de lijnen = de
+                    # prijs van het k-ste goedkoopste uur. Ontlading blijft P70.
+                    need_gross = max(0.0, (target_soc - 10.0) / 100.0 * pack_kwh / eff_c)
+                    k_tom = max(1, min(int(math.ceil(need_gross / 2.4)), n))
+                    c_cut = sorted(vals_t)[k_tom - 1]
                     day = tom.isoformat()
                     tbase = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
                     gen = (day,
                            tuple(sorted((int(h), float(p))
                                         for h, p in hourly_t.items())),
-                           c_thr, d_thr)
+                           c_cut, d_thr)
                     if TOM_ANCHORED != gen:
                         # generatie-wissel: publicatie, prijsrevisie of
                         # constant-wijziging — eerst serieheel deleten
@@ -450,8 +463,8 @@ def scrape():
                         vm_delete_series("controller_charge_threshold_tomorrow_eur")
                         vm_delete_series("controller_discharge_threshold_tomorrow_eur")
                         TOM_ANCHORED = gen
-                        log(f"tomorrow re-anchored: laad {c_thr} / ontlaad "
-                            f"{d_thr} ({day})")
+                        log(f"tomorrow re-anchored: laad {c_cut} / ontlaad "
+                            f"{d_thr} ({day}, rang-k={k_tom})")
                     for h, p in sorted((int(h), float(p))
                                        for h, p in hourly_t.items()):
                         lines.append(
@@ -459,7 +472,7 @@ def scrape():
                             f"{p} {int((tbase + h * 3600) * 1000)}")
                     for h in range(24):
                         lines.append(f"controller_charge_threshold_tomorrow_eur "
-                                     f"{c_thr} {int((tbase + h * 3600) * 1000)}")
+                                     f"{c_cut} {int((tbase + h * 3600) * 1000)}")
                         lines.append(f"controller_discharge_threshold_tomorrow_eur "
                                      f"{d_thr} {int((tbase + h * 3600) * 1000)}")
             except Exception as e:

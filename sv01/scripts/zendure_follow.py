@@ -16,9 +16,13 @@ hour -- DP[label] holds the price of CLOCK hour label+1 -- confirmed against
 Robert's billing page 03-11-2026 (mon 06-07 = DP[5] 0,42, 14-15 = DP[13] 0,37).
 So clock hour 0 = yesterday's DP[23] and clock hour h = DP[h-1]. Fallback: the
 public widget (same DP shift applied; its clock hour 0 stays unknown -> idle).
-Thresholds = percentiles of today's 24 CLOCK-hour prices (charge <= CHARGE_PCT
-quantile, discharge >= DISCHARGE_PCT quantile), gated on a minimum spread;
-flat days idle.
+Thresholds (gated on a minimum spread; flat days idle):
+  discharge >= DISCHARGE_PCT quantile of the day prices. CHARGE = RANK
+  selection (Robert 15-11-2026 "2400 W en pak de laagste prijs bij het
+  laden"): charge in the k CHEAPEST remaining clock hours that still reach
+  CHARGE_TARGET from the live SoC (k from PACK_KWH/CHARGE_EFF; ties
+  chronological); the displayed charge threshold is that k-th cheapest
+  price (tomorrow 16-11: 0.26), not the P30 band.
 
 Control laws (verified 31-10-2026):
   price=charge  (SOC < CHARGE_TARGET)  -> 0 / IN_CAP (grid charge, full speed)
@@ -26,15 +30,17 @@ Control laws (verified 31-10-2026):
       measured feed + GAIN*(import - MARGIN), hold band 0..HOLD_HI, export past
       -EXPORT_NUDGE shaves 15 W; charge-on-surplus ON again sinds 09-11-2026
   price=idle / flat / no prices        -> 0/0 (+ surplus gate may charge)
-Failsafe: P1 unreadable > FAIL_GRACE s -> 0/0; SIGTERM -> 0/0; caps 800 W
-(Robert keeps the socket limit until the dedicated group exists); SOC limits
-stay device-managed. With saldering, exporting never beats avoided import, so
-the controller never pushes power outward.
+Failsafe: P1 unreadable > FAIL_GRACE s -> 0/0; SIGTERM -> 0/0; caps at the
+device max 2400 W (Robert 15-11-2026, chargeMaxLimit/inverseMaxPower in het
+rapport; was 800 W conservative); SOC limits stay device-managed. With
+saldering, exporting never beats avoided import, so the controller never
+pushes power outward.
 Status on http://192.168.1.10:8891/status.json
 """
 import datetime
 import http.cookiejar
 import json
+import math
 import os
 import re
 import signal
@@ -84,6 +90,13 @@ CHARGE_PCT = 0.30  # charge while today's price is below this quantile
 DISCHARGE_PCT = 0.70
 MIN_SPREAD = 0.03  # EUR/kWh: below this spread the whole day idles (not worth cycling)
 CHARGE_TARGET = 90  # %: stop grid-charging at this SOC (Robert 11-11-2026 'Laad max 90%' — terugroepen van de tijdelijke 100%; het terugkerende patroon: bij grote spreiding tijdelijk 100, daarna terug naar 90)
+# Rang-keuze voor het laden (Robert 15-11-2026: '2400 W op én af — pak de
+# laagste prijs bij het laden'): in plaats van álle ≤P30-uren chronologisch
+# vol te vullen, laden in de k GOEDKOOPSTE resterende uren die het doel nog
+# halen; k = benodigde groothanden uit de LIVE SoC. De cut in status/Grafana
+# is de prijs van het k-ste goedkoopste resterende uur (morgen 16-11: 0,26).
+PACK_KWH = 5.46     # kWh pack-intern; gebootstrapd uit de AC-boeken+SoC (battery_score.py, 15-11-2026)
+CHARGE_EFF = 0.92   # AC-in -> pack (klassewaarde, mee gemeten in de boeken)
 # One-day override pattern (DISCHARGE_FULL_* / DISCHARGE_NOT_BEFORE_*): zie
 # skill zendure-solarflow. De 09-11-2026 full-cap override ('ontlaad naar 0%')
 # werd diezelfde avond opgeheven op Roberts instructie 'accu niet maximaal
@@ -139,6 +152,7 @@ state = {
     "price_regime": "no_prices",
     "price_now": None,
     "price_charge_thr": None,
+    "price_k": None,
     "price_discharge_thr": None,
     "prices_today": {},
     "prices_fetched_at": None,
@@ -579,7 +593,26 @@ def price_regime(now_dt):
     if d_thr - c_thr < MIN_SPREAD:
         state["price_regime"] = "flat_day"
         return "idle"
-    if state["price_now"] <= c_thr:
+    # Rang-keuze voor het laden (15-11-2026): de k goedkoopste resterende
+    # uren die het doel nog halen; k uit de LIVE SoC. Urgentie-fallback: als
+    # het doel in de resterende goedkope uren onbereikbaar dreigt, vullen de
+    # resterende uren zelf aan (k loopt op tot het resterende aantal).
+    soc = state.get("soc")
+    remaining = [h for h in range(now_dt.hour, 24) if h in prices]
+    need_pct = max(0.0, CHARGE_TARGET - (soc if soc is not None else 0.0))
+    pph = IN_CAP / 1000.0 * CHARGE_EFF / PACK_KWH * 100.0  # %-punten per vol uur laden (2,4 kW ≈ 40 ppt/u)
+    k = min(int(math.ceil(need_pct / pph)), len(remaining)) if remaining else 0
+    cut, fire = None, False
+    if k > 0 and remaining:
+        ordered = sorted(remaining, key=lambda h: (prices[h], h))[:k]
+        cut = prices[ordered[-1]]
+        fire = now_dt.hour in ordered
+    state["price_k"] = k
+    state["price_charge_thr"] = cut if cut is not None else c_thr
+    # one-day charge-price cap (CHARGE_THR_STEPS): hard plafond bovenop de rang-keuze
+    if fire and str(now_dt.date()) in [td for td, _th, _c in CHARGE_THR_STEPS]:
+        fire = fire and state["price_now"] <= c_thr
+    if fire:
         state["price_regime"] = "charge"
         return "charge"
     if state["price_now"] >= d_thr:
