@@ -44,6 +44,7 @@ PHASES = [
     ("2026-11-12", "ZENKI"),
     ("2026-11-15", "Zenki-uit"),
     ("2026-11-16", "TOU-test"),
+    ("2026-11-17", "ZENKI-2"),   # 16-11 avond: ZENKI opnieuw aan (Robert: 'nog een paar dagen testen')
 ]
 
 # fallback-physics: cap wordt gebootstrapd uit de boeken; eff vast.
@@ -291,6 +292,10 @@ def main():
                - counter_at("battery_discharge_eur", tb))
         dis_kwh = (counter_at("battery_discharge_kwh", te)
                    - counter_at("battery_discharge_kwh", tb))
+        exp_kwh = (counter_at("p1_export_kwh", te)
+                   - counter_at("p1_export_kwh", tb))
+        exp_eur = (counter_at("export_eur", te)
+                   - counter_at("export_eur", tb))
         hw = hourly_means("battery_charge_w", day, tb)
         dw = hourly_means("battery_discharge_w", day, tb)
         charge_h = [h for h in range(24) if hw.get(h, 0) > 100]
@@ -306,6 +311,7 @@ def main():
             "phase": phase_for(day),
             "charge_kwh": round(chg_kwh, 2), "charge_eur": round(chg, 2),
             "disc_kwh": round(dis_kwh, 2), "disc_eur": round(dis, 2),
+            "exp_kwh": round(exp_kwh, 2), "exp_eur": round(exp_eur, 2),
             "actual_net": round(dis - chg, 2),
             "ref_charge_kwh": round(ref["charge_kwh"], 2),
             "ref_charge_eur": round(ref["charge_eur"], 2),
@@ -369,9 +375,11 @@ def main():
         if not r.get("ok"):
             print(f"{day}              (day-prijzen niet bekend in VM — overgeslagen)")
             continue
+        beh = f"laad {range_str(r['charge_h'])} · ontl {range_str(r['disc_h'])}"
+        if r.get("exp_kwh", 0) > 0.2:
+            beh += f" · export {r['exp_kwh']:.1f} kWh/{eur(r['exp_eur'])}"
         print(f"{day}  {r['phase']:<10} | {eur(r['charge_eur']):9}{eur(r['disc_eur']):11}"
-              f"{eur(r['actual_net']):6}| {eur(r['ref_net']):7}  | {eur(r['delta']):7} | "
-              f"laad {range_str(r['charge_h'])} · ontl {range_str(r['disc_h'])}")
+              f"{eur(r['actual_net']):6}| {eur(r['ref_net']):7}  | {eur(r['delta']):7} | {beh}")
     print()
     print("Score per fase (Σ netto €, werk vs. plan):")
     agg = {}
