@@ -97,6 +97,7 @@ CHARGE_TARGET = 90  # %: stop grid-charging at this SOC (Robert 11-11-2026 'Laad
 # is de prijs van het k-ste goedkoopste resterende uur (morgen 16-11: 0,26).
 PACK_KWH = 5.46     # kWh pack-intern; gebootstrapd uit de AC-boeken+SoC (battery_score.py, 15-11-2026)
 CHARGE_EFF = 0.92   # AC-in -> pack (klassewaarde, mee gemeten in de boeken)
+FLOOR_ASSUMED = 10  # %: de device-vloer waarmee de rang-plan rekent (app-minSoc = 10)
 # One-day override pattern (DISCHARGE_FULL_* / DISCHARGE_NOT_BEFORE_*): zie
 # skill zendure-solarflow. De 09-11-2026 full-cap override ('ontlaad naar 0%')
 # werd diezelfde avond opgeheven op Roberts instructie 'accu niet maximaal
@@ -601,12 +602,32 @@ def price_regime(now_dt):
     remaining = [h for h in range(now_dt.hour, 24) if h in prices]
     need_pct = max(0.0, CHARGE_TARGET - (soc if soc is not None else 0.0))
     pph = IN_CAP / 1000.0 * CHARGE_EFF / PACK_KWH * 100.0  # %-punten per vol uur laden (2,4 kW ≈ 40 ppt/u)
-    k = min(int(math.ceil(need_pct / pph)), len(remaining)) if remaining else 0
+    k_full = int(math.ceil(need_pct / pph)) if need_pct > 0 else 0
+    k = min(k_full, len(remaining)) if remaining else 0
     cut, fire = None, False
     if k > 0 and remaining:
         ordered = sorted(remaining, key=lambda h: (prices[h], h))[:k]
         cut = prices[ordered[-1]]
         fire = now_dt.hour in ordered
+    if fire:
+        # Grensoverschrijdend (15-11-2026): als de gepubliceerde morgendag een
+        # betere cut aanbiedt, laden we liever straks — een uur van vandaag
+        # mag alleen vuren op prijzen die de morgendag niet onderbiedt.
+        tom_cut = None
+        try:
+            with open(os.path.join(STATUS_DIR, "prices-tomorrow.json")) as f:
+                tom = json.load(f).get("hourly", {})
+            th = sorted(float(v) for v in tom.values())
+            kt = max(1, min(int(math.ceil(max(0.0, CHARGE_TARGET - FLOOR_ASSUMED)
+                                          / 100.0 * PACK_KWH / CHARGE_EFF
+                                          / (IN_CAP / 1000.0))), len(th)))
+            tom_cut = th[kt - 1]
+        except Exception:
+            tom_cut = None
+        if tom_cut is not None and prices.get(now_dt.hour, 1e9) > tom_cut:
+            fire = False
+        if tom_cut is not None:
+            cut = min(cut if cut is not None else tom_cut, tom_cut)
     state["price_k"] = k
     state["price_charge_thr"] = cut if cut is not None else c_thr
     # one-day charge-price cap (CHARGE_THR_STEPS): hard plafond bovenop de rang-keuze
