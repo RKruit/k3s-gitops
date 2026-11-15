@@ -1,6 +1,6 @@
 {
  "uid": "energy-daily",
- "title": "Energie \u2014 Verloop",
+ "title": "Energie — Verloop",
  "description": "Historie: prijscurve + regelaar-drempels, rolling-24h kWh, SoC, regime en gas.",
  "tags": [
   "energy",
@@ -15,7 +15,7 @@
   "to": "now"
  },
  "schemaVersion": 39,
- "version": 1,
+ "version": 4,
  "annotations": {
   "list": [
    {
@@ -39,7 +39,7 @@
  "panels": [
   {
    "id": 1,
-   "title": "Prijs (all-in \u20ac/kWh) + drempels",
+   "title": "Prijs (all-in €/kWh) + drempels",
    "type": "timeseries",
    "datasource": {
     "type": "prometheus",
@@ -83,7 +83,44 @@
      "unit": "currencyEUR",
      "decimals": 2
     },
-    "overrides": []
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "D"
+      },
+      "properties": [
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "dash": [
+          10,
+          10
+         ],
+         "fill": 0
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "E"
+      },
+      "properties": [
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "dash": [
+          10,
+          10
+         ],
+         "fill": 0
+        }
+       }
+      ]
+     }
+    ]
    },
    "options": {
     "legend": {
@@ -123,8 +160,27 @@
      "expr": "controller_discharge_threshold_eur",
      "legendFormat": "ontlaaddrempel",
      "refId": "C"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "legendFormat": "laaddrempel morgen",
+     "refId": "D",
+     "expr": "max(last_over_time(controller_charge_threshold_tomorrow_eur[1h]))"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "legendFormat": "ontlaaddrempel morgen",
+     "refId": "E",
+     "expr": "max(last_over_time(controller_discharge_threshold_tomorrow_eur[1h]))"
     }
-   ]
+   ],
+   "description": "Doorgetrokken regels = drempels van de lopende dag (live wet). Onderbroken regels = drempels van de morgendag, opnieuw berekend met dezelfde wet zodra NextEnergy de morgenprijzen publiceert (±16:00); de prijslijn loopt na publicatie door over de morgendag. Zichtbaar in bereiken die de morgendag bevatten."
   },
   {
    "id": 2,
@@ -210,7 +266,7 @@
       "uid": "victoriametrics"
      },
      "expr": "avg_over_time(pv_power_w[24h]) * 0.024",
-     "legendFormat": "PV \u2248",
+     "legendFormat": "PV ≈",
      "refId": "C"
     },
     {
@@ -219,7 +275,7 @@
       "uid": "victoriametrics"
      },
      "expr": "avg_over_time(battery_charge_w[24h]) * 0.024",
-     "legendFormat": "accu in \u2248",
+     "legendFormat": "accu in ≈",
      "refId": "D"
     },
     {
@@ -228,7 +284,7 @@
       "uid": "victoriametrics"
      },
      "expr": "avg_over_time(battery_discharge_w[24h]) * 0.024",
-     "legendFormat": "accu uit \u2248",
+     "legendFormat": "accu uit ≈",
      "refId": "E"
     }
    ]
@@ -379,7 +435,7 @@
   },
   {
    "id": 5,
-   "title": "Gas (m\u00b3, rolling 24u)",
+   "title": "Gas (m³, rolling 24u)",
    "type": "timeseries",
    "datasource": {
     "type": "prometheus",

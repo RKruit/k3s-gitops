@@ -16,6 +16,15 @@
 # timestamps (ms) via /api/v1/import/prometheus so the hourly curve is
 # stable; everything else is stored at receive time. stdlib only.
 #
+# v5 (2026-11-15): morgendag-ankers — na publicatie (±16:00) krijgt
+# nextenergy_price_eur{day=morgen} de 24 uurs-ankers van de komende dag
+# (de prijscuve loopt in de prijspanelen door over morgen) plus de
+# morgen-drempels controller_{charge,discharge}_threshold_tomorrow_eur
+# (P30/P70 over de gepubliceerde set; pct-constanten live uit
+# zendure_follow.py gelezen). Generatie-guard (delete + re-anchor) bij
+# publicatie/prijsrevisie/constanten-wijziging; geen receive-sample op de
+# morgen-drempels (niets mag over de historie bruggen).
+#
 # v2 (2026-11-04): savings bookkeeping — cumulative kWh/€ counters for the
 # battery and PV, persisted across restarts in
 # /var/lib/energy-poller/state.json (systemd StateDirectory). kWh are
@@ -34,6 +43,7 @@
 # Lelystad Airport) for the Verwarming dashboard (gas-tegen-warmtepomp per uur).
 import json
 import os
+import re
 import sys
 import time
 import urllib.parse
@@ -51,6 +61,17 @@ PRICES_FILE = "/var/lib/zendure-follow/prices.json"
 HOMEY_NOTE = ""
 HOMEY_NOTE_TS = 0.0
 TOMORROW_FILE = "/var/lib/zendure-follow/prices-tomorrow.json"
+# morgendag-ankers (15-11-2026): de prijspanelen (3 kopieën) tonen na de
+# publicatie (±16:00) de komende dag. Drempels = P30/P70 over de gepubliceerde
+# set, met de pct-constanten uit de LIVE wet (in-sync met de regelaar en het
+# avondplan; date-scoped one-day overrides wegen niet mee — die zijn voor
+# "vandaag"). Generatie-guard: bij publicatie/herziening/constant-wijziging
+# delete + re-anchor (duplicate-tie-regel; oude gelijke-ts-sample wint anders
+# voor altijd). Alleen ankers, GÉEN receive-sample: de serie mag niet via
+# last_over_time-brug over de historie lekken; vandaag/die-die-het-regime
+# voert blijft de receive-time B/C-regel.
+CONTROLLER_SCRIPT = "/opt/sv01-config/sv01/scripts/zendure_follow.py"
+TOM_ANCHORED = None
 VM_PUSH_URL = "http://127.0.0.1:8428/api/v1/import/prometheus"
 VM_DELETE_URL = "http://127.0.0.1:8428/api/v1/admin/tsdb/delete_series"
 INTERVAL_S = 10
@@ -141,6 +162,22 @@ def save_state(st):
     os.replace(tmp, STATE_PATH)
 
 
+def threshold_consts():
+    """(CHARGE_PCT, DISCHARGE_PCT) live uit zendure_follow.py, zodat de
+    morgen-drempels exact de wet volgen die de regelaar (en het avondplan)
+    draait; defaults bij leesfout."""
+    consts = (0.30, 0.70)
+    try:
+        src = open(CONTROLLER_SCRIPT).read()
+        c = re.search(r"^CHARGE_PCT\s*=\s*([\d.]+)", src, re.M)
+        d = re.search(r"^DISCHARGE_PCT\s*=\s*([\d.]+)", src, re.M)
+        if c and d:
+            consts = (float(c.group(1)), float(d.group(1)))
+    except OSError:
+        pass
+    return consts
+
+
 def hour_price(now):
     """All-in €/kWh valid right now from the controller's price cache.
 
@@ -220,7 +257,7 @@ def refresh_weather():
 
 
 def scrape():
-    global HOMEY_NOTE, HOMEY_NOTE_TS, GAS_PUSHED_EUR, WEATHER_PUSHED_GEN
+    global HOMEY_NOTE, HOMEY_NOTE_TS, GAS_PUSHED_EUR, WEATHER_PUSHED_GEN, TOM_ANCHORED
     lines = []
     vals = {}
 
@@ -386,6 +423,47 @@ def scrape():
                 lines.append(
                     f'nextenergy_price_tomorrow_hour{{aa_order="{h:02d}",hour="{h}"}} '
                     f"{float(price)}")
+            # morgendag-ankers (15-11-2026): dezelfde nextenergy_price_eur
+            # als de vandaag-ankers (stamp = morgen-midnacht + h*3600), dus de
+            # prijscuve extended door de komende dag élke panel-kopie; plus de
+            # morgen-drempels (P30/P70 over de gepubliceerde set) als eigen
+            # uurs-geankerde serie zodat max(last_over_time(...[1h])) op
+            # elke grafana-step dicht zit.
+            try:
+                vals_t = sorted(float(v) for v in hourly_t.values())
+                if len(vals_t) >= 20:
+                    n = len(vals_t)
+                    c_pct, d_pct = threshold_consts()
+                    c_thr = vals_t[min(max(int(round(c_pct * n)), 1), n) - 1]
+                    d_thr = vals_t[min(max(int(round(d_pct * n)), 1), n) - 1]
+                    day = tom.isoformat()
+                    tbase = datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=TZ).timestamp()
+                    gen = (day,
+                           tuple(sorted((int(h), float(p))
+                                        for h, p in hourly_t.items())),
+                           c_thr, d_thr)
+                    if TOM_ANCHORED != gen:
+                        # generatie-wissel: publicatie, prijsrevisie of
+                        # constant-wijziging — eerst serieheel deleten
+                        # (duplicate-tie), dan zelfde cycle opnieuw ankeren.
+                        vm_delete_series(f'nextenergy_price_eur{{day="{day}"}}')
+                        vm_delete_series("controller_charge_threshold_tomorrow_eur")
+                        vm_delete_series("controller_discharge_threshold_tomorrow_eur")
+                        TOM_ANCHORED = gen
+                        log(f"tomorrow re-anchored: laad {c_thr} / ontlaad "
+                            f"{d_thr} ({day})")
+                    for h, p in sorted((int(h), float(p))
+                                       for h, p in hourly_t.items()):
+                        lines.append(
+                            f'nextenergy_price_eur{{day="{day}",hour="{h:02d}"}} '
+                            f"{p} {int((tbase + h * 3600) * 1000)}")
+                    for h in range(24):
+                        lines.append(f"controller_charge_threshold_tomorrow_eur "
+                                     f"{c_thr} {int((tbase + h * 3600) * 1000)}")
+                        lines.append(f"controller_discharge_threshold_tomorrow_eur "
+                                     f"{d_thr} {int((tbase + h * 3600) * 1000)}")
+            except Exception as e:
+                log(f"tomorrow anchors: {e}")
     except Exception as e:
         log(f"tomorrow: {e}")
 

@@ -15,7 +15,7 @@
   "to": "now/d"
  },
  "schemaVersion": 39,
- "version": 39,
+ "version": 40,
  "annotations": {
   "list": [
    {
@@ -668,7 +668,44 @@
      "unit": "currencyEUR",
      "decimals": 2
     },
-    "overrides": []
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "D"
+      },
+      "properties": [
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "dash": [
+          10,
+          10
+         ],
+         "fill": 0
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "E"
+      },
+      "properties": [
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "dash": [
+          10,
+          10
+         ],
+         "fill": 0
+        }
+       }
+      ]
+     }
+    ]
    },
    "options": {
     "legend": {
@@ -708,9 +745,27 @@
      "expr": "last_over_time(controller_discharge_threshold_eur[24h])",
      "legendFormat": "ontlaaddrempel",
      "refId": "C"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "legendFormat": "laaddrempel morgen",
+     "refId": "D",
+     "expr": "max(last_over_time(controller_charge_threshold_tomorrow_eur[1h]))"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "legendFormat": "ontlaaddrempel morgen",
+     "refId": "E",
+     "expr": "max(last_over_time(controller_discharge_threshold_tomorrow_eur[1h]))"
     }
    ],
-   "description": "Volgt het dashboard: standaard de hele dag (middernacht-24:00, komende uren inbegrepen). Verander je de tijd-picker, dan volgt het panel die range; de link 'Hele dag ▸' zet de dagweergave altijd terug.",
+   "description": "Doorgetrokken regels = drempels van de lopende dag (live wet). Onderbroken regels = drempels van de morgendag, opnieuw berekend met dezelfde wet zodra NextEnergy de morgenprijzen publiceert (±16:00); de prijslijn loopt na publicatie door over de morgendag. Zichtbaar in bereiken die de morgendag bevatten.",
    "links": [
     {
      "title": "Hele dag ▸",
