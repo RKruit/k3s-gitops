@@ -44,6 +44,7 @@ PHASES = [
     ("2026-11-12", "ZENKI"),
     ("2026-11-15", "Zenki-uit"),
     ("2026-11-16", "ZENKI-2"),   # 15-11 ~23:25: ZENKI opnieuw aan (Robert: 'nog een paar dagen testen')
+    ("2026-11-17", "eigen wet 2"),  # 16-11 ~16:35: control terug (Robert: 'Zenki is niet goed'); 16-11 is een gemengde dag, telt bij ZENKI-2
 ]
 
 # fallback-physics: cap wordt gebootstrapd uit de boeken; eff vast.
