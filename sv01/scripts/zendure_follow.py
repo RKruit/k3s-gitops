@@ -84,6 +84,8 @@ FAIL_GRACE = 10.0  # s without a valid P1 read -> steer to 0/0
 DRIFT_REASSERT_GAP = 20    # s minimum between drift-reassert writes
 DRIFT_STICK_CLEAR = 300    # s the reasserted limit must hold to clear the burst counter
 DRIFT_BURST_LIMIT = 3      # consecutive quick re-drifts -> pause + alarm (foreign writer)
+DRIFT_TOL = 25             # W: report-vs-written deviation that counts as real drift (v1 false positives were a 10-50 W report lag behind write churn)
+DRIFT_WRITE_AGE = 15       # s: trust a deviation only this long after the last law write (device applies a limit within ~1-2 s)
 FOREIGN_ERR = "foreign writer: limit keeps being reverted"  # -> Kuma #20 DOWN
 STATUS_PORT = 8891
 CHARGE_PCT = 0.30  # charge while today's price is below this quantile
@@ -294,10 +296,22 @@ def verify_or_retry(props_report):
 # our own intended limit when the report deviates. A reverter that keeps it
 # up ~every 15-20 s (plan mode) trips the burst counter: pause + alarm.
 def drift_check(observe, props):
-    """Re-assert the engaged limit when the device report silently disagrees."""
+    """Re-assert the engaged limit when the device report silently disagrees.
+
+    v2 (16-11-2026): v1 compared the report with the last write within 2
+    samples and fired on the follower's own write churn — during active
+    zero-export steering the report trails the written limit by 10-50 W, so
+    one evening of control produced 188 FOREIGN lines and Kuma #20 DOWN-
+    cycles. A deviation now only counts when it exceeds DRIFT_TOL, the law
+    has written NOTHING since the first flagged sample (the original
+    foreign-writer distinction) and the last write is older than
+    DRIFT_WRITE_AGE. The charge case that worked stays intact (12-11:
+    charge@800 silently reverted to 0 while the write counter never moved).
+    """
     if observe:
         return
-    st = state.setdefault("drift", {"seen": 0, "last_at": 0.0, "bursts": 0, "reasserts": 0})
+    st = state.setdefault("drift", {"seen": 0, "last_at": 0.0, "bursts": 0,
+                                    "reasserts": 0, "writes0": None})
     lw = state["last_written"]
     if lw["outputLimit"] is None:
         return
@@ -312,16 +326,32 @@ def drift_check(observe, props):
     if report_val is None:
         return
     now = time.time()
-    if int(report_val or 0) == want_val:
+    if abs(int(report_val or 0) - want_val) <= DRIFT_TOL:
         st["seen"] = 0
+        st["writes0"] = None
         if st["bursts"] and now - st["last_at"] >= DRIFT_STICK_CLEAR:
             st["bursts"] = 0  # reassert held long enough
         if state.get("last_error") == FOREIGN_ERR:
             state["last_error"] = ""  # limit holds again, alarm off
         return
+    writes_now = state.get("writes", 0)
+    if st["seen"] == 0:
+        st["writes0"] = writes_now  # first flagged sample: note the counter
+    elif st["writes0"] != writes_now:
+        st["seen"] = 0  # our own write landed meanwhile: state is fresh
+        return
     st["seen"] += 1
     if st["seen"] < 2:
-        return  # require 2 consecutive samples (report refresh noise)
+        return  # require 2 consecutive flagged samples (report refresh noise)
+    lw_at = state.get("last_write_at")
+    if lw_at:
+        try:
+            lw_ts = time.mktime(datetime.datetime.strptime(
+                lw_at, "%Y-%m-%dT%H:%M:%S").timetuple())
+            if now - lw_ts < DRIFT_WRITE_AGE:
+                return  # too soon after our own write: report may still lag
+        except ValueError:
+            pass
     if now - st["last_at"] < DRIFT_REASSERT_GAP:
         return
     if st["bursts"] >= DRIFT_BURST_LIMIT:

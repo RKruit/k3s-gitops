@@ -7,7 +7,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=rkruit
-ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/zendure_follow.py --observe
+ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/zendure_follow.py
 Restart=always
 RestartSec=15
 
