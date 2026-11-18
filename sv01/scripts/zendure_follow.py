@@ -118,6 +118,10 @@ DISCHARGE_NOT_BEFORE_HOUR = 16
 DISCHARGE_THR_STEPS = (
     ("2026-11-11", 0, 0.59),
     ("2026-11-11", 19, 0.48),
+    # Robert 18-11-2026 (op het geleverde plan): ontlaaddrempel donderdag 19-11
+    # naar 37 ct (P70 was 0,41) — vureert vanaf 0,38 (uur 06). Gepaard met de
+    # charge-step eronder, anders vliegt de flat-day-gate op slot (P30 = 0,36).
+    ("2026-11-19", 0, 0.37),
 )
 # One-day CHARGE-threshold override (Robert 11-11-2026 ~22:00 'de laadrempel
 # staat wat hoog voor de rest van de dag; kijk ook naar morgen'): vanavond
@@ -126,6 +130,12 @@ DISCHARGE_THR_STEPS = (
 # 00:00. Spiegel van DISCHARGE_THR_STEPS; vervalt automatisch met de datum.
 CHARGE_THR_STEPS = (
     ("2026-11-11", 22, 0.38),
+    # Gate-opener bij de 37-ct-ontlaadstap (Robert 18-11): alleen de flat-gate
+    # moet de dag openhouden — c_thr = 0,335 omdat de echte P30 (0,36) met de
+    # 0,37-drempel op spread 0,01 -> flat_day uitkomt, en 0,34 in floats op
+    # 0,029999... blijft hangen. 4-tupel "gate" = GEEN cap (de rang-keuze rekent
+    # zelf: k=2 uur 00-02 @ 0,34). Vervalt automatisch met de datum.
+    ("2026-11-19", 0, 0.335, "gate"),
 )
 PRICE_STALE = 5400 # s: prices older than this -> treat as unknown (idle, safe)
 STATUS_DIR = "/var/lib/zendure-follow"
@@ -621,9 +631,9 @@ def price_regime(now_dt):
     state["price_now"] = prices[now_dt.hour]
     vals = sorted(prices.values())
     c_thr = quantile(vals, CHARGE_PCT)
-    for _td, _th, _cthr in CHARGE_THR_STEPS:
+    for _td, _th, _cthr, *_rest in CHARGE_THR_STEPS:
         if str(now_dt.date()) == _td and now_dt.hour >= _th:
-            c_thr = _cthr  # one-day charge-threshold override (Robert)
+            c_thr = _cthr  # one-day charge-threshold override; 4-tupel "gate" = gate-opener zonder cap
     d_thr = quantile(vals, DISCHARGE_PCT)
     for _td, _th, _tthr in DISCHARGE_THR_STEPS:
         if str(now_dt.date()) == _td and now_dt.hour >= _th:
@@ -669,9 +679,14 @@ def price_regime(now_dt):
             cut = min(cut if cut is not None else tom_cut, tom_cut)
     state["price_k"] = k
     state["price_charge_thr"] = cut if cut is not None else c_thr
-    # one-day charge-price cap (CHARGE_THR_STEPS): hard plafond bovenop de rang-keuze
-    if fire and str(now_dt.date()) in [td for td, _th, _c in CHARGE_THR_STEPS]:
-        fire = fire and state["price_now"] <= c_thr
+    # one-day charge-price cap (CHARGE_THR_STEPS 3-tupel): hard plafond bovenop
+    # de rang-keuze. Een 4-tupel ( datum, uur, waarde, "gate" ) is uitsluitend
+    # een gate-opener: het voedt de flat-gate-cthr maar cap't NIET — de rang-keuze
+    # bepaalt dan zelf welke uren laden (Robert 18-11, 37-ct-ontlaadstap).
+    if fire:
+        for _t in CHARGE_THR_STEPS:
+            if str(now_dt.date()) == _t[0] and len(_t) == 3:
+                fire = state["price_now"] <= _t[2]
     if fire:
         state["price_regime"] = "charge"
         return "charge"
