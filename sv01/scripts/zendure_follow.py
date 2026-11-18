@@ -118,10 +118,11 @@ DISCHARGE_NOT_BEFORE_HOUR = 16
 DISCHARGE_THR_STEPS = (
     ("2026-11-11", 0, 0.59),
     ("2026-11-11", 19, 0.48),
-    # Robert 18-11-2026 (op het geleverde plan): ontlaaddrempel donderdag 19-11
-    # naar 37 ct (P70 was 0,41) — vureert vanaf 0,38 (uur 06). Gepaard met de
-    # charge-step eronder, anders vliegt de flat-day-gate op slot (P30 = 0,36).
-    ("2026-11-19", 0, 0.37),
+    # Robert 18-11-2026 (correctie 15:40): ONTLAADDREMPEL ALLEEN VANDAAG naar
+    # 0,37 (was P70 0,34) — avond 16-20 (0,37-0,40) vuren, de 0,34-0,36-tail
+    # (15/21/22/23) idlem. Donderdag 19-11 gewoon P70 0,41 ('morgen zoals het
+    # was'). Voor de flat-gate: 0,37 - P30(0,27) = 0,10 — geen opener nodig.
+    ("2026-11-18", 0, 0.37),
 )
 # One-day CHARGE-threshold override (Robert 11-11-2026 ~22:00 'de laadrempel
 # staat wat hoog voor de rest van de dag; kijk ook naar morgen'): vanavond
@@ -130,12 +131,6 @@ DISCHARGE_THR_STEPS = (
 # 00:00. Spiegel van DISCHARGE_THR_STEPS; vervalt automatisch met de datum.
 CHARGE_THR_STEPS = (
     ("2026-11-11", 22, 0.38),
-    # Gate-opener bij de 37-ct-ontlaadstap (Robert 18-11): alleen de flat-gate
-    # moet de dag openhouden — c_thr = 0,335 omdat de echte P30 (0,36) met de
-    # 0,37-drempel op spread 0,01 -> flat_day uitkomt, en 0,34 in floats op
-    # 0,029999... blijft hangen. 4-tupel "gate" = GEEN cap (de rang-keuze rekent
-    # zelf: k=2 uur 00-02 @ 0,34). Vervalt automatisch met de datum.
-    ("2026-11-19", 0, 0.335, "gate"),
 )
 PRICE_STALE = 5400 # s: prices older than this -> treat as unknown (idle, safe)
 STATUS_DIR = "/var/lib/zendure-follow"
