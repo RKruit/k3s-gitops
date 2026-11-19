@@ -700,11 +700,15 @@ def _dbg(msg):
         print(f"GATE {msg}", flush=True)
 
 
-def surplus_gate_eval(p1_avg, soc):
+def surplus_gate_eval(p1_avg, soc, feed_w=0):
     """Stateful gate for surplus charging; True while the battery may charge.
 
     Steers entirely on the long rolling mean: a duty-cycling flapping surplus
     averages out and never flickers the gate itself.
+    feed_w = de eigen feed naar huis (outputHomePower): een negatieve P1 terwijl
+    de accu zelf voert is GEEN echte zon-surplus maar de eigen overfeed van de
+    volger — die mag niet weggeabsorbeerd worden met een tegenlading (18-11,
+    Robert: om 07:00 was er geen zon). Engageert dus alleen bij feed ~0.
     """
     if not SURPLUS_CHARGE_ENABLED:
         state["surplus_gate"] = False
@@ -714,9 +718,10 @@ def surplus_gate_eval(p1_avg, soc):
         # judge only on a sufficiently filled window (restart = fresh history):
         if (state.get("p1_cov") or 0) < 0.75 * SURPLUS_WINDOW:
             return False
-        if p1_avg is not None and p1_avg < SURPLUS_ENTER and soc < SURPLUS_TARGET:
+        if p1_avg is not None and p1_avg < SURPLUS_ENTER and soc < SURPLUS_TARGET \
+                and feed_w < 50:
             state["surplus_gate"] = True
-            _dbg(f"engage (mean{SURPLUS_WINDOW}s={p1_avg})")
+            _dbg(f"engage (mean{SURPLUS_WINDOW}s={p1_avg}, feed={feed_w})")
             return True
         return False
     if soc >= SURPLUS_TARGET or p1_avg is None or p1_avg > SURPLUS_RELEASE:
@@ -751,7 +756,7 @@ def compute_target(p1, props, last_written, p_regime, p1_avg=None):
 
     lw_out = last_written["outputLimit"] or 0
     lw_in = last_written["inputLimit"] or 0
-    surplus_charge = surplus_gate_eval(p1_avg, soc)
+    surplus_charge = surplus_gate_eval(p1_avg, soc, props.get("outputHomePower") or 0)
 
     if p_regime == "charge" and soc < CHARGE_TARGET:
         if lw_in == IN_CAP:
@@ -768,7 +773,14 @@ def compute_target(p1, props, last_written, p_regime, p1_avg=None):
             return 0, tgt_c
         if p1 > HOLD_HI:
             feed = props.get("outputHomePower") or 0  # measured W into the home now
-            tgt = feed + GAIN * (p1 - MARGIN)
+            # ALGEBRAÏSCHE feed-forward (18-11-2026, Robert: 'te grote vertraging
+            # tussen P1 en accu'): het huis = p1 + feed op DÉZE meet-instant —
+            # het doel is dan gewoon huis − MARGIN. De oude GAIN-0,5-fallback
+            # (feed + GAIN×err) reageerde 1-2 s te laat op de eigen write
+            # (applicatielag) en op ingestorte huislast (koken-einde): ±2 kW
+            # zwaaiend rond nul + gate-charge-tegenovergestelde. Feed-forward
+            # convergeert in één loop zonder eigen-versterkingscyclus.
+            tgt = (p1 + feed) - MARGIN
             tgt = min(max(tgt, 0.0), OUT_CAP)
             tgt = int(5 * round(tgt / 5))
             if last_written["outputLimit"] is not None \
@@ -777,9 +789,17 @@ def compute_target(p1, props, last_written, p_regime, p1_avg=None):
             state["regime"] = "discharge"
             return tgt, 0
         if p1 < -EXPORT_NUDGE and lw_out > 0:
-            tgt = int(5 * round((lw_out - 15) / 5))
+            # zelfde algebra als de import-tak, ook voor de export-zijde: de
+            # oude 15 W-per-write-kreun kon een −1740-collapse pas na honderden
+            # writes wegwerken (18-11, 'te grote vertraging').
+            feed = props.get("outputHomePower") or 0
+            tgt = (p1 + feed) - MARGIN
+            tgt = min(max(tgt, 0.0), OUT_CAP)
+            tgt = int(5 * round(tgt / 5))
+            if tgt >= lw_out - WRITE_MIN:
+                return None  # al op het goede niveau: houd
             state["regime"] = "nudge"
-            return max(tgt, 0), 0
+            return tgt, 0
         state["regime"] = "discharge-hold"
         if lw_in != 0:  # surplus window ended; stop charging
             return lw_out, 0
