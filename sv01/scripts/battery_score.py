@@ -314,6 +314,17 @@ def main():
         charge_h = [h for h in range(24) if hw.get(h, 0) > 100]
         disc_h = [h for h in range(24) if dw.get(h, 0) > 100]
         house = hourly_means("house_load_w", day, tb)
+        # Zon-dag: welk deel van de laadstroom kwam uit PV-overschot? Het
+        # overschot is PV boven de huislast (house_load is exclusief accu/PV);
+        # alleen dat deel telt als "uit de zon geladen" — de rest kwam van het net.
+        pv = hourly_means("pv_power_w", day, tb)
+        pv_charge_kwh = 0.0
+        for h in range(24):
+            surplus_w = max(0.0, pv.get(h, 0.0) - house.get(h, 0.0))
+            pv_charge_kwh += min(max(hw.get(h, 0.0), 0.0), surplus_w) / 1000.0
+        pv_used_kwh = min(pv_charge_kwh * ETA_D, max(dis_kwh, 0.0))
+        disc_price = (dis / dis_kwh) if dis_kwh > 0.05 else 0.0
+        pv_shift_eur = pv_used_kwh * disc_price
         ref = simulate(prices, house, soc, c_pct, d_pct, charge_target,
                        min_spread, pack_law,
                        rank_rule=(day >= "2026-11-16"),
@@ -321,10 +332,15 @@ def main():
         soc = ref["soc_end"]
         rows[day] = {
             "ok": True,
+            "day": day,
             "phase": phase_for(day),
             "charge_kwh": round(chg_kwh, 2), "charge_eur": round(chg, 2),
             "disc_kwh": round(dis_kwh, 2), "disc_eur": round(dis, 2),
             "exp_kwh": round(exp_kwh, 2), "exp_eur": round(exp_eur, 2),
+            "pv_charge_kwh": round(pv_charge_kwh, 2),
+            "pv_used_kwh": round(pv_used_kwh, 2),
+            "pv_shift_eur": round(pv_shift_eur, 2),
+            "pv_day": pv_charge_kwh >= 1.0,
             "actual_net": round(dis - chg, 2),
             "ref_charge_kwh": round(ref["charge_kwh"], 2),
             "ref_charge_eur": round(ref["charge_eur"], 2),
@@ -364,6 +380,9 @@ def main():
             ts_ms = int((midnight(day) + 1800) * 1000)
             lines.append(f"battery_score_actual_net_eur {r['actual_net']} {ts_ms}")
             lines.append(f"battery_score_reference_net_eur {r['ref_net']} {ts_ms}")
+            lines.append(f"battery_score_pv_charge_kwh {r.get('pv_charge_kwh', 0)} {ts_ms}")
+            lines.append(f"battery_score_pv_used_kwh {r.get('pv_used_kwh', 0)} {ts_ms}")
+            lines.append(f"battery_score_pv_shift_eur {r.get('pv_shift_eur', 0)} {ts_ms}")
         body = ("\n".join(lines) + "\n").encode()
         urllib.request.urlopen(urllib.request.Request(
             f"{VM}/api/v1/import/prometheus", data=body, method="POST",
@@ -377,7 +396,7 @@ def main():
 
     print("🔋 Accu-scorecard — app-sturing vs. het prijsdrempel-plan")
     print(f"plan (nu): laden rang-keuze tot {charge_target}% @ 2400 W · ontladen ≥ P70 "
-          f"({d_pct:.0%}) zero-export · vloer 10% · flat-gate {min_spread} ct "
+          f"({d_pct:.0%}) zero-export · vloer 10% · flat-gate {min_spread * 100:.1f} ct "
           f"(≤ 14-11 gesimuleerd op de toenmalige P30-wet @ 800 W)")
     print(f"physisch: wet PACK_KWH {pack_law:.2f} kWh · bootstrap-cap {cap:.2f} kWh "
           f"({len(est)} segmenten)", "· η laden", ETA_C, "· η ontladen", ETA_D)
@@ -391,6 +410,9 @@ def main():
         beh = f"laad {range_str(r['charge_h'])} · ontl {range_str(r['disc_h'])}"
         if r.get("exp_kwh", 0) > 0.2:
             beh += f" · export {r['exp_kwh']:.1f} kWh/{eur(r['exp_eur'])}"
+        if r.get("pv_charge_kwh", 0) >= 0.2:
+            beh += (f" · zon {r['pv_charge_kwh']:.1f}→{r['pv_used_kwh']:.1f} kWh"
+                    f"/€{r['pv_shift_eur']:.2f}")
         print(f"{day}  {r['phase']:<10} | {eur(r['charge_eur']):9}{eur(r['disc_eur']):11}"
               f"{eur(r['actual_net']):6}| {eur(r['ref_net']):7}  | {eur(r['delta']):7} | {beh}")
     print()
@@ -406,6 +428,17 @@ def main():
     for ph, a in agg.items():
         print(f"  {ph:<10} werk {eur(a['act'])}  ·  ref {eur(a['ref'])}  ·  "
               f"Δ {eur(a['act'] - a['ref'])}  ({a['n']} d)")
+    ok_rows = [r for r in rows.values() if r.get("ok")]
+    if ok_rows:
+        pv_days = [r for r in ok_rows if r.get("pv_charge_kwh", 0) >= 1.0]
+        pv_c = sum(r.get("pv_charge_kwh", 0) for r in ok_rows)
+        pv_u = sum(r.get("pv_used_kwh", 0) for r in ok_rows)
+        pv_e = sum(r.get("pv_shift_eur", 0) for r in ok_rows)
+        print()
+        print(f"Zon-dagen: {len(pv_days)}/{len(ok_rows)} · {pv_c:.1f} kWh uit overschot "
+              f"geladen · {pv_u:.1f} kWh 's avonds benut · €{pv_e:.2f} vermeden inkoop (bruto)")
+        print("  bruto t.o.v. inkoop; onder saldering (t/m 2026) gaat de gederfde "
+              "terugleverwaarde er nog vanaf, vanaf 2027 is die ± de beursprijs")
     tou = agg.get("TOU-test")
     if tou and tou["n"]:
         print()
