@@ -21,12 +21,14 @@ Same untrusted-vendor category, but this workload is architecturally different f
 | Device access | none | `/dev/net/tun` only | Same requirement |
 | Published ports | none | `4449/tcp` (Node UI) + `61000-61100/udp` (WG listener range) | Inbound sessions are the product; the UI also lives on 4449 |
 | Network | default bridge | **own network `myst-net`** | No reachability to any other sv01 container (and none back) |
-| docker socket / host mounts | none | none | Data dir is the single NFS volume (`myst-data` → `/var/lib/mysterium-node`) |
+| docker socket / host mounts | none | none | Data dir is a single **local** volume (`myst-data-local` → `/var/lib/mysterium-node`) |
 | Resources | 256 MB / 0.5 CPU | 512 MB / 1.0 CPU | Session relay needs a bit more; still capped |
 | Logs | 10 MB × 3 | 10 MB × 3 | Same |
 | Updates | daily timer + diun | daily timer + diun (floating `:latest`) | Robert's standing choice for these apps |
 
-Keystore/identity + node database live on NFS (`/volume1/k8sv2/myst-data`, dir mode 777 because the NAS root-squashes). The keystore is encrypted by the node itself.
+Keystore/identity + node database live on **local disk** (`/srv/sv01-local/myst-data`, bound into the compose volume `myst-data-local`; the keystore is encrypted by the node itself).
+
+Why local and not NFS: the node stores its database in bbolt, which reads the file through `mmap`. On the NFS datadir that produced a fatal Go `SIGBUS` after a few days uptime (2026-11-22, `fatal error: fault` inside `bbolt.(*Cursor).search`), which crashed the process — the dashboard showed the node offline for the ~1 minute until the restart policy brought it back. Same class of problem as Komodo's MongoDB, which is local for the same reason. The old NFS dir `/volume1/k8sv2/myst-data` is left in place as a cold backup; it is no longer mounted.
 
 Same exit-IP caveat as the other share-apps: relayed third-party traffic leaves via the home WAN IP; container isolation protects sv01 the machine, not the IP.
 
@@ -59,4 +61,4 @@ Floating `:latest`, pulled + applied daily by `sv01-image-update.timer` (04:17 +
 
 ## Removal
 
-Delete the `myst:` service block + `myst-data` volume definition from `sv01/compose/docker-compose.yml`, delete the OPNsense forward "MystNodes sv01" (+ its registered pass rule) → apply, remove the Kuma monitor, retire this page + the `hosts/sv01.md` row, push. NFS data (`/volume1/k8sv2/myst-data`) can be deleted after confirming the node is deregistered at mystnodes.com.
+Delete the `myst:` service block + `myst-data` volume definition from `sv01/compose/docker-compose.yml`, delete the OPNsense forward "MystNodes sv01" (+ its registered pass rule) → apply, remove the Kuma monitor, retire this page + the `hosts/sv01.md` row, push. Local data (`/srv/sv01-local/myst-data`) and the old NFS backup (`/volume1/k8sv2/myst-data`) can be deleted after confirming the node is deregistered at mystnodes.com.

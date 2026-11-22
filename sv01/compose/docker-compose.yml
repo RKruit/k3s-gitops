@@ -521,7 +521,7 @@ services:
       - "4449:4449"
       - "61000-61100:61000-61100/udp"
     volumes:
-      - myst-data:/var/lib/mysterium-node
+      - myst-data-local:/var/lib/mysterium-node
     networks:
       - myst-net
     deploy:
@@ -855,13 +855,17 @@ volumes:
       o: addr=192.168.1.2,rw,hard,timeo=600
       device: ":/volume1/k8sv2/waha-data"
 
-  # MystNodes identity/keystore + node-database — NFS volgens conventie
-  myst-data:
+  # MystNodes identity/keystore + node-database — bewust LOKAAL (geen NFS):
+  # de node gebruikt bbolt, dat de DB via mmap leest; op NFS gaf dat na een
+  # paar dagen een SIGBUS-crash (22-11-2026, Go fatal error in bbolt.Cursor).
+  # Zelfde klasse als de lokale mongo-volume van Komodo. Oude NFS-datadir
+  # (k8sv2/myst-data) blijft als backup staan en wordt niet meer gemount.
+  myst-data-local:
     driver: local
     driver_opts:
-      type: nfs4
-      o: addr=192.168.1.2,rw,hard,timeo=600
-      device: ":/volume1/k8sv2/myst-data"
+      type: none
+      o: bind
+      device: /srv/sv01-local/myst-data
 
   # EarnApp device identity + node state (uuid en co) — NFS volgens conventie;
   # persistent identity is een vendor-eis (leeg = orphan dashboard-devices)
