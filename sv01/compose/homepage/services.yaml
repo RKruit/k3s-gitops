@@ -23,6 +23,11 @@
         href: https://beszel.oostrandpark.com
         server: local
         container: sv01-beszel
+    - Grafana:
+        icon: grafana.png
+        href: https://grafana.oostrandpark.com
+        server: local
+        container: sv01-grafana
     - Docs:
         icon: mkdocs.png
         href: https://docs.oostrandpark.com
