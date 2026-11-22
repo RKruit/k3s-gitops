@@ -503,18 +503,21 @@ services:
       - SETGID
     devices:
       - /dev/net/tun:/dev/net/tun
-    # --wireguard.listen.ports = provider WG listener range; MUST match the
-    # published UDP range above. 1.39.9 help claims --udp.ports is the
-    # successor but that flag is NOT yet defined on `service` (verified
-    # 04-11-2026: 'flag provided but not defined') — deprecated-but-working
-    # is the only option today; re-check on a future myst upgrade.
-    # Location flags BEFORE `service` are app-level (after it they crash-loop,
-    # same class as --udp.ports): the oracle labels ASN 50266 (Odido behind
-    # this Glasoperator FTTH line) as "cellular", which hides the node from
-    # residential-filtering consumers; manual resolver = truthful "residential".
+    # --udp.ports = UDP listen range for the node's services (WireGuard/dVPN
+    # included); MUST match the published/forwarded range above. mist 1.40:
+    # --wireguard.listen.ports is DEPRECATED ("use --udp.ports") and is
+    # ignored in practice — with it the node bound a random port from the
+    # default 10000:60000 range (verified 22-11-2026: only one UDP socket,
+    # 33127; zero sockets in 61000-61100, so the OPNsense forward had no
+    # target). --udp.ports is app-level in 1.40 and must come BEFORE
+    # `service` (after it = 'flag provided but not defined' crash-loop).
+    # Location flags BEFORE `service` are app-level for the same reason: the
+    # oracle labels ASN 50266 (Odido behind this Glasoperator FTTH line) as
+    # "cellular", which hides the node from residential-filtering consumers;
+    # the manual resolver = truthful "residential".
     # NOTE: the image entrypoint execs args UNQUOTED — space-containing values
     # die on word-splitting ('No help topic for Stad'); use single-word city.
-    command: ["--location.type", "manual", "--location.country", "NL", "--location.city", "Almere", "--location.ip-type", "residential", "service", "--agreed-terms-and-conditions", "--wireguard.listen.ports", "61000:61100"]
+    command: ["--location.type", "manual", "--location.country", "NL", "--location.city", "Almere", "--location.ip-type", "residential", "--udp.ports", "61000:61100", "service", "--agreed-terms-and-conditions"]
     labels:
       diun.enable: "true"
     ports:
