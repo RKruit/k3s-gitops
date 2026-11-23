@@ -67,6 +67,10 @@ Kuma port-monitor "MystNodes UI (dVPN node)": `tcp 192.168.1.10:4449` (proves th
 
 Floating `:latest`, pulled + applied daily by `sv01-image-update.timer` (04:17 + jitter); diun reports new tags on Telegram. The WG-port flag is deprecated upstream (see above) — after major myst upgrades check the container actually starts (`docker logs sv01-myst`).
 
+## Bandwidth shaper — OFF (2026-11-23)
+
+The image ships no `tc`, so every session logged `Could not start traffic shaper` / `Could not limit download speed` (wondershaper shells out to `tc`) and the cap never applied. The container now starts with `--shaper.enabled=false` (app-level flag, before `service`; verified via `GET :4050/config` → `{"bandwidth":125000,"enabled":false}` and zero shaper errors in the log). The disabled path is a noop — `ws.Clear()` still runs `tc qdisc del` but its error is discarded. `shaper.bandwidth` stays set but is inert; re-enable only together with an image layer that carries `tc`.
+
 ## Removal
 
 Delete the `myst:` service block + `myst-data` volume definition from `sv01/compose/docker-compose.yml`, delete the OPNsense forward "MystNodes sv01" (+ its registered pass rule) → apply, remove the Kuma monitor, retire this page + the `hosts/sv01.md` row, push. Local data (`/srv/sv01-local/myst-data`) and the old NFS backup (`/volume1/k8sv2/myst-data`) can be deleted after confirming the node is deregistered at mystnodes.com.
