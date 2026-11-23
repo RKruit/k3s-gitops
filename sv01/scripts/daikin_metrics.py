@@ -63,6 +63,11 @@ MAP = {
     "C/9/Consumption_Heatpump": ("daikin_consumption_heatpump", 1),
     "C/9/COP_Lifetime": ("daikin_cop_lifetime", 1),
     "C/9/COP_Realtime": ("daikin_cop_realtime", 1),
+    "C/9/Production_Gasboiler": ("daikin_production_gasboiler", 1),
+    "C/1/Energy_Produced_Compressor_Heatpump": ("daikin_production_heatpump", 1),
+    "C/1/Energy_Produced_Compressor_Heating": ("daikin_production_heating", 1),
+    "C/1/Hours_Compressor_Heating": ("daikin_hours_compressor", 1),
+    "M/1/Flow": ("daikin_flow_lpm", 1),
     "M/1/ErrorCode1": ("daikin_error_code", 1),
 }
 
