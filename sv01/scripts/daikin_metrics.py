@@ -16,6 +16,7 @@ losse run — het is een forever loop.
 """
 import json
 import subprocess
+import threading
 import sys
 import time
 import urllib.request
@@ -110,6 +111,32 @@ def price_lines():
     return out
 
 
+def reader(latest, stop):
+    """Leest de MQTT-stream en houdt de laatst geziene waarde per metriek bij."""
+    while not stop.is_set():
+        proc = subprocess.Popen(
+            ["mosquitto_sub", "-h", BROKER, "-p", PORT, "-u", USER, "-P", creds(),
+             "-t", TOPIC, "-v", "-q", "1"],
+            stdout=subprocess.PIPE, text=True, bufsize=1,
+        )
+        print(f"{datetime.now():%H:%M:%S} collectie gestart op {TOPIC}", flush=True)
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            try:
+                topic, _, payload = line.rstrip("\n").partition(" ")
+                suffix = topic.split("/bridge0/", 1)[1]
+            except IndexError:
+                continue
+            if suffix in MAP:
+                val = num(payload)
+                if val is not None:
+                    latest[MAP[suffix][0]] = val
+            if stop.is_set():
+                break
+        print("mosquitto_sub gestopt — herstart over 5 s", flush=True)
+        stop.wait(5)
+
+
 def main():
     latest = {}
     cache = Path(STATE_CACHE)
@@ -119,48 +146,24 @@ def main():
             print(f"{datetime.now():%H:%M:%S} {len(latest)} waarden uit cache geladen", flush=True)
         except Exception:  # noqa: BLE001
             latest = {}
-    proc = subprocess.Popen(
-        ["mosquitto_sub", "-h", BROKER, "-p", PORT, "-u", USER, "-P", creds(),
-         "-t", TOPIC, "-v", "-q", "1"],
-        stdout=subprocess.PIPE, text=True, bufsize=1,
-    )
-    print(f"{datetime.now():%H:%M:%S} collectie gestart op {TOPIC}", flush=True)
-    last_push = 0.0
+
+    stop = threading.Event()
+    th = threading.Thread(target=reader, args=(latest, stop), daemon=True)
+    th.start()
+
     while True:
-        line = proc.stdout.readline()
-        if not line:
-            print("mosquitto_sub is gestopt — herstart over 5 s", flush=True)
-            time.sleep(5)
-            proc = subprocess.Popen(
-                ["mosquitto_sub", "-h", BROKER, "-p", PORT, "-u", USER,
-                 "-P", creds(), "-t", TOPIC, "-v", "-q", "1"],
-                stdout=subprocess.PIPE, text=True, bufsize=1)
-            continue
-
+        time.sleep(INTERVAL_S)
+        lines = [f"{name} {val}" for name, val in latest.items()]
+        lwt = latest.get("daikin_lwt_c")
+        ret = latest.get("daikin_return_c")
+        if lwt is not None and ret is not None:
+            lines.append(f"daikin_delta_t {round(lwt - ret, 3)}")
+        lines.extend(price_lines())
+        push(lines)
         try:
-            topic, _, payload = line.rstrip("\n").partition(" ")
-            suffix = topic.split("/bridge0/", 1)[1]
-        except IndexError:
-            continue
-        if suffix in MAP:
-            val = num(payload)
-            if val is not None:
-                latest[MAP[suffix][0]] = val
-
-        now = time.time()
-        if now - last_push >= INTERVAL_S:
-            last_push = now
-            lines = [f"{name} {val}" for name, val in latest.items()]
-            lwt = latest.get("daikin_lwt_c")
-            ret = latest.get("daikin_return_c")
-            if lwt is not None and ret is not None:
-                lines.append(f"daikin_delta_t {round(lwt - ret, 3)}")
-            lines.extend(price_lines())
-            push(lines)
-            try:
-                cache.write_text(json.dumps(latest))
-            except Exception:  # noqa: BLE001
-                pass
+            cache.write_text(json.dumps(latest))
+        except Exception:  # noqa: BLE001
+            pass
 
 
 if __name__ == "__main__":
