@@ -524,7 +524,13 @@ services:
     # already knows, so the monitoring check has nothing to contradict.
     # Re-adding a residential override is a separate experiment: it needs the
     # city to match exactly AND a re-test via the dashboard "Test node".
-    command: ["--udp.ports", "61000:61100", "service", "--agreed-terms-and-conditions"]
+    # shaper.enabled=false (2026-11-23, Robert's call): the myst image ships
+    # no `tc`, so every session logged "Could not start traffic shaper"
+    # (shaper_linux.go -> wondershaper -> tc) and the configured bandwidth
+    # cap never applied. Disabling turns the loud error off; the noop path
+    # still calls `tc qdisc del` via ws.Clear(), but its error is discarded.
+    # Re-enable only together with a `tc`-carrying image layer.
+    command: ["--shaper.enabled=false", "--udp.ports", "61000:61100", "service", "--agreed-terms-and-conditions"]
     labels:
       diun.enable: "true"
     ports:
