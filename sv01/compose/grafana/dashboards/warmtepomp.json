@@ -36,7 +36,7 @@
  "timezone": "browser",
  "title": "Warmtepomp",
  "uid": "warmtepomp",
- "version": 3,
+ "version": 4,
  "panels": [
   {
    "id": 1,
@@ -772,9 +772,20 @@
      "legendFormat": "preferent (laag tarief)",
      "range": true,
      "refId": "C"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_dhw",
+     "legendFormat": "tapwaterbedrijf (DHW)",
+     "range": true,
+     "refId": "D"
     }
    ],
-   "description": "0/1-signalen: wie doet het werk, en of de unit in de goedkope-tariefstand staat."
+   "description": "0/1-signalen: wie doet het werk, of de unit in de goedkope-tariefstand staat, en of het tapwaterbedrijf actief is (dan brandt de ketel voor warm water, niet voor de verwarming)."
   },
   {
    "id": 10,
@@ -969,7 +980,7 @@
    },
    "gridPos": {
     "x": 0,
-    "y": 28,
+    "y": 35,
     "w": 24,
     "h": 8
    },
@@ -1110,6 +1121,142 @@
     }
    ],
    "description": "De brandstofprijs is de regelknop: omslag-COP = stroomtarief / brandstofprijs. Daalt de lijn, dan wil de sturing meer warmtepomp; stijgt hij, dan eerder gas."
+  },
+  {
+   "id": 13,
+   "title": "Watervraag: tapwater of verwarming",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 28,
+    "w": 24,
+    "h": 7
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "axisPlacement": "auto",
+      "axisColorMode": "text",
+      "drawStyle": "line",
+      "lineInterpolation": "linear",
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "gradientMode": "none",
+      "pointSize": 1,
+      "showPoints": "never",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "scaleDistribution": {
+       "type": "linear"
+      },
+      "hideFrom": {
+       "legend": false,
+       "tooltip": false,
+       "viz": false
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "spanNulls": true,
+      "barWidthFactor": 0.8
+     },
+     "unit": "none",
+     "decimals": 0,
+     "min": 0,
+     "max": 1.2
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "calcs": [],
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_dhw",
+     "legendFormat": "tapwaterbedrijf (DHW)",
+     "range": true,
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_dhw_demand",
+     "legendFormat": "tapwatervraag",
+     "range": true,
+     "refId": "B"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_gasboiler_active",
+     "legendFormat": "ketel actief",
+     "range": true,
+     "refId": "C"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_valve_dhw",
+     "legendFormat": "klep tapwatervat",
+     "range": true,
+     "refId": "D"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_valve_main",
+     "legendFormat": "klep hoofdzone",
+     "range": true,
+     "refId": "E"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_dhw_boost",
+     "legendFormat": "boost",
+     "range": true,
+     "refId": "F"
+    }
+   ],
+   "description": "0/1-signalen uit de unit: tapwaterbedrijf (DHW), tapwatervraag, de driewegklep naar het tapwatervat, de zonekleppen van hoofd- en extra zone, en de boost. Zo zie je of de ketel brandt voor warm water of voor de verwarming — tapwater is comfort, geen prijskeuze."
   }
  ]
 }
