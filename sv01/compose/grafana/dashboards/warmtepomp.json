@@ -36,7 +36,7 @@
  "timezone": "browser",
  "title": "Warmtepomp",
  "uid": "warmtepomp",
- "version": 5,
+ "version": 6,
  "panels": [
   {
    "id": 1,
@@ -1348,6 +1348,151 @@
     }
    ],
    "description": "0/1-signalen uit de unit: tapwaterbedrijf (DHW), tapwatervraag, de driewegklep naar het tapwatervat, de zonekleppen van hoofd- en extra zone, en de boost. Zo zie je of de ketel brandt voor warm water of voor de verwarming — tapwater is comfort, geen prijskeuze."
+  },
+  {
+   "id": 14,
+   "title": "Warmtebalans vandaag: pomp vs ketel",
+   "type": "timeseries",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 43,
+    "w": 24,
+    "h": 7
+   },
+   "fieldConfig": {
+    "defaults": {
+     "color": {
+      "mode": "palette-classic"
+     },
+     "custom": {
+      "axisPlacement": "auto",
+      "axisColorMode": "text",
+      "drawStyle": "line",
+      "lineInterpolation": "linear",
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "gradientMode": "none",
+      "pointSize": 1,
+      "showPoints": "never",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "scaleDistribution": {
+       "type": "linear"
+      },
+      "hideFrom": {
+       "legend": false,
+       "tooltip": false,
+       "viz": false
+      },
+      "thresholdsStyle": {
+       "mode": "off"
+      },
+      "spanNulls": true,
+      "barWidthFactor": 0.8
+     },
+     "unit": "kwatth",
+     "decimals": 2,
+     "min": 0,
+     "max": 8
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "C"
+      },
+      "properties": [
+       {
+        "id": "custom.axisPlacement",
+        "value": "right"
+       },
+       {
+        "id": "unit",
+        "value": "percent"
+       },
+       {
+        "id": "decimals",
+        "value": 0
+       },
+       {
+        "id": "max",
+        "value": 100
+       },
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "fill": "dash",
+         "dash": [
+          6,
+          6
+         ]
+        }
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#F2CC0C"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "calcs": [],
+     "displayMode": "list",
+     "placement": "bottom",
+     "showLegend": true
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_heat_pump_kwh_today",
+     "legendFormat": "warmte uit warmtepomp (kWh)",
+     "range": true,
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_heat_boiler_kwh_today",
+     "legendFormat": "warmte uit ketel (kWh)",
+     "range": true,
+     "refId": "B"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_heat_boiler_share_pct",
+     "legendFormat": "aandeel gas (%)",
+     "range": true,
+     "refId": "C"
+    }
+   ],
+   "description": "Geïntegreerde warmte-afgifte (flow x dT uit de bus, 0,06977 x l/min x K = kW) sinds middernacht, gesplitst naar de bron. Toerekening is een benadering: zolang de ketel actief is gaat de afgifte naar gas, anders naar de pomp — bij gelijktijdig bedrijf is dat een bovengrens voor het gasaandeel. De tellers van de Daikin zelf zijn hiervoor onbruikbaar (ze vallen soms terug naar 0)."
   }
  ]
 }

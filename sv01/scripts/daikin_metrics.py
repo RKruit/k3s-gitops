@@ -31,7 +31,10 @@ TOPIC = "P1P2/P/P1P2MQTT/bridge0/#"
 VM_PUSH_URL = "http://127.0.0.1:8428/api/v1/import/prometheus"
 PRICE_STATUS = "/var/lib/daikin-price/status.json"
 STATE_CACHE = "/var/lib/daikin-price/metrics-cache.json"
+HEAT_STATE = "/var/lib/daikin-price/heat-balance.json"
 INTERVAL_S = 10
+# soortelijke warmte water: 4,186 kJ/kg.K -> kW = 0,06977 * (l/min) * dT
+HEAT_K = 4.186 / 60.0
 
 # topic-achtervoegsel -> (metrieknaam, schaal)
 MAP = {
@@ -123,6 +126,38 @@ def price_lines():
     return out
 
 
+def heat_balance(latest, state):
+    """Integreert flow x dT tot kWh en splitst naar pomp of ketel.
+
+    Benadering: zolang de ketel actief is wordt de hele afgifte aan gas
+    toegerekend, anders aan de pomp. Bij gelijktijdig bedrijf is dat een
+    bovengrens voor het gasaandeel (de pomp draait dan immers ook mee).
+    """
+    now = time.time()
+    flow = latest.get("daikin_flow_lpm") or 0.0
+    lwt = latest.get("daikin_lwt_c")
+    ret = latest.get("daikin_return_c")
+    today = datetime.now().strftime("%Y-%m-%d")
+    if state.get("date") != today:
+        state.update({"date": today, "pump_kwh": 0.0, "boiler_kwh": 0.0})
+
+    kw = 0.0
+    if lwt is not None and ret is not None and flow > 1.0 and lwt > ret:
+        kw = HEAT_K * flow * (lwt - ret)
+
+    last = state.get("last_ts") or now
+    dt = min(max(now - last, 0.0), 120.0)
+    kwh = kw * dt / 3600.0
+    if kwh > 0:
+        if (latest.get("daikin_gasboiler_active") or 0) >= 0.5:
+            state["boiler_kwh"] = state.get("boiler_kwh", 0.0) + kwh
+        else:
+            state["pump_kwh"] = state.get("pump_kwh", 0.0) + kwh
+    state["last_ts"] = now
+    state["heat_kw"] = round(kw, 3)
+    return state
+
+
 def reader(latest, stop):
     """Leest de MQTT-stream en houdt de laatst geziene waarde per metriek bij."""
     while not stop.is_set():
@@ -170,8 +205,22 @@ def main():
         ret = latest.get("daikin_return_c")
         if lwt is not None and ret is not None:
             lines.append(f"daikin_delta_t {round(lwt - ret, 3)}")
+        try:
+            hb = json.loads(Path(HEAT_STATE).read_text()) if Path(HEAT_STATE).exists() else {}
+        except Exception:  # noqa: BLE001
+            hb = {}
+        hb = heat_balance(latest, hb)
+        lines.append(f"daikin_heat_kw {hb['heat_kw']}")
+        lines.append(f"daikin_heat_pump_kwh_today {round(hb.get('pump_kwh', 0.0), 4)}")
+        lines.append(f"daikin_heat_boiler_kwh_today {round(hb.get('boiler_kwh', 0.0), 4)}")
+        total = (hb.get('pump_kwh', 0.0) or 0) + (hb.get('boiler_kwh', 0.0) or 0)
+        lines.append(f"daikin_heat_boiler_share_pct {round(100.0 * (hb.get('boiler_kwh', 0.0) or 0) / total, 2) if total > 0.05 else 0}")
         lines.extend(price_lines())
         push(lines)
+        try:
+            Path(HEAT_STATE).write_text(json.dumps(hb))
+        except Exception:  # noqa: BLE001
+            pass
         try:
             cache.write_text(json.dumps(latest))
         except Exception:  # noqa: BLE001
