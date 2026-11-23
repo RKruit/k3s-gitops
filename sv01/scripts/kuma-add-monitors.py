@@ -57,6 +57,11 @@ MONITORS = [
     dict(COMMON, type="keyword", name="Homey energy stale", url="http://192.168.1.10:8890/energy.json",
          keyword='"stale":false'),
     dict(COMMON, type="ping", name="Homey Pro (hub)", hostname="192.168.68.188"),  # ethernet
+    # P1P2MQTT bridge (Daikin warmtepomp, added 23-11-2026). HTTP-only check:
+    # the bridge serves the firmware-update page on port 80; there is no
+    # health endpoint, but a 200 proves WiFi + ESP alive. Bus health itself is
+    # covered by the P1P2/L/... "online" MQTT topic (not monitorable by Kuma).
+    dict(COMMON, type="http", name="P1P2MQTT bridge (Daikin)", url="http://192.168.68.82/"),
 ]
 
 
