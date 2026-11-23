@@ -36,7 +36,7 @@
  "timezone": "browser",
  "title": "Warmtepomp",
  "uid": "warmtepomp",
- "version": 1,
+ "version": 2,
  "panels": [
   {
    "id": 1,
@@ -824,7 +824,8 @@
       "barWidthFactor": 0.8
      },
      "unit": "none",
-     "decimals": 2
+     "decimals": 2,
+     "max": null
     },
     "overrides": []
    },
@@ -864,7 +865,7 @@
      "refId": "B"
     }
    ],
-   "description": "Uurtoename van de elektriciteitstellers van de Daikin zelf (teller-eenheden van de unit, geen kWh-meter). De vorm is bruikbaar, de absolute schaal volgt de unit."
+   "description": "Uurtoename van de elektriciteitstellers van de Daikin zelf. Let op: de eenheid is die van de unit-teller, niet kWh — de absolute schaal is dus indicatief, de vorm (wanneer draait hij, hoe hard) is bruikbaar. Bij de start van de meting waren de tellers 5572 (totaal) en 5413 (compressor verwarming)."
   },
   {
    "id": 11,
@@ -1008,9 +1009,47 @@
      "unit": "currencyEUR",
      "decimals": 3,
      "min": 0,
-     "max": 1.0
+     "max": 0.6
     },
-    "overrides": []
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "D"
+      },
+      "properties": [
+       {
+        "id": "custom.axisPlacement",
+        "value": "right"
+       },
+       {
+        "id": "unit",
+        "value": "none"
+       },
+       {
+        "id": "decimals",
+        "value": 2
+       },
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "fill": "dash",
+         "dash": [
+          6,
+          6
+         ]
+        }
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#F2CC0C"
+        }
+       }
+      ]
+     }
+    ]
    },
    "options": {
     "legend": {
