@@ -511,13 +511,20 @@ services:
     # 33127; zero sockets in 61000-61100, so the OPNsense forward had no
     # target). --udp.ports is app-level in 1.40 and must come BEFORE
     # `service` (after it = 'flag provided but not defined' crash-loop).
-    # Location flags BEFORE `service` are app-level for the same reason: the
-    # oracle labels ASN 50266 (Odido behind this Glasoperator FTTH line) as
-    # "cellular", which hides the node from residential-filtering consumers;
-    # the manual resolver = truthful "residential".
-    # NOTE: the image entrypoint execs args UNQUOTED — space-containing values
-    # die on word-splitting ('No help topic for Stad'); use single-word city.
-    command: ["--location.type", "manual", "--location.country", "NL", "--location.city", "Almere", "--location.ip-type", "residential", "--udp.ports", "61000:61100", "service", "--agreed-terms-and-conditions"]
+    # Location flags BEFORE `service` are app-level for the same reason.
+    # REMOVED 2026-11-23: the manual override (country NL / city "Almere" /
+    # ip-type residential) did not survive the monitoring agent's location
+    # check — the quality oracle's provider statuses went to
+    # {"monitoring":{"connect_fail":N,"invalid_location":4}} as soon as
+    # sessions started completing, i.e. the agent rejects the declared
+    # location. The oracle's own record for 31.184.106.54 is NL / "Almere
+    # Stad" / AS50266 Odido / node_type cellular; the override shortened the
+    # city to "Almere" (the entrypoint word-splits argv, so "Almere Stad"
+    # died) and claimed residential. Automatic location = what the oracle
+    # already knows, so the monitoring check has nothing to contradict.
+    # Re-adding a residential override is a separate experiment: it needs the
+    # city to match exactly AND a re-test via the dashboard "Test node".
+    command: ["--udp.ports", "61000:61100", "service", "--agreed-terms-and-conditions"]
     labels:
       diun.enable: "true"
     ports:
