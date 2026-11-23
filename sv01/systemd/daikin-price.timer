@@ -1,0 +1,11 @@
+[Unit]
+Description=Daikin brandstofprijs per uur (elke 5 minuten)
+
+[Timer]
+OnBootSec=90
+OnUnitActiveSec=300
+AccuracySec=30
+Unit=daikin-price.service
+
+[Install]
+WantedBy=timers.target

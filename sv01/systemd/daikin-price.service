@@ -1,0 +1,10 @@
+[Unit]
+Description=Daikin brandstofprijs per uur -> P1P2-bus via Homey (optie A)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=rkruit
+ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/daikin_price_bridge.py
+TimeoutStartSec=120
