@@ -1,0 +1,14 @@
+[Unit]
+Description=Daikin P1P2-bus -> VictoriaMetrics collector (warmtepomp dashboard)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rkruit
+ExecStart=/usr/bin/python3 /opt/sv01-config/sv01/scripts/daikin_metrics.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
