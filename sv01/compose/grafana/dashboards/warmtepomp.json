@@ -36,7 +36,7 @@
  "timezone": "browser",
  "title": "Warmtepomp",
  "uid": "warmtepomp",
- "version": 2,
+ "version": 3,
  "panels": [
   {
    "id": 1,
@@ -554,12 +554,12 @@
      },
      "editorMode": "code",
      "expr": "daikin_room_c",
-     "legendFormat": "kamer (display)",
+     "legendFormat": "garage (paneel bij de unit)",
      "range": true,
      "refId": "E"
     }
    ],
-   "description": "Alles wat de unit zelf meet en via P1/P2 publiceert."
+   "description": "Alles wat de unit zelf meet en via P1/P2 publiceert. De kamerlijn is de temperatuur die het Daikin-bedienpaneel zelf meet — dat paneel hangt bij de warmtepomp in de garage, dus die lijn toont de garagetemperatuur en niet de woonkamer (die wordt door Tado geregeld)."
   },
   {
    "id": 8,
