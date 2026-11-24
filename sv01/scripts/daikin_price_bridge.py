@@ -36,6 +36,15 @@ FUEL_MAX_EUR = 0.50
 FALLBACK_EL_EUR = 0.45  # als de bus de stroomprijs even niet levert
 REFRESH_MIN = 30      # ook zonder wijziging elke 30 min opnieuw sturen
 
+# Stooklijn-deviatie (aanvoertemperatuur) naar buitentemperatuur.
+# Getest 24-11-2026: -2 K bij -2 C buiten gaf COP +0,2, ketelbedrijf 39->28%,
+# kamer bleef constant. Bij echte vorst is het vermogensverlies te groot.
+DEV_MILD_OUTSIDE_C = -3.0   # boven deze buitentemperatuur: volle winst pakken
+DEV_COLD_OUTSIDE_C = -8.0   # onder deze: deviatie terug naar 0
+DEV_MILD_K = -2.0           # deviatie bij mild weer
+DEV_MID_K = -1.0            # deviatie tussen de twee grenzen
+DEV_COLD_K = 0.0            # deviatie bij strenge vorst
+
 # --------------------------------------------------------------------- paden
 PRICES = Path("/var/lib/zendure-follow/prices.json")   # zendure_follow vult dit
 STATE = Path("/var/lib/daikin-price/last.json")
@@ -47,6 +56,7 @@ BROKER_PORT = "1883"
 TOPIC_CMD = "homey/p1p2/cmd"                      # Homey-flow luistert hierop
 TOPIC_EL = "P1P2/P/P1P2MQTT/bridge0/S/0/Electricity"
 TOPIC_GAS = "P1P2/P/P1P2MQTT/bridge0/S/0/Gas"
+TOPIC_OUTSIDE = "P1P2/P/P1P2MQTT/bridge0/T/1/Temperature_Outside"
 MQTT_USER = "hermes"
 
 
@@ -86,6 +96,24 @@ def mqtt_pub(topic, payload):
         raise RuntimeError(f"publish mislukt: {res.stderr.strip()}")
     log(f"-> {topic}: {payload}")
     return payload
+
+
+def deviation_k(outside_c):
+    """Gekozen stooklijn-deviatie (K) op basis van de buitentemperatuur."""
+    if outside_c is None:
+        return DEV_MILD_K          # geen meting: de veilige, geteste stand
+    if outside_c >= DEV_MILD_OUTSIDE_C:
+        return DEV_MILD_K
+    if outside_c >= DEV_COLD_OUTSIDE_C:
+        return DEV_MID_K
+    return DEV_COLD_K
+
+
+def deviation_payload(kelvin):
+    """E360008%04X, deviatie x10, negatief als two's complement."""
+    tenths = int(round(kelvin * 10))
+    raw = tenths if tenths >= 0 else 65536 + tenths
+    return "E360008%04X" % raw
 
 
 def percentile(values, pct):
@@ -143,6 +171,15 @@ def main():
     kind, target, p_cheap, p_peak, fuel = decide(price_now, hourly, el_eur)
     payload = "E3D001F%04X" % round(fuel * 10000)
 
+    # buitentemperatuur -> stooklijn-deviatie
+    out_raw = mqtt_sub(TOPIC_OUTSIDE, wait=6)
+    try:
+        outside_c = float(out_raw) if out_raw else None
+    except ValueError:
+        outside_c = None
+    dev_k = deviation_k(outside_c)
+    dev_payload = deviation_payload(dev_k)
+
     last = {}
     if STATE.exists():
         try:
@@ -152,18 +189,30 @@ def main():
     age_min = (time.time() - last.get("ts", 0)) / 60.0
     changed = last.get("payload") != payload
 
+    dev_changed = last.get("dev_payload") != dev_payload
+
     if changed or age_min >= REFRESH_MIN:
         # L1 is nodig voordat de bridge writes accepteert; idempotent.
         mqtt_pub(TOPIC_CMD, "L1")
         time.sleep(1)
         mqtt_pub(TOPIC_CMD, payload)
-        STATE.write_text(json.dumps({"payload": payload, "ts": time.time(),
-                                     "fuel_eur": round(fuel, 4)}, ensure_ascii=False))
         log(f"verzonden ({'gewijzigd' if changed else 'verversing'}): "
             f"uurprijs €{price_now:.3f} ({kind}) stroom €{el_eur:.3f} "
             f"-> omslag {target} -> brandstof €{fuel:.4f}")
     else:
         log(f"geen wijziging (payload {payload}, {age_min:.0f} min oud)")
+
+    if dev_changed:
+        mqtt_pub(TOPIC_CMD, "L1")
+        time.sleep(1)
+        mqtt_pub(TOPIC_CMD, dev_payload)
+        log(f"stooklijn-deviatie {dev_k:+.1f} K (buiten "
+            f"{outside_c if outside_c is not None else '?'} °C) -> {dev_payload}")
+
+    if changed or dev_changed:
+        STATE.write_text(json.dumps({"payload": payload, "dev_payload": dev_payload,
+                                     "ts": time.time(), "fuel_eur": round(fuel, 4),
+                                     "deviation_k": dev_k}, ensure_ascii=False))
 
     STATUS.write_text(json.dumps({
         "ok": True, "ts": time.time(), "hour": now.hour,
@@ -171,6 +220,7 @@ def main():
         "electricity_eur": round(el_eur, 4), "fuel_eur": round(fuel, 4),
         "payload": payload, "p_cheap": round(p_cheap, 4), "p_peak": round(p_peak, 4),
         "last_sent_ts": last.get("ts") if not changed else time.time(),
+        "outside_c": outside_c, "deviation_k": dev_k, "dev_payload": dev_payload,
     }, ensure_ascii=False))
     return 0
 

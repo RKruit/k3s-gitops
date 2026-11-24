@@ -119,7 +119,8 @@ def price_lines():
     for key, metric in (("fuel_eur", "daikin_fuel_price_eur"),
                         ("electricity_eur", "daikin_el_tariff_eur"),
                         ("omslag", "daikin_omslag_target"),
-                        ("price_now_eur", "daikin_hour_price_eur")):
+                        ("price_now_eur", "daikin_hour_price_eur"),
+                        ("deviation_k", "daikin_deviation_target")):
         val = st.get(key)
         if isinstance(val, (int, float)):
             out.append(f"{metric} {val}")
