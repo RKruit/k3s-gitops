@@ -191,11 +191,13 @@ def main():
 
     dev_changed = last.get("dev_payload") != dev_payload
 
+    sent = False
     if changed or age_min >= REFRESH_MIN:
         # L1 is nodig voordat de bridge writes accepteert; idempotent.
         mqtt_pub(TOPIC_CMD, "L1")
         time.sleep(1)
         mqtt_pub(TOPIC_CMD, payload)
+        sent = True
         log(f"verzonden ({'gewijzigd' if changed else 'verversing'}): "
             f"uurprijs €{price_now:.3f} ({kind}) stroom €{el_eur:.3f} "
             f"-> omslag {target} -> brandstof €{fuel:.4f}")
@@ -206,20 +208,27 @@ def main():
         mqtt_pub(TOPIC_CMD, "L1")
         time.sleep(1)
         mqtt_pub(TOPIC_CMD, dev_payload)
+        sent = True
         log(f"stooklijn-deviatie {dev_k:+.1f} K (buiten "
             f"{outside_c if outside_c is not None else '?'} °C) -> {dev_payload}")
 
-    if changed or dev_changed:
-        STATE.write_text(json.dumps({"payload": payload, "dev_payload": dev_payload,
-                                     "ts": time.time(), "fuel_eur": round(fuel, 4),
-                                     "deviation_k": dev_k}, ensure_ascii=False))
+    # ts hoort bij de laatste ECHTE verzending (ook een verversing), niet bij
+    # de laatste payload-wijziging: anders blijft ts uren stilstaan terwijl de
+    # brug elke 30 min ververst, en slaat de watchdog onterecht alarm.
+    # Zonder deze update bleef age_min ook doorlopen en werd er elke 5 min
+    # (timer-interval) opnieuw naar de bus geschreven i.p.v. elke 30 min.
+    if sent:
+        last = {"payload": payload, "dev_payload": dev_payload,
+                "ts": time.time(), "fuel_eur": round(fuel, 4),
+                "deviation_k": dev_k}
+        STATE.write_text(json.dumps(last))
 
     STATUS.write_text(json.dumps({
         "ok": True, "ts": time.time(), "hour": now.hour,
         "price_now_eur": price_now, "kind": kind, "omslag": target,
         "electricity_eur": round(el_eur, 4), "fuel_eur": round(fuel, 4),
         "payload": payload, "p_cheap": round(p_cheap, 4), "p_peak": round(p_peak, 4),
-        "last_sent_ts": last.get("ts") if not changed else time.time(),
+        "last_sent_ts": last.get("ts"),
         "outside_c": outside_c, "deviation_k": dev_k, "dev_payload": dev_payload,
     }, ensure_ascii=False))
     return 0
