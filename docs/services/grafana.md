@@ -88,7 +88,7 @@ Files: `sv01/compose/grafana/provisioning/` (datasource + provider) and `sv01/co
 | `daikin_room_c`, `daikin_room_wall_c`, `daikin_dhw_setpoint_c` | kamer/display-meting, wandthermostaat, tapwater-setpoint |
 | `daikin_elec_counter`, `daikin_elec_counter_heating`, `daikin_consumption_heatpump` | elektriciteitstellers van de Daikin zelf (eenheid = unit-teller, niet kWh) + het verbruikssaldo van de warmtepomp |
 | `daikin_cop_lifetime`, `daikin_cop_realtime` | COP die de Daikin zelf bijhoudt (levensduur 2,93 bij de eerste meting); realtime blijft 0 — deze unit meet geen waterflow |
-| `daikin_fuel_price_eur`, `daikin_el_tariff_eur`, `daikin_hour_price_eur`, `daikin_omslag_target` | de prijsbrug: geschreven brandstofprijs, actief stroomtarief van de manager, NextEnergy-uurprijs en de gekozen omslag-COP (uit `/var/lib/daikin-price/status.json`) |
+| `daikin_fuel_price_eur`, `daikin_el_tariff_eur`, `daikin_hour_price_eur`, `daikin_omslag_target`, `daikin_deviation_target` | de prijsbrug: geschreven brandstofprijs, actief stroomtarief van de manager, NextEnergy-uurprijs, de gekozen omslag-COP en de ingestelde stooklijn-deviatie in K (uit `/var/lib/daikin-price/status.json`) |
 | `forecast_weather_age_s` | leeftijd van de weer-cache (stagneert bij Open-Meteo/ipinfo-fout; poller back-offt 10 min en serveert dan de cache van vandaag) |
 | `energy_books_since_ts` | epoch the books started (2026-11-04) |
 
