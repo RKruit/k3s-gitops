@@ -36,7 +36,7 @@
  "timezone": "browser",
  "title": "Warmtepomp",
  "uid": "warmtepomp",
- "version": 6,
+ "version": 7,
  "panels": [
   {
    "id": 1,
@@ -488,7 +488,37 @@
      "unit": "celsius",
      "decimals": 1
     },
-    "overrides": []
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "G"
+      },
+      "properties": [
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "fill": "dash",
+         "dash": [
+          4,
+          4
+         ]
+        }
+       },
+       {
+        "id": "custom.lineWidth",
+        "value": 1
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#8AB8FF"
+        }
+       }
+      ]
+     }
+    ]
    },
    "options": {
     "legend": {
@@ -557,9 +587,31 @@
      "legendFormat": "garage (paneel bij de unit)",
      "range": true,
      "refId": "E"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_room_tado_c",
+     "legendFormat": "woonkamer (Tado)",
+     "range": true,
+     "refId": "F"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_room_target_c",
+     "legendFormat": "doel woonkamer (Tado)",
+     "range": true,
+     "refId": "G"
     }
    ],
-   "description": "Alles wat de unit zelf meet en via P1/P2 publiceert. De kamerlijn is de temperatuur die het Daikin-bedienpaneel zelf meet — dat paneel hangt bij de warmtepomp in de garage, dus die lijn toont de garagetemperatuur en niet de woonkamer (die wordt door Tado geregeld)."
+   "description": "Alles wat de unit zelf meet en via P1/P2 publiceert, plus de woonkamer via Tado. De lijn 'garage (paneel bij de unit)' is het Daikin-paneel in de garage (niet de woonkamer). Tado stuurt de warmtevraag; zakt de woonkamer onder het doel, dan komt er vraag."
   },
   {
    "id": 8,

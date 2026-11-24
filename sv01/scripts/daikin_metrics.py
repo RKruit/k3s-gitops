@@ -36,6 +36,13 @@ INTERVAL_S = 10
 # soortelijke warmte water: 4,186 kJ/kg.K -> kW = 0,06977 * (l/min) * dT
 HEAT_K = 4.186 / 60.0
 
+# Tado (via Homey): de woonkamertemperatuur is de comfortmeter bij tests.
+HOMEY_HOST = "http://192.168.68.188"
+HOMEY_ID = "66e57ca24da8fc528fb04f47"
+HOMEY_SETTINGS = "/home/rkruit/.athom-cli/settings.json"
+TADO_DEVICE = "a0e669fe-2a03-46ca-a7a3-7384ce33254d"   # Woonkamer - Slimme Thermostaat
+TADO_INTERVAL_S = 60
+
 # topic-achtervoegsel -> (metrieknaam, schaal)
 MAP = {
     "T/1/Temperature_Outside": ("daikin_outside_c", 1),
@@ -159,6 +166,28 @@ def heat_balance(latest, state):
     return state
 
 
+def tado_reader(latest, stop):
+    """Leest elke minuut de woonkamertemperatuur en het doel uit Tado (via Homey)."""
+    while not stop.is_set():
+        try:
+            tok = json.loads(Path(HOMEY_SETTINGS).read_text())["homeyApi"][
+                f"homey-{HOMEY_ID}"]["token"]
+            for cap, metric in (("measure_temperature", "daikin_room_tado_c"),
+                                ("target_temperature", "daikin_room_target_c")):
+                req = urllib.request.Request(
+                    f"{HOMEY_HOST}/api/manager/devices/device/{TADO_DEVICE}/capability/{cap}",
+                    headers={"Authorization": "Bearer " + tok, "X-Homey-ID": HOMEY_ID})
+                val = json.loads(urllib.request.urlopen(req, timeout=8).read())
+                if isinstance(val, (int, float)):
+                    latest[metric] = float(val)
+            if "daikin_room_tado_c" in latest and "daikin_room_target_c" in latest:
+                latest["daikin_room_deficit_c"] = round(
+                    latest["daikin_room_target_c"] - latest["daikin_room_tado_c"], 2)
+        except Exception as exc:  # noqa: BLE001
+            print(f"{datetime.now():%H:%M:%S} Tado lezen mislukt: {exc}", flush=True)
+        stop.wait(TADO_INTERVAL_S)
+
+
 def reader(latest, stop):
     """Leest de MQTT-stream en houdt de laatst geziene waarde per metriek bij."""
     while not stop.is_set():
@@ -198,6 +227,7 @@ def main():
     stop = threading.Event()
     th = threading.Thread(target=reader, args=(latest, stop), daemon=True)
     th.start()
+    threading.Thread(target=tado_reader, args=(latest, stop), daemon=True).start()
 
     while True:
         time.sleep(INTERVAL_S)
