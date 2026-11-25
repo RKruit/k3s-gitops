@@ -123,6 +123,12 @@ DISCHARGE_THR_STEPS = (
     # (15/21/22/23) idlem. Donderdag 19-11 gewoon P70 0,41 ('morgen zoals het
     # was'). Voor de flat-gate: 0,37 - P30(0,27) = 0,10 — geen opener nodig.
     ("2026-11-18", 0, 0.37),
+    # Robert 25-11-2026 (14:50): ONTLAADDREMPEL NU naar 0,47 — de accu (SoC 69%)
+    # spaart zich voor de avondpiek: vandaag 15:00 (0,47), 16:00 (0,50),
+    # 17:00/18:00 (0,49) vuren; het 0,42-uur van nu en 19:00-21:00
+    # (0,39-0,42) blijven idle. Alleen vandaag; morgen weer P70.
+    # Flat-gate: 0,47 - P30(0,35) = 0,12 → geen opener nodig.
+    ("2026-11-25", 0, 0.47),
 )
 # One-day CHARGE-threshold override (Robert 11-11-2026 ~22:00 'de laadrempel
 # staat wat hoog voor de rest van de dag; kijk ook naar morgen'): vanavond
