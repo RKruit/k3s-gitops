@@ -129,6 +129,11 @@ DISCHARGE_THR_STEPS = (
     # (0,39-0,42) blijven idle. Alleen vandaag; morgen weer P70.
     # Flat-gate: 0,47 - P30(0,35) = 0,12 → geen opener nodig.
     ("2026-11-25", 0, 0.47),
+    # Robert 25-11-2026 (16:48): morgen (do 26-11) ontlaadrempel 0,58 i.p.v.
+    # P70 0,53 — alleen 16:00 (0,58), 17:00 en 18:00 (0,59) vuren; 08-10
+    # (0,53), 13:00 (0,53) en 15:00 (0,57) blijven idle. Vervalt na 26-11.
+    # Flat-gate: 0,58 - c_thr 0,36 = 0,22 -> geen opener nodig.
+    ("2026-11-26", 0, 0.58),
 )
 # One-day CHARGE-threshold override (Robert 11-11-2026 ~22:00 'de laadrempel
 # staat wat hoog voor de rest van de dag; kijk ook naar morgen'): vanavond
