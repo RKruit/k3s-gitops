@@ -34,6 +34,14 @@ it step by step).
   `/srv/sv01-secrets/backup-passphrase`, 14 archives kept (~22 MB each).
 - Every run decrypts the fresh archive again as a smoke test; a corrupt archive
   exits non-zero instead of passing silently.
+- **Only when something changed.** `hermes_backup_fingerprint.py` hashes the
+  *content* of everything in scope (mtimes are ignored) plus a normalised view
+  of `cron/jobs.json` — the cron ticker rewrites `last_run_at`/`next_run_at`
+  there on every run, which says nothing about what you want to keep. No
+  change means no new archive, just a log line; the stored fingerprint lives in
+  `/var/lib/sv01-backup/hermes-fingerprint` and is written only after a
+  successful, readable archive. Safety net: an archive older than 7 days is
+  always refreshed, so a bug in the fingerprint can never leave you without one.
 - **The passphrase is the single point of failure.** It must be stored outside
   sv01 (Robert's password manager). Losing it makes every archive worthless.
 

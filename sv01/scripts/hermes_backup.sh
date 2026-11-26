@@ -25,6 +25,31 @@ OUT="${DEST}/hermes-${STAMP}.tar.gz.gpg"
 [ -r "$PASSFILE" ] || { echo "FOUT: passphrase-bestand $PASSFILE ontbreekt of is onleesbaar" >&2; exit 1; }
 mkdir -p "$DEST"
 
+# --- alleen back-uppen als er iets is veranderd -------------------------
+# Vingerafdruk over de inhoud (niet over mtimes); jobs.json wordt genormaliseerd
+# omdat de cron-ticker daar elke run last_run_at/next_run_at in bijwerkt.
+STATE_DIR="/var/lib/sv01-backup"
+FINGERPRINT_FILE="${STATE_DIR}/hermes-fingerprint"
+MAX_AGE_DAYS=7   # vangnet: hoe dan ook minstens één keer per week een archief
+mkdir -p "$STATE_DIR"
+
+FINDER="$(dirname "$0")/hermes_backup_fingerprint.py"
+NOW_FP="$(python3 "$FINDER")" || { echo "FOUT: vingerafdruk mislukt" >&2; exit 1; }
+LAST_FP="$(cat "$FINGERPRINT_FILE" 2>/dev/null || true)"
+
+NEWEST="$(ls -1t "${DEST}"/hermes-*.tar.gz.gpg 2>/dev/null | head -1 || true)"
+FORCE=0
+if [ -z "$NEWEST" ]; then
+  FORCE=1
+elif [ -n "$(find "$NEWEST" -mtime "+${MAX_AGE_DAYS}" 2>/dev/null)" ]; then
+  FORCE=1
+fi
+
+if [ "${NOW_FP}" = "${LAST_FP}" ] && [ "$FORCE" -eq 0 ]; then
+  echo "$(date -Is) geen wijzigingen sinds $(basename "$NEWEST") — back-up overgeslagen"
+  exit 0
+fi
+
 # lijst met paden die mee moeten (bestaande paden alleen)
 TMPLIST="$(mktemp)"
 trap 'rm -f "$TMPLIST"' EXIT
@@ -60,9 +85,11 @@ ls -1t "${DEST}"/hermes-*.tar.gz.gpg 2>/dev/null | tail -n +$((KEEP + 1)) | whil
   rm -f "$old" && echo "opgeruimd: $old"
 done
 
+# onthoud de vingerafdruk pas als het archief goed is (hieronder bij succes)
 # rooktest: kan het archief geopend worden met de passphrase?
 if gpg --batch --quiet --decrypt --passphrase-file "$PASSFILE" "$OUT" 2>/dev/null | tar -tzf - >/dev/null 2>&1; then
   echo "controle: archief leesbaar en compleet"
+  echo "${NOW_FP}" > "$FINGERPRINT_FILE"
 else
   echo "FOUT: archief niet leesbaar — back-up is NIET betrouwbaar" >&2
   exit 2
