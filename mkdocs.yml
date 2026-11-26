@@ -79,3 +79,4 @@ nav:
       - Network & DNS: infra/network-dns.md
       - NFS storage: infra/nfs-storage.md
       - Secrets: infra/secrets.md
+      - Disaster recovery: infra/disaster-recovery.md

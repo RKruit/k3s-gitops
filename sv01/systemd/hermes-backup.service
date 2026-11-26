@@ -1,0 +1,9 @@
+[Unit]
+Description=Encrypted backup of secrets + Hermes state to the NAS
+RequiresMountsFor=/mnt/nas/hermes_shared
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/sv01-config/sv01/scripts/hermes_backup.sh
+TimeoutStartSec=900

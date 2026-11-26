@@ -135,5 +135,6 @@ Every page carries frontmatter: a `description` one-liner plus an optional `rela
 | [`Network & DNS`](infra/network-dns.md) | IP-plan, DNS policy (Cloudflare zones, DNS-01, manual unbound entries), sv01 hostname table, squid isolation ranges. |
 | [`NFS storage`](infra/nfs-storage.md) | NFS storage pattern (local-driver volumes + nfs4 opts), live sv01 volume mapping, safe new-subdir creation. |
 | [`Secrets`](infra/secrets.md) | Secrets inventory: paths-only policy, per-host secret files and their consumers, hygiene rules. |
+| [`Disaster recovery`](infra/disaster-recovery.md) | What lives where (git vs NFS vs encrypted backup) and how sv01 + Hermes are rebuilt on new hardware; the nightly hermes-backup archive and its passphrase. |
 
 <!-- okf:index:end -->
