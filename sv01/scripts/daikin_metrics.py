@@ -270,8 +270,10 @@ def main():
         push(lines)
         try:
             Path(HEAT_STATE).write_text(json.dumps(hb))
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            # stil falen = de balans begint na elke herstart opnieuw; dat mag
+            # nooit ongemerkt gebeuren (gezien 27-11-2026: bestand root-owned).
+            print(f"{datetime.now():%H:%M:%S} balans opslaan mislukt: {exc}", flush=True)
         try:
             cache.write_text(json.dumps(latest))
         except Exception:  # noqa: BLE001
