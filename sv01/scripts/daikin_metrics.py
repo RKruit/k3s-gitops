@@ -135,11 +135,17 @@ def price_lines():
 
 
 def heat_balance(latest, state):
-    """Integreert flow x dT tot kWh en splitst naar pomp of ketel.
+    """Integreert flow x dT tot kWh en splitst naar pomp, ketel of tapwater.
 
-    Benadering: zolang de ketel actief is wordt de hele afgifte aan gas
-    toegerekend, anders aan de pomp. Bij gelijktijdig bedrijf is dat een
-    bovengrens voor het gasaandeel (de pomp draait dan immers ook mee).
+    Toerekening in deze volgorde (eerste match wint):
+      1. tapwatervraag open (S/1/DHW_Demand)  -> dhw_kwh     (comfort, geen prijskeuze)
+      2. ketel actief (S/1/Gasboiler_Active)  -> boiler_kwh  (verwarming op gas)
+      3. anders                               -> pump_kwh    (warmtepomp)
+
+    Tapwater gaat vóór de ketel, omdat de combi-ketel op deze installatie het
+    warme water maakt: zonder die volgorde zou alle tapwaterwarmte als
+    verwarmingsgas in de cijfers staan (gezien op 27-11-2026: ~25 van de 127
+    ketelminuten waren tapwater).
     """
     now = time.time()
     flow = latest.get("daikin_flow_lpm") or 0.0
@@ -147,7 +153,8 @@ def heat_balance(latest, state):
     ret = latest.get("daikin_return_c")
     today = datetime.now().strftime("%Y-%m-%d")
     if state.get("date") != today:
-        state.update({"date": today, "pump_kwh": 0.0, "boiler_kwh": 0.0})
+        state.update({"date": today, "pump_kwh": 0.0, "boiler_kwh": 0.0,
+                      "dhw_kwh": 0.0, "dhw_min": 0.0, "dhw_boiler_min": 0.0})
 
     kw = 0.0
     if lwt is not None and ret is not None and flow > 1.0 and lwt > ret:
@@ -156,8 +163,17 @@ def heat_balance(latest, state):
     last = state.get("last_ts") or now
     dt = min(max(now - last, 0.0), 120.0)
     kwh = kw * dt / 3600.0
-    if kwh > 0:
+
+    dhw_on = (latest.get("daikin_dhw_demand") or 0) >= 0.5
+    if dhw_on:
+        state["dhw_min"] = state.get("dhw_min", 0.0) + dt / 60.0
         if (latest.get("daikin_gasboiler_active") or 0) >= 0.5:
+            state["dhw_boiler_min"] = state.get("dhw_boiler_min", 0.0) + dt / 60.0
+
+    if kwh > 0:
+        if dhw_on:
+            state["dhw_kwh"] = state.get("dhw_kwh", 0.0) + kwh
+        elif (latest.get("daikin_gasboiler_active") or 0) >= 0.5:
             state["boiler_kwh"] = state.get("boiler_kwh", 0.0) + kwh
         else:
             state["pump_kwh"] = state.get("pump_kwh", 0.0) + kwh
@@ -244,8 +260,12 @@ def main():
         lines.append(f"daikin_heat_kw {hb['heat_kw']}")
         lines.append(f"daikin_heat_pump_kwh_today {round(hb.get('pump_kwh', 0.0), 4)}")
         lines.append(f"daikin_heat_boiler_kwh_today {round(hb.get('boiler_kwh', 0.0), 4)}")
-        total = (hb.get('pump_kwh', 0.0) or 0) + (hb.get('boiler_kwh', 0.0) or 0)
+        lines.append(f"daikin_heat_dhw_kwh_today {round(hb.get('dhw_kwh', 0.0), 4)}")
+        lines.append(f"daikin_dhw_minutes_today {round(hb.get('dhw_min', 0.0), 1)}")
+        lines.append(f"daikin_dhw_boiler_minutes_today {round(hb.get('dhw_boiler_min', 0.0), 1)}")
+        total = (hb.get('pump_kwh', 0.0) or 0) + (hb.get('boiler_kwh', 0.0) or 0) + (hb.get('dhw_kwh', 0.0) or 0)
         lines.append(f"daikin_heat_boiler_share_pct {round(100.0 * (hb.get('boiler_kwh', 0.0) or 0) / total, 2) if total > 0.05 else 0}")
+        lines.append(f"daikin_heat_dhw_share_pct {round(100.0 * (hb.get('dhw_kwh', 0.0) or 0) / total, 2) if total > 0.05 else 0}")
         lines.extend(price_lines())
         push(lines)
         try:

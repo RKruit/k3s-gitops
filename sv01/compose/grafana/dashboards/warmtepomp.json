@@ -36,7 +36,7 @@
  "timezone": "browser",
  "title": "Warmtepomp",
  "uid": "warmtepomp",
- "version": 7,
+ "version": 9,
  "panels": [
   {
    "id": 1,
@@ -1494,6 +1494,25 @@
         }
        }
       ]
+     },
+     {
+      "matcher": {
+       "id": "byFrameRefID",
+       "options": "D"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "#FF8FA3"
+        }
+       },
+       {
+        "id": "custom.lineWidth",
+        "value": 1
+       }
+      ]
      }
     ]
    },
@@ -1528,9 +1547,20 @@
      },
      "editorMode": "code",
      "expr": "daikin_heat_boiler_kwh_today",
-     "legendFormat": "warmte uit ketel (kWh)",
+     "legendFormat": "warmte uit ketel, verwarming (kWh)",
      "range": true,
      "refId": "B"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_heat_dhw_kwh_today",
+     "legendFormat": "warmte tapwater (kWh)",
+     "range": true,
+     "refId": "D"
     },
     {
      "datasource": {
@@ -1544,7 +1574,90 @@
      "refId": "C"
     }
    ],
-   "description": "Geïntegreerde warmte-afgifte (flow x dT uit de bus, 0,06977 x l/min x K = kW) sinds middernacht, gesplitst naar de bron. Toerekening is een benadering: zolang de ketel actief is gaat de afgifte naar gas, anders naar de pomp — bij gelijktijdig bedrijf is dat een bovengrens voor het gasaandeel. De tellers van de Daikin zelf zijn hiervoor onbruikbaar (ze vallen soms terug naar 0)."
+   "description": "Geïntegreerde warmte-afgifte (flow x dT uit de bus, 0,06977 x l/min x K = kW) sinds middernacht, gesplitst naar bron in deze volgorde: tapwatervraag open → tapwater (comfort, de combi-ketel maakt het warme water), anders ketel actief → verwarming op gas, anders de warmtepomp. Zonder die volgorde zou tapwaterwarmte als verwarmingsgas in de cijfers staan. De tellers van de Daikin zelf zijn onbruikbaar (ze vallen soms terug naar nul)."
+  },
+  {
+   "id": 15,
+   "title": "Tapwater vandaag",
+   "type": "stat",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "victoriametrics"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 50,
+    "w": 24,
+    "h": 4
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "m",
+     "decimals": 0,
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "yellow",
+        "value": 15
+       },
+       {
+        "color": "red",
+        "value": 45
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "orientation": "horizontal",
+    "textMode": "value_and_name",
+    "colorMode": "value",
+    "graphMode": "none",
+    "justifyMode": "auto"
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_dhw_minutes_today",
+     "legendFormat": "tapwatervraag (min)",
+     "refId": "A",
+     "range": true,
+     "instant": false
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "victoriametrics"
+     },
+     "editorMode": "code",
+     "expr": "daikin_dhw_boiler_minutes_today",
+     "legendFormat": "waarvan met ketel (min)",
+     "refId": "B",
+     "range": true,
+     "instant": false
+    }
+   ],
+   "description": "De combi-ketel maakt het warme water; dat circuit loopt niet door de flowmeter van de warmtepomp, dus in kWh is het maar een klein deel zichtbaar. De tijd is het eerlijke getal: hoeveel minuten vroeg het huis warm water, en hoeveel daarvan maakte de ketel."
   }
  ]
 }
