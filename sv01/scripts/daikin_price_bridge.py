@@ -20,6 +20,7 @@ de timer leest dit bestand elke run opnieuw.
 """
 import json
 import subprocess
+import urllib.request
 import sys
 import time
 from datetime import datetime
@@ -222,6 +223,15 @@ def main():
                 "ts": time.time(), "fuel_eur": round(fuel, 4),
                 "deviation_k": dev_k}
         STATE.write_text(json.dumps(last))
+
+    # dead-man's switch: Kuma 'Daikin prijsbrug' (#28); stilte = alarm
+    try:
+        for line in Path("/srv/sv01-secrets/kuma-push.env").read_text().splitlines():
+            if line.startswith("KUMA_PUSH_DAIKIN_URL="):
+                url = line.split("=", 1)[1].strip()
+                urllib.request.urlopen(f"{url}?status=up&msg=ok&ping=", timeout=8).read()
+    except Exception:  # noqa: BLE001
+        pass
 
     STATUS.write_text(json.dumps({
         "ok": True, "ts": time.time(), "hour": now.hour,

@@ -62,6 +62,20 @@ MONITORS = [
     # health endpoint, but a 200 proves WiFi + ESP alive. Bus health itself is
     # covered by the P1P2/L/... "online" MQTT topic (not monitorable by Kuma).
     dict(COMMON, type="http", name="P1P2MQTT bridge (Daikin)", url="http://192.168.68.82/"),
+    # ------------------------------------------------------------------
+    # Dead-man's switches (26-11-2026, Robert): Kuma bewaakt de sites en de
+    # poorten, maar niets bewaakte de bewakers. Deze twee monitors worden door
+    # de scripts ZELF gepusht; stilte is het alarm.
+    #   back-up  : dagelijks 03:30 -> 1 u interval x 26 = alarm na ~26 uur
+    #   prijsbrug: schrijft elke 5 min -> 5 min x 12 = alarm na ~1 uur
+    # De pushtoken wordt door Kuma bij het aanmaken gegenereerd; hij staat na
+    # de run in /srv/sv01-secrets/kuma-push.env (zie kuma_push_tokens.py).
+    dict(COMMON, type="push", name="Hermes back-up", interval=3600, maxretries=26,
+         retryInterval=3600,
+         description="Elke nacht 03:30 een versleuteld archief. Geen ping binnen ~26 uur = back-up stilgevallen."),
+    dict(COMMON, type="push", name="Daikin prijsbrug", interval=300, maxretries=12,
+         retryInterval=300,
+         description="daikin_price_bridge.py draait elke 5 minuten. Geen ping binnen ~1 uur = brug staat stil."),
 ]
 
 

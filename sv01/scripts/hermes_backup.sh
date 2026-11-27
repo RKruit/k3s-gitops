@@ -45,8 +45,16 @@ elif [ -n "$(find "$NEWEST" -mtime "+${MAX_AGE_DAYS}" 2>/dev/null)" ]; then
   FORCE=1
 fi
 
+ping_kuma() {
+  local url
+  url="$(grep -h '^KUMA_PUSH_BACKUP_URL=' /srv/sv01-secrets/kuma-push.env 2>/dev/null | cut -d= -f2- || true)"
+  [ -n "$url" ] || return 0
+  curl -s -m 10 "${url}?status=up&msg=$1&ping=" >/dev/null || true
+}
+
 if [ "${NOW_FP}" = "${LAST_FP}" ] && [ "$FORCE" -eq 0 ]; then
   echo "$(date -Is) geen wijzigingen sinds $(basename "$NEWEST") — back-up overgeslagen"
+  ping_kuma "geen-wijziging"
   exit 0
 fi
 
@@ -90,6 +98,7 @@ done
 if gpg --batch --quiet --decrypt --passphrase-file "$PASSFILE" "$OUT" 2>/dev/null | tar -tzf - >/dev/null 2>&1; then
   echo "controle: archief leesbaar en compleet"
   echo "${NOW_FP}" > "$FINGERPRINT_FILE"
+  ping_kuma "archief-ok"
 else
   echo "FOUT: archief niet leesbaar — back-up is NIET betrouwbaar" >&2
   exit 2
